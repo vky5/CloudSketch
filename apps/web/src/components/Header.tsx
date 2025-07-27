@@ -6,12 +6,12 @@ import { Menu } from 'lucide-react'
 
 export default function Header() {
   return (
-    <header className="w-full px-6 py-4 border-b border-neutral-800 bg-black text-white flex items-center justify-between">
+    <header className=" w-full px-6 py-4 border-b border-neutral-800 bg-[#232329] text-white flex items-center justify-between shadow-md">
       <Link href="/" className="text-2xl font-bold tracking-tight">
         CloudSketch
       </Link>
 
-      <nav className="hidden md:flex gap-4">
+      <nav className="hidden md:flex gap-6">
         <Link href="/canvas" className="hover:text-neutral-300 transition">
           Canvas
         </Link>

@@ -1,97 +1,88 @@
-'use client'
+"use client";
 
-import { Server, Zap, Box, Cloud, Database, HardDrive, Folder, Shield, Activity, Bell, Repeat, MessageSquare, Lock, Globe, Wifi, AlertTriangle, Monitor, GitBranch } from 'lucide-react';
-import { cn } from '@/lib/utils'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import {
+  MousePointer2,
+  Type,
+  Square,
+  Circle,
+  ArrowRight,
+  Minus,
+  Hand,
+  Eraser,
+  Palette,
+  ChevronRight,
+  Server,
+} from "lucide-react";
+import { useDiagramStore } from "@/store/useDiagramStore";
 
-const serviceBlocks = [
-  {
-    title: 'Compute',
-    items: [
-      { name: 'EC2 Instance', desc: 'Virtual server in the cloud', icon: Server },
-      { name: 'Lambda Function', desc: 'Serverless compute service', icon: Zap },
-      { name: 'ECS Service', desc: 'Container orchestration service', icon: Box },
-      { name: 'EKS Cluster', desc: 'Managed Kubernetes cluster', icon: Cloud },
-    ],
-  },
-  {
-    title: 'Storage',
-    items: [
-      { name: 'S3 Bucket', desc: 'Object storage service', icon: Folder },
-      { name: 'EBS Volume', desc: 'Block storage for EC2', icon: HardDrive },
-      { name: 'EFS File System', desc: 'Shared POSIX-compliant storage', icon: Database },
-    ],
-  },
-  {
-    title: 'Database',
-    items: [
-      { name: 'RDS Instance', desc: 'Managed SQL database', icon: Database },
-      { name: 'DynamoDB Table', desc: 'Serverless NoSQL database', icon: Database },
-      { name: 'Redis Cache', desc: 'In-memory key-value store', icon: Database },
-    ],
-  },
-  {
-    title: 'Networking',
-    items: [
-      { name: 'VPC', desc: 'Isolated virtual network', icon: Globe },
-      { name: 'Load Balancer', desc: 'Distribute traffic across resources', icon: Repeat },
-      { name: 'NAT Gateway', desc: 'Enable outbound traffic from private subnets', icon: Wifi },
-      { name: 'Security Group', desc: 'Virtual firewall for instances', icon: Shield },
-    ],
-  },
-  {
-    title: 'Security',
-    items: [
-      { name: 'IAM Role', desc: 'Permissions for AWS resources', icon: Lock },
-      { name: 'Secrets Manager', desc: 'Store API keys and credentials securely', icon: Shield },
-      { name: 'KMS Key', desc: 'Encrypt and decrypt data securely', icon: Lock },
-    ],
-  },
-  {
-    title: 'Monitoring',
-    items: [
-      { name: 'CloudWatch Logs', desc: 'Log monitoring and management', icon: Activity },
-      { name: 'CloudWatch Alarms', desc: 'Set thresholds and receive alerts', icon: Bell },
-      { name: 'Metrics Dashboard', desc: 'Custom visualization of resource metrics', icon: Monitor },
-    ],
-  },
-  {
-    title: 'Messaging',
-    items: [
-      { name: 'SQS Queue', desc: 'Reliable, scalable message queue', icon: MessageSquare },
-      { name: 'SNS Topic', desc: 'Pub/Sub messaging and notifications', icon: Bell },
-      { name: 'EventBridge', desc: 'Event-driven routing between services', icon: GitBranch },
-    ],
-  },
+const primaryTools = [
+  { id: "select", name: "Select", icon: MousePointer2, shortcut: "V" },
+  { id: "hand", name: "Hand", icon: Hand, shortcut: "H" },
+  { id: "text", name: "Text", icon: Type, shortcut: "T" },
+  { id: "rectangle", name: "Rectangle", icon: Square, shortcut: "R" },
+  { id: "circle", name: "Circle", icon: Circle, shortcut: "O" },
+  { id: "arrow", name: "Arrow", icon: ArrowRight, shortcut: "A" },
+  { id: "line", name: "Line", icon: Minus, shortcut: "L" },
+  { id: "eraser", name: "Eraser", icon: Eraser, shortcut: "E" },
+  { id: "color", name: "Color", icon: Palette, shortcut: "C" },
 ];
 
 export default function Sidebar() {
-  return (
-    <div className="w-[260px] h-full bg-[#0e0f11] border-r border-zinc-800 p-4 overflow-y-auto" style={{scrollbarWidth: "none"}}>
-      {serviceBlocks.map((block) => (
-        <div key={block.title} className="mb-6">
-          <h2 className="text-sm font-semibold text-zinc-500 mb-3">{block.title}</h2>
-          <div className="space-y-4" >
-            {block.items.map((item) => (
-              <div
-                key={item.name}
-                className="bg-[#141518] hover:bg-[#020817] cursor-pointer p-3 rounded-xl border border-zinc-700 flex gap-3 items-center"
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify(item))
-                }}
+  const { selectedTool, setSelectedTool } = useDiagramStore();
+  const [showAWSComponents, setShowAWSComponents] = useState(false);
 
-                
+  return (
+    <>
+      {/* Floating Tool Sidebar */}
+      <Card className="fixed left-4 top-1/2 -translate-y-1/2 z-50 p-2 shadow-lg border-none rounded-xl bg-[#232329] border border-white border-2xl">
+        <div className="flex flex-col gap-1">
+          {primaryTools.map((tool, index) => (
+            <div key={tool.id}>
+              <Button
+                size="sm"
+                className={`w-10 h-10 p-0 relative group rounded-md bg-transparent ${
+                  selectedTool === tool.id
+                    ? "bg-[#3B82F6] hover:bg-[#3B82F6]"
+                    : "hover:bg-[#1E293B]"
+                } text-white transition-colors`}
+                onClick={() => setSelectedTool(tool.id)}
+                title={`${tool.name} (${tool.shortcut})`}
               >
-                <item.icon className="h-5 w-5 text-blue-500" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-white">{item.name}</span>
-                  <span className="text-xs text-zinc-400">{item.desc}</span>
+                <tool.icon className="w-4 h-4" />
+                <div className="absolute left-12 top-1/2 -translate-y-1/2 bg-popover text-popover-foreground px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                  {tool.name} ({tool.shortcut})
                 </div>
-              </div>
-            ))}
-          </div>
+              </Button>
+              {index === 1 && <Separator className="my-2" />}
+              {index === 8 && <Separator className="my-2" />}
+            </div>
+          ))}
+
+          {/* AWS Component Toggle */}
+          <Button
+            size="sm"
+            className={`w-10 h-10 p-0 relative group rounded-md bg-transparent ${
+              showAWSComponents ? "bg-[#3B82F6] hover:bg-[#3B82F6]" : "hover:bg-[#1E293B]"
+            } text-white transition-colors`}
+            onClick={() => setShowAWSComponents(!showAWSComponents)}
+            title="AWS Components"
+          >
+            <Server className="w-4 h-4" />
+            <ChevronRight
+              className={`w-3 h-3 absolute -right-1 -top-1 transition-transform ${
+                showAWSComponents ? "rotate-90" : ""
+              }`}
+            />
+            <div className="absolute left-12 top-1/2 -translate-y-1/2 bg-popover text-popover-foreground px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              AWS Components
+            </div>
+          </Button>
         </div>
-      ))}
-    </div>
-  )
+      </Card>
+    </>
+  );
 }
