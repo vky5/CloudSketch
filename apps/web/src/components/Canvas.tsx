@@ -49,7 +49,7 @@ function FlowContent() {
       ...node,
       draggable: node.id === selectedNodeId,
     }));
-  }, [nodes, selectedNodeId]);
+  }, [nodes, selectedNodeId, selectedTool]);
 
   // Add connection as a new edge
   const onConnect = (params: Edge | Connection) => {
@@ -125,8 +125,16 @@ function FlowContent() {
     console.log("Adding node:", nodes);
   }, [selectedTool]);
 
+  const onNodeDragStart = useCallback(() => {
+    console.log("Node drag started");
+  }, []);
+
+  const onNodeDragStop = useCallback(() => {
+    console.log("Node drag stopped");
+  }, []);
+
   return (
-    <div className="w-full h-full" ref={canvasRef}>
+    <div className="w-full h-full overflow-hidden" ref={canvasRef}>
       <ReactFlow
         nodes={memoizedNodes}
         edges={edges}
@@ -134,6 +142,8 @@ function FlowContent() {
         onNodesChange={onNodesChangeHandler}
         onEdgesChange={setEdges}
         onConnect={onConnect}
+        onNodeDragStart={onNodeDragStart}
+        onNodeDragStop={onNodeDragStop}
         onDrop={onDrop}
         onDragOver={onDragOver}
         // onPaneClick={onCanvasClick}
@@ -143,6 +153,7 @@ function FlowContent() {
         onInit={(instance) => {
           instance.fitView();
         }}
+        fitViewOptions={{ padding: 0.5 }}
         panOnDrag={selectedTool === "hand"}
         zoomOnScroll={true}
         panOnScroll={true}
