@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useMemo } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -8,66 +8,58 @@ import ReactFlow, {
   Edge,
   Node,
   ReactFlowProvider,
+  useReactFlow,
 } from "reactflow";
 
 import "reactflow/dist/style.css";
 import { useDiagramStore } from "@/store/useDiagramStore";
-
-// importing all nodes
-import EC2Node from "./nodes/EC2Node"; // Your custom EC2 node component
-import CircleNode from "./nodes/tools/CircleNode";
-import RectangleNode from "./nodes/tools/RectangleNode";
-
-const nodeTypes = {
-  ec2: EC2Node,
-  rectangle: RectangleNode,
-  circle: CircleNode,
-};
+import { nodeTypes } from "./Canvas/nodeTypes";
 
 // function is pure and will never change, if u put in the main component it will rerender everytime
 function mapItemToNodeType(name: string): string {
-  if (name.includes("Rectangle")) return "rectangle";
-  if (name.includes("Circle")) return "circle";
+  console.log("mapItemToNodeType called with:", name);
+  if (name.includes("rectangle")) return "rectangle";
+  if (name.includes("circle")) return "circle";
   if (name.includes("EC2")) return "ec2";
   return "default";
 }
 
-export default function Canvas() {
-  const { nodes, edges, setNodes, setEdges, addNode, addEdge, selectedTool } =
-    useDiagramStore();
+function FlowContent() {
+  const {
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    addNode,
+    addEdge,
+    selectedTool,
+    selectedNodeId,
+    closeSettings,
+    openSettings,
+  } = useDiagramStore();
 
   // using hook to reference to canvas
   const canvasRef = useRef<HTMLDivElement>(null);
+  useEffect(() => console.log("Rendered"));
+
+  const { screenToFlowPosition } = useReactFlow();
+
+  const memoizedNodes = useMemo(() => {
+    return nodes.map((node) => ({
+      ...node,
+      draggable: node.id === selectedNodeId,
+    }));
+  }, [nodes, selectedNodeId]);
 
   // Add connection as a new edge
   const onConnect = (params: Edge | Connection) => {
     addEdge(params);
   };
 
-  const onCanvasClick = useCallback(
-    (event: React.MouseEvent) => {
-      // Only create nodes when a shape tool is selected
-      if (selectedTool !== "rectangle" && selectedTool !== "circle") return;
-
-      const bounds = event.currentTarget.getBoundingClientRect();
-      const position = {
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
-      };
-
-      const newNode: Node = {
-        id: crypto.randomUUID(),
-        type: selectedTool, // either 'rectangle' or 'circle'
-        position,
-        data: {
-          label: selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1), // "Rectangle"
-        },
-      };
-
-      addNode(newNode);
-    },
-    [selectedTool, addNode]
-  );
+  const onNodeClick = useCallback((event, node) => {
+    console.log("Node clicked:", node.id);
+    openSettings(node.id);
+  }, []);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -83,22 +75,26 @@ export default function Canvas() {
         event.dataTransfer.getData("application/json")
       );
 
-      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
-      const position = {
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      };
+      const screenX = event.clientX;
+      const screenY = event.clientY;
 
-      // Only allow EC2 for now
+      const position = screenToFlowPosition({
+        x: screenX,
+        y: screenY,
+      });
 
       const type = mapItemToNodeType(itemData.name);
 
-      if (!["rectangle", "circle", "ec2"].includes(type)) return;
+      if (!["rectangle", "circle", "ec2"].includes(type)) {
+        console.log("Returning, ", type);
+        return;
+      }
 
       const newNode: Node = {
         id: crypto.randomUUID(),
         type,
         position,
+        draggable: false, // initially not draggable
         data: {
           ...itemData,
           label: itemData.name,
@@ -106,8 +102,16 @@ export default function Canvas() {
       };
       console.log("Dropped node:", newNode);
       addNode(newNode);
+      openSettings(newNode.id);
     },
     [addNode]
+  );
+
+  const onNodesChangeHandler = useCallback(
+    (changes) => {
+      setNodes(changes);
+    },
+    [setNodes]
   );
 
   useEffect(() => {
@@ -122,35 +126,47 @@ export default function Canvas() {
   }, [selectedTool]);
 
   return (
+    <div className="w-full h-full" ref={canvasRef}>
+      <ReactFlow
+        nodes={memoizedNodes}
+        edges={edges}
+        onNodeClick={onNodeClick}
+        onNodesChange={onNodesChangeHandler}
+        onEdgesChange={setEdges}
+        onConnect={onConnect}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        // onPaneClick={onCanvasClick}
+        // nodesDraggable={selectedTool === "select"} // drag component only when select tool is selected not ideal
+        className="bg-[#020817]"
+        nodeTypes={nodeTypes}
+        onInit={(instance) => {
+          instance.fitView();
+        }}
+        panOnDrag={selectedTool === "hand"}
+        zoomOnScroll={true}
+        panOnScroll={true}
+        style={{
+          cursor:
+            selectedTool === "hand"
+              ? "grab"
+              : selectedTool === "rectangle" || selectedTool === "circle"
+              ? "crosshair"
+              : "default",
+        }}
+      >
+        <Controls />
+        <Background gap={11} size={1} />
+      </ReactFlow>
+    </div>
+  );
+}
+
+export default function Canvas() {
+  return (
     <ReactFlowProvider>
-      <div className="w-full h-full" ref={canvasRef}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={setNodes}
-          onEdgesChange={setEdges}
-          onConnect={onConnect}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onPaneClick={onCanvasClick}
-          className="bg-[#020817]"
-          nodeTypes={nodeTypes}
-          fitView
-          panOnDrag={selectedTool === "hand"}
-          zoomOnScroll={true}
-          panOnScroll={true}
-          style={{
-            cursor:
-              selectedTool === "hand"
-                ? "grab"
-                : selectedTool === "rectangle" || selectedTool === "circle"
-                ? "crosshair"
-                : "default",
-          }}
-        >
-          <Controls />
-          <Background gap={11} size={1} />
-        </ReactFlow>
+      <div className="w-full h-full">
+        <FlowContent />
       </div>
     </ReactFlowProvider>
   );

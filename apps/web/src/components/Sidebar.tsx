@@ -35,15 +35,24 @@ export default function Sidebar() {
   const { selectedTool, setSelectedTool } = useDiagramStore();
   const [showAWSComponents, setShowAWSComponents] = useState(false);
 
+  const handleDragStart = (event: React.DragEvent, toolId: string) => {
+    const item = {
+      name: toolId,
+    };
+    event.dataTransfer.setData("application/json", JSON.stringify(item));
+    event.dataTransfer.effectAllowed = "move";
+  };
+
   return (
     <>
-      {/* Floating Tool Sidebar */}
       <Card className="fixed left-4 top-1/2 -translate-y-1/2 z-50 p-2 shadow-lg border-none rounded-xl bg-[#232329] border border-white border-2xl">
         <div className="flex flex-col gap-1">
           {primaryTools.map((tool, index) => (
             <div key={tool.id}>
               <Button
                 size="sm"
+                draggable={["rectangle", "circle", "ec2"].includes(tool.id)} // Only these are draggable
+                onDragStart={(e) => handleDragStart(e, tool.id)}
                 className={`w-10 h-10 p-0 relative group rounded-md bg-transparent ${
                   selectedTool === tool.id
                     ? "bg-[#3B82F6] hover:bg-[#3B82F6]"

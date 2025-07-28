@@ -18,13 +18,12 @@ interface DiagramState {
   nodes: Node[];
   edges: Edge[];
   selectedNodeId: string | null;
-  selectedTool: string; // NEW
+  selectedTool: string;
 
   setNodes: (changes: NodeChange[]) => void;
   setEdges: (changes: EdgeChange[]) => void;
   addNode: (node: Node) => void;
   addEdge: (edge: Edge | Connection) => void;
-
 
   setSelectedTool: (tool: string) => void; // NEW
   openSettings: (id: string) => void;
@@ -60,7 +59,7 @@ export const useDiagramStore = create<DiagramState>((set) => ({
 
   setSelectedTool: (tool) => set({ selectedTool: tool }),
 
-  openSettings: (id) => set({ selectedNodeId: id }),
+  openSettings: (id) => set({ selectedNodeId: id }), // this will be used to give open setting of a selected node (if there is any & also prevent the drag of non selected tool; for selection of node for border like excalidraw or drag)
   closeSettings: () => set({ selectedNodeId: null }),
 
   updateNodeData: (id, newData) =>
