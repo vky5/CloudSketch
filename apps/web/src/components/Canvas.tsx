@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useMemo } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Controls,
   Connection,
@@ -9,9 +10,8 @@ import ReactFlow, {
   Node,
   ReactFlowProvider,
   useReactFlow,
-} from "reactflow";
-
-import "reactflow/dist/style.css";
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css"; 
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { nodeTypes } from "./Canvas/nodeTypes";
 
@@ -34,7 +34,6 @@ function FlowContent() {
     addEdge,
     selectedTool,
     selectedNodeId,
-    closeSettings,
     openSettings,
   } = useDiagramStore();
 
@@ -148,7 +147,6 @@ function FlowContent() {
         onDragOver={onDragOver}
         // onPaneClick={onCanvasClick}
         // nodesDraggable={selectedTool === "select"} // drag component only when select tool is selected not ideal
-        className="bg-[#020817]"
         nodeTypes={nodeTypes}
         onInit={(instance) => {
           instance.fitView();
@@ -167,7 +165,7 @@ function FlowContent() {
         }}
       >
         <Controls />
-        <Background gap={11} size={1} />
+        <Background gap={11} size={1} bgColor="#020817"/>
       </ReactFlow>
     </div>
   );

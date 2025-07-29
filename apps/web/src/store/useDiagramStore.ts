@@ -7,8 +7,7 @@ import {
   Connection,
   applyNodeChanges,
   applyEdgeChanges,
-} from "reactflow";
-
+} from "@xyflow/react";
 /*
 Okay so two types Edge and Connnections
 Edge includes Id connections doesnt
@@ -29,6 +28,7 @@ interface DiagramState {
   openSettings: (id: string) => void;
   closeSettings: () => void;
   updateNodeData: (id: string, newData: any) => void;
+  updateNodeDimensions: (id: string, width: number, height: number) => void;
 }
 
 export const useDiagramStore = create<DiagramState>((set) => ({
@@ -66,6 +66,13 @@ export const useDiagramStore = create<DiagramState>((set) => ({
     set((state) => ({
       nodes: state.nodes.map((node) =>
         node.id === id ? { ...node, data: { ...node.data, ...newData } } : node
+      ),
+    })),
+
+  updateNodeDimensions: (id, width, height) =>
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === id ? { ...node, width, height } : node
       ),
     })),
 }));

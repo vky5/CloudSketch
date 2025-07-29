@@ -1,4 +1,4 @@
-import { Handle, Position, NodeProps } from "reactflow";
+import { Handle, Position, NodeProps } from  '@xyflow/react';
 import { Server } from "lucide-react"; 
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { FaGear } from "react-icons/fa6";
