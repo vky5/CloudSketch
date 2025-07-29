@@ -6,7 +6,7 @@ import { Menu } from 'lucide-react'
 
 export default function Header() {
   return (
-    <header className=" w-full px-6 py-4 border-b border-neutral-800 bg-[#232329] text-white flex items-center justify-between shadow-md">
+    <header className="relative w-full px-6 py-4 border-b border-neutral-800 bg-[#232329] text-white flex items-center justify-between shadow-md z-[1100]">
       <Link href="/" className="text-2xl font-bold tracking-tight">
         CloudSketch
       </Link>

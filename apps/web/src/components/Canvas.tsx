@@ -11,18 +11,11 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from "@xyflow/react";
-import "@xyflow/react/dist/style.css"; 
+import "@xyflow/react/dist/style.css";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { nodeTypes } from "./Canvas/nodeTypes";
-
-// function is pure and will never change, if u put in the main component it will rerender everytime
-function mapItemToNodeType(name: string): string {
-  console.log("mapItemToNodeType called with:", name);
-  if (name.includes("rectangle")) return "rectangle";
-  if (name.includes("rhombus")) return "rhombus";
-  if (name.includes("EC2")) return "ec2";
-  return "default";
-}
+import GhostRectangle from "./nodes/ghosts/GhostRectangle";
+import GhostRhombus from "./nodes/ghosts/GhostRhombus";
 
 function FlowContent() {
   const {
@@ -33,16 +26,83 @@ function FlowContent() {
     addNode,
     addEdge,
     selectedTool,
+    setSelectedTool,
     selectedNodeId,
     openSettings,
   } = useDiagramStore();
 
   // using hook to reference to canvas
-  const canvasRef = useRef<HTMLDivElement>(null);
-  useEffect(() => console.log("Rendered"));
-
+  const canvasRef = useRef<HTMLDivElement>(null); // TODO remove it if not in use till end
+  const ghostRef = useRef<HTMLDivElement>(null); // instead of triggering rerendering by passing in x, y position to ghost components, we ar gonna use ref to 
+  const mousePos = useRef({ x: 0, y: 0 });
   const { screenToFlowPosition } = useReactFlow();
 
+  // Track the 
+  useEffect(() => {
+    const updatePosition = (e: MouseEvent) => {
+      mousePos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const moveGhost = () => { // set the movement of the ghost component
+      const ghost = ghostRef.current; // if ghost ref is attached to any component which it will be the selected tool is in renderGhostShape function
+      if (ghost) {
+        ghost.style.left = `${mousePos.current.x}px`; // setting the x and y position
+        ghost.style.top = `${mousePos.current.y}px`;
+      }
+      requestAnimationFrame(moveGhost); // this is browser API, // TODO add the similar logic to moving the node by clicking on it from one positionn to another 
+    };
+
+    window.addEventListener("mousemove", updatePosition);
+    requestAnimationFrame(moveGhost);
+
+    return () => {
+      window.removeEventListener("mousemove", updatePosition);
+    };
+  }, []);
+
+  function renderGhostShape(tool: string) {
+    switch (tool) {
+      case "rectangle":
+        return <GhostRectangle ref={ghostRef} />;
+      case "rhombus":
+        return <GhostRhombus ref={ghostRef} />;
+      // Add more cases like "circle", "ec2", etc.
+      default:
+        return null;
+    }
+  }
+
+  // this is just adding the node to canvas, done by adding to Node array in state and rest everything does reactflow
+  const handlePaneClick = useCallback(
+    (event: React.MouseEvent) => {
+      const validNodeTypes = Object.keys(nodeTypes);
+      if (!validNodeTypes.includes(selectedTool)) return;
+
+      const { clientX, clientY } = event;
+      const position = screenToFlowPosition({ x: clientX, y: clientY });
+
+      const newNode: Node = {
+        id: crypto.randomUUID(),
+        type: selectedTool,
+        position,
+        draggable: false,
+        data: {
+          label: selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1),
+        },
+      };
+
+      addNode(newNode);
+      openSettings(newNode.id);
+      setSelectedTool("hand"); // when node is added switch to hand tool 
+    },
+    [selectedTool, screenToFlowPosition, addNode, openSettings]
+  );
+
+  // this is a utility to count the number of renders remove it
+  useEffect(() => console.log("Rendered"));
+
+
+  // DUNNO what this one does
   const memoizedNodes = useMemo(() => {
     return nodes.map((node) => ({
       ...node,
@@ -50,62 +110,21 @@ function FlowContent() {
     }));
   }, [nodes, selectedNodeId, selectedTool]);
 
-  // Add connection as a new edge
+
+
+
+  // Add connection as a new edge 
   const onConnect = (params: Edge | Connection) => {
     addEdge(params);
   };
 
+  // when node is clicked select it
   const onNodeClick = useCallback((event, node) => {
     console.log("Node clicked:", node.id);
-    openSettings(node.id);
+    openSettings(node.id); // to select the node for opening settings and 
   }, []);
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  }, []);
-
-  // this is the logic for on drop which is to put in the rectangle
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-
-      const itemData = JSON.parse(
-        event.dataTransfer.getData("application/json")
-      );
-
-      const screenX = event.clientX;
-      const screenY = event.clientY;
-
-      const position = screenToFlowPosition({
-        x: screenX,
-        y: screenY,
-      });
-
-      const type = mapItemToNodeType(itemData.name);
-
-      if (!["rectangle", "rhombus", "ec2"].includes(type)) {
-        console.log("Returning, ", type);
-        return;
-      }
-
-      const newNode: Node = {
-        id: crypto.randomUUID(),
-        type,
-        position,
-        draggable: false, // initially not draggable
-        data: {
-          ...itemData,
-          label: itemData.name,
-        },
-      };
-      console.log("Dropped node:", newNode);
-      addNode(newNode);
-      openSettings(newNode.id);
-    },
-    [addNode]
-  );
-
+  // 
   const onNodesChangeHandler = useCallback(
     (changes) => {
       setNodes(changes);
@@ -113,17 +132,20 @@ function FlowContent() {
     [setNodes]
   );
 
+
+  // for logging purpose remove if no need
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    canvas.style.cursor = "not-allowed";
     console.log("Canvas is : ", canvas?.style.cursor);
 
     console.log("Clicked canvas with tool:", selectedTool);
     console.log("Adding node:", nodes);
   }, [selectedTool]);
 
+
+  // useless functions
   const onNodeDragStart = useCallback(() => {
     console.log("Node drag started");
   }, []);
@@ -143,9 +165,9 @@ function FlowContent() {
         onConnect={onConnect}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        // onPaneClick={onCanvasClick}
+        // onDrop={onDrop}
+        // onDragOver={onDragOver}
+        onPaneClick={handlePaneClick}
         // nodesDraggable={selectedTool === "select"} // drag component only when select tool is selected not ideal
         nodeTypes={nodeTypes}
         onInit={(instance) => {
@@ -156,17 +178,28 @@ function FlowContent() {
         zoomOnScroll={true}
         panOnScroll={true}
         style={{
-          cursor:
-            selectedTool === "hand"
-              ? "grab"
-              : selectedTool === "rectangle" || selectedTool === "circle"
-              ? "crosshair"
-              : "default",
+          cursor: (() => {
+            switch (selectedTool) {
+              case "hand":
+                return "grab";
+              case "rectangle":
+              case "rhombus":
+              case "arrow":
+              case "line":
+                return "crosshair";
+              case "text":
+                return "text";
+              default:
+                return "default";
+            }
+          })(),
         }}
       >
         <Controls />
-        <Background gap={11} size={1} bgColor="#020817"/>
+        <Background gap={11} size={1} bgColor="#020817" />
       </ReactFlow>
+
+      {renderGhostShape(selectedTool)}
     </div>
   );
 }
