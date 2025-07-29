@@ -19,7 +19,7 @@ import { nodeTypes } from "./Canvas/nodeTypes";
 function mapItemToNodeType(name: string): string {
   console.log("mapItemToNodeType called with:", name);
   if (name.includes("rectangle")) return "rectangle";
-  if (name.includes("circle")) return "circle";
+  if (name.includes("rhombus")) return "rhombus";
   if (name.includes("EC2")) return "ec2";
   return "default";
 }
@@ -84,7 +84,7 @@ function FlowContent() {
 
       const type = mapItemToNodeType(itemData.name);
 
-      if (!["rectangle", "circle", "ec2"].includes(type)) {
+      if (!["rectangle", "rhombus", "ec2"].includes(type)) {
         console.log("Returning, ", type);
         return;
       }

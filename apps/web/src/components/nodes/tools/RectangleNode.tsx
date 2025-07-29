@@ -16,7 +16,7 @@ function RectangleNode({ data, selected, width, height }: NodeProps) {
         onResizeEnd={(e, { width, height }) => {
           useDiagramStore
             .getState()
-            .updateNodeDimensions(data.id, width, height);
+            .updateNodeDimensions(data.id as string, width, height);
         }}
       />
 

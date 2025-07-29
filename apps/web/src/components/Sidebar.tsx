@@ -8,7 +8,7 @@ import {
   MousePointer2,
   Type,
   Square,
-  Circle,
+  Diamond,
   ArrowRight,
   Minus,
   Hand,
@@ -24,7 +24,7 @@ const primaryTools = [
   { id: "hand", name: "Hand", icon: Hand, shortcut: "H" },
   { id: "text", name: "Text", icon: Type, shortcut: "T" },
   { id: "rectangle", name: "Rectangle", icon: Square, shortcut: "R" },
-  { id: "circle", name: "Circle", icon: Circle, shortcut: "O" },
+  { id: "rhombus", name: "Rhombus", icon: Diamond, shortcut: "D" },
   { id: "arrow", name: "Arrow", icon: ArrowRight, shortcut: "A" },
   { id: "line", name: "Line", icon: Minus, shortcut: "L" },
   { id: "eraser", name: "Eraser", icon: Eraser, shortcut: "E" },
@@ -51,7 +51,7 @@ export default function Sidebar() {
             <div key={tool.id}>
               <Button
                 size="sm"
-                draggable={["rectangle", "circle", "ec2"].includes(tool.id)} // Only these are draggable
+                draggable={["rectangle", "rhombus", "ec2"].includes(tool.id)} // Only these are draggable
                 onDragStart={(e) => handleDragStart(e, tool.id)}
                 className={`w-10 h-10 p-0 relative group rounded-md bg-transparent ${
                   selectedTool === tool.id

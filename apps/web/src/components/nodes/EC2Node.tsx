@@ -29,10 +29,10 @@ export default function EC2Node({ data, id }: NodeProps) {
         <div className="flex flex-col space-y-1">
           <span className="font-semibold text-base">EC2 Instance</span>
           <span className="text-xs text-muted-foreground">
-            Type: {data.instanceType || "t2.micro"}
+            {`Type: ${data.instanceType || "t2.micro"}`}
           </span>
           <span className="text-xs text-muted-foreground">
-            AMI: {data.amiId || "ami-12345678"}
+            AMI: {data.amiId ? data.amiId.toString() : "ami-12345678"}
           </span>
         </div>
       </div>
