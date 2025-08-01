@@ -1,106 +1,90 @@
 "use client";
+
 import { useDiagramStore } from "@/store/useDiagramStore";
-import { memo, useState, useRef, useEffect } from "react";
+import { memo, useState, useEffect, useRef } from "react";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 
-function TextNode({ data, selected, width = 200, height = 50 }: NodeProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [text, setText] = useState<string>(typeof data.label === 'string' ? data.label : "Double click to edit");
+function TextNode({ data, selected, width = 100, height = 50 }: NodeProps) {
+  const [text, setText] = useState<string>(
+    typeof data.label === "string" ? data.label : "Click to edit text"
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Focus textarea when entering edit mode
+  const updateNodeData = useDiagramStore((state) => state.updateNodeData);
+  const updateNodeDimensions = useDiagramStore((state) => state.updateNodeDimensions);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setText(newText);
+    updateNodeData(data.id as string, { label: newText });
+  };
+
+  // Auto-resize height only
   useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.select();
+    const textarea = textareaRef.current;
+    const container = containerRef.current;
+
+    if (textarea && container) {
+      textarea.style.height = "auto";
+      const scrollHeight = textarea.scrollHeight + 4;
+      textarea.style.height = `${scrollHeight}px`;
+      container.style.width = `${width}px`;
+      container.style.height = `${scrollHeight}px`;
+
+      // Sync height, keep width same
+      updateNodeDimensions(data.id as string, width, scrollHeight);
     }
-  }, [isEditing]);
+  }, [text, width]);
 
-  const handleDoubleClick = () => {
-    setIsEditing(true);
-  };
+  // Restore autofocus
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.select();
+      }
+    }, 0);
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(e.target.value);
-  };
+    return () => clearTimeout(timer);
+  }, []);
 
-  const handleBlur = () => {
-    setIsEditing(false);
-    // Update the store with new text
-    useDiagramStore.getState().updateNodeData(data.id as string, { label: text });
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      setIsEditing(false);
-      useDiagramStore.getState().updateNodeData(data.id as string, { label: text });
+  useEffect(() => {
+    if (data.label !== text) {
+      setText(typeof data.label === "string" ? data.label : "");
     }
-    if (e.key === 'Escape') {
-      setText(typeof data.label === 'string' ? data.label : "Double click to edit");
-      setIsEditing(false);
-    }
-  };
+  }, [data.label]);
 
   return (
-    <div 
-      className="relative"
-      style={{ 
-        width: width || 200, 
-        height: height || 50,
-        minWidth: 100,
-        minHeight: 30 
-      }}
+    <div
+      ref={containerRef}
+      className="relative bg-transparent"
+      style={{ minWidth: 80, minHeight: 40 }}
     >
       <NodeResizer
         isVisible={selected}
-        minWidth={100}
-        minHeight={30}
-        lineClassName="border-blue-500"
-        handleClassName="bg-blue-500 border border-white"
+        minWidth={80}
+        minHeight={40}
+        lineClassName="border-emerald-500"
+        handleClassName="bg-emerald-500 border border-white"
         onResizeEnd={(e, { width, height }) => {
-          useDiagramStore
-            .getState()
-            .updateNodeDimensions(data.id as string, width, height);
+          updateNodeDimensions(data.id as string, width, height);
         }}
       />
-      
-      <div
-        className="w-full h-full flex items-center justify-center bg-transparent text-white cursor-text border-2 border-dashed border-gray-400/50 hover:border-gray-300/70 transition-colors"
-        onDoubleClick={handleDoubleClick}
+
+      <textarea
+        ref={textareaRef}
+        value={text}
+        onChange={handleChange}
+        className="bg-transparent text-white text-sm resize-none outline-none p-1 absolute top-0 left-0"
         style={{
-          width: width || 200,
-          height: height || 50,
+          width: `${width}px`, // Keep width constant
+          fontFamily: "inherit",
+          overflow: "hidden",
+          whiteSpace: "pre-wrap",
         }}
-      >
-        {isEditing ? (
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={handleTextChange}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            className="w-full h-full bg-transparent text-white text-center resize-none outline-none border-none p-2 text-sm"
-            style={{
-              fontFamily: 'inherit',
-              fontSize: '14px',
-              lineHeight: '1.2',
-            }}
-            placeholder="Enter your text..."
-          />
-        ) : (
-          <div 
-            className="w-full h-full flex items-center justify-center p-2 text-sm text-center break-words overflow-hidden"
-            style={{
-              lineHeight: '1.2',
-              wordWrap: 'break-word',
-              hyphens: 'auto',
-            }}
-          >
-            {text || "Double click to edit"}
-          </div>
-        )}
-      </div>
+        spellCheck={false}
+      />
     </div>
   );
 }
