@@ -29,27 +29,107 @@ function FlowContent() {
     setSelectedTool,
     selectedNodeId,
     openSettings,
+    selectedNodeIds,
+    selectNodes,
+    clearSelectedNodes,
   } = useDiagramStore();
 
   // using hook to reference to canvas
   const canvasRef = useRef<HTMLDivElement>(null); // TODO remove it if not in use till end
-  const ghostRef = useRef<HTMLDivElement>(null); // instead of triggering rerendering by passing in x, y position to ghost components, we ar gonna use ref to 
+  const ghostRef = useRef<HTMLDivElement>(null); // instead of triggering rerendering by passing in x, y position to ghost components, we ar gonna use ref to
+  const selectionBoxRef = useRef<HTMLDivElement>(null);
   const mousePos = useRef({ x: 0, y: 0 });
   const { screenToFlowPosition } = useReactFlow();
 
-  // Track the 
+  // for selection and drawign the selection rectangle
+  useEffect(() => {
+    if (selectedTool !== "select") return;
+
+    const canvas = canvasRef.current;
+    const selectionBox = selectionBoxRef.current;
+    if (!canvas || !selectionBox) return;
+
+    let isSelecting = false;
+    let startX = 0;
+    let startY = 0;
+
+    const onMouseDown = (e: MouseEvent) => {
+      isSelecting = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      selectionBox.style.left = `${startX}px`;
+      selectionBox.style.top = `${startY}px`;
+      selectionBox.style.width = "0px";
+      selectionBox.style.height = "0px";
+      selectionBox.style.display = "block";
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isSelecting) return;
+      const currentX = e.clientX;
+      const currentY = e.clientY;
+      const rectLeft = Math.min(startX, currentX);
+      const rectTop = Math.min(startY, currentY);
+      const rectWidth = Math.abs(startX - currentX);
+      const rectHeight = Math.abs(startY - currentY);
+
+      selectionBox.style.left = `${rectLeft}px`;
+      selectionBox.style.top = `${rectTop}px`;
+      selectionBox.style.width = `${rectWidth}px`;
+      selectionBox.style.height = `${rectHeight}px`;
+    };
+    const onMouseUp = () => {
+      isSelecting = false;
+      selectionBox.style.display = "none";
+
+      const selectionRect = selectionBox.getBoundingClientRect();
+
+      // Compute selected nodes
+      const selected = nodes.filter((node) => {
+        const nodeRect = document
+          .querySelector(`[data-id='${node.id}']`)
+          ?.getBoundingClientRect();
+        if (!nodeRect) return false;
+
+        const isInside =
+          nodeRect.left >= selectionRect.left &&
+          nodeRect.right <= selectionRect.right &&
+          nodeRect.top >= selectionRect.top &&
+          nodeRect.bottom <= selectionRect.bottom;
+
+        return isInside;
+      });
+
+      const selectedIds = selected.map((node) => node.id);
+      selectNodes(selectedIds);
+      console.log("Selected node IDs:", selectedIds);
+    };
+
+    canvas.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+
+    return () => {
+      canvas.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [selectedTool, nodes, screenToFlowPosition, selectNodes]);
+
+  // Track the
   useEffect(() => {
     const updatePosition = (e: MouseEvent) => {
       mousePos.current = { x: e.clientX, y: e.clientY };
     };
 
-    const moveGhost = () => { // set the movement of the ghost component
+    const moveGhost = () => {
+      // set the movement of the ghost component
       const ghost = ghostRef.current; // if ghost ref is attached to any component which it will be the selected tool is in renderGhostShape function
       if (ghost) {
         ghost.style.left = `${mousePos.current.x}px`; // setting the x and y position
         ghost.style.top = `${mousePos.current.y}px`;
       }
-      requestAnimationFrame(moveGhost); // this is browser API, // TODO add the similar logic to moving the node by clicking on it from one positionn to another 
+      requestAnimationFrame(moveGhost); // this is browser API, // TODO add the similar logic to moving the node by clicking on it from one positionn to another
     };
 
     window.addEventListener("mousemove", updatePosition);
@@ -67,6 +147,14 @@ function FlowContent() {
       case "rhombus":
         return <GhostRhombus ref={ghostRef} />;
       // Add more cases like "circle", "ec2", etc.
+      case "select":
+        return (
+          <div
+            ref={selectionBoxRef}
+            className="absolute border border-emerald-400 bg-emerald-500/10 pointer-events-none z-[1001]"
+            style={{ display: "none" }}
+          />
+        );
       default:
         return null;
     }
@@ -93,14 +181,13 @@ function FlowContent() {
 
       addNode(newNode);
       openSettings(newNode.id);
-      setSelectedTool("hand"); // when node is added switch to hand tool 
+      setSelectedTool("hand"); // when node is added switch to hand tool
     },
     [selectedTool, screenToFlowPosition, addNode, openSettings]
   );
 
   // this is a utility to count the number of renders remove it
   useEffect(() => console.log("Rendered"));
-
 
   // DUNNO what this one does
   const memoizedNodes = useMemo(() => {
@@ -110,10 +197,7 @@ function FlowContent() {
     }));
   }, [nodes, selectedNodeId, selectedTool]);
 
-
-
-
-  // Add connection as a new edge 
+  // Add connection as a new edge
   const onConnect = (params: Edge | Connection) => {
     addEdge(params);
   };
@@ -121,17 +205,16 @@ function FlowContent() {
   // when node is clicked select it
   const onNodeClick = useCallback((event, node) => {
     console.log("Node clicked:", node.id);
-    openSettings(node.id); // to select the node for opening settings and 
+    openSettings(node.id); // to select the node for opening settings and
   }, []);
 
-  // 
+  //
   const onNodesChangeHandler = useCallback(
     (changes) => {
       setNodes(changes);
     },
     [setNodes]
   );
-
 
   // for logging purpose remove if no need
   useEffect(() => {
@@ -143,7 +226,6 @@ function FlowContent() {
     console.log("Clicked canvas with tool:", selectedTool);
     console.log("Adding node:", nodes);
   }, [selectedTool]);
-
 
   // useless functions
   const onNodeDragStart = useCallback(() => {
@@ -165,10 +247,7 @@ function FlowContent() {
         onConnect={onConnect}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
-        // onDrop={onDrop}
-        // onDragOver={onDragOver}
         onPaneClick={handlePaneClick}
-        // nodesDraggable={selectedTool === "select"} // drag component only when select tool is selected not ideal
         nodeTypes={nodeTypes}
         onInit={(instance) => {
           instance.fitView();

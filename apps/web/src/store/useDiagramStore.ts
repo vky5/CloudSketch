@@ -16,17 +16,20 @@ Edge includes Id connections doesnt
 interface DiagramState {
   nodes: Node[];
   edges: Edge[];
-  selectedNodeId: string | null;
+  selectedNodeId: string | null; // for signle selected node (enables drag drop and resize)
   selectedTool: string;
+  selectedNodeIds: string[]; // for tracking multiple selected nodes
 
   setNodes: (changes: NodeChange[]) => void;
   setEdges: (changes: EdgeChange[]) => void;
   addNode: (node: Node) => void;
   addEdge: (edge: Edge | Connection) => void;
 
-  setSelectedTool: (tool: string) => void; // NEW
+  setSelectedTool: (tool: string) => void;
   openSettings: (id: string) => void;
   closeSettings: () => void;
+  selectNodes: (ids: string[]) => void; // set a large number of nodes in selected in selectedNodeIds
+  clearSelectedNodes: () => void;
   updateNodeData: (id: string, newData: any) => void;
   updateNodeDimensions: (id: string, width: number, height: number) => void;
 }
@@ -36,6 +39,7 @@ export const useDiagramStore = create<DiagramState>((set) => ({
   edges: [],
   selectedNodeId: null,
   selectedTool: "select", // Default tool
+  selectedNodeIds: [],
 
   setNodes: (changes) =>
     set((state) => ({
@@ -61,6 +65,9 @@ export const useDiagramStore = create<DiagramState>((set) => ({
 
   openSettings: (id) => set({ selectedNodeId: id }), // this will be used to give open setting of a selected node (if there is any & also prevent the drag of non selected tool; for selection of node for border like excalidraw or drag)
   closeSettings: () => set({ selectedNodeId: null }),
+
+  selectNodes: (ids) => set({ selectedNodeIds: ids }), // this is for the selection and here the ids is the array of ids that is selected
+  clearSelectedNodes: () => set({ selectedNodeIds: [] }),
 
   updateNodeData: (id, newData) =>
     set((state) => ({
