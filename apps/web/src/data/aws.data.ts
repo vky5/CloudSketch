@@ -8,41 +8,81 @@ import {
   Repeat,
   Shield,
   Lock,
-} from 'lucide-react';
+} from "lucide-react";
 
 export const awsComponents = [
   {
-    title: 'Compute',
+    title: "Compute",
     items: [
-      { name: 'EC2 Instance', desc: 'Virtual server in the cloud', icon: Server },
-      { name: 'Lambda Function', desc: 'Serverless compute service', icon: Zap },
+      {
+        id: "ec2",
+        name: "EC2 Instance",
+        desc: "Virtual server in the cloud",
+        icon: Server,
+      },
+      {
+        id: "lambda",
+        name: "Lambda Function",
+        desc: "Serverless compute service",
+        icon: Zap,
+      },
     ],
   },
   {
-    title: 'Storage',
+    title: "Storage",
     items: [
-      { name: 'S3 Bucket', desc: 'Object storage service', icon: Folder },
-      { name: 'EBS Volume', desc: 'Block storage for EC2', icon: HardDrive },
+      {
+        id: "s3",
+        name: "S3 Bucket",
+        desc: "Object storage service",
+        icon: Folder,
+      },
+      {
+        id: "ebs",
+        name: "EBS Volume",
+        desc: "Block storage for EC2",
+        icon: HardDrive,
+      },
     ],
   },
   {
-    title: 'Database',
+    title: "Database",
     items: [
-      { name: 'RDS Instance', desc: 'Managed SQL database', icon: Database },
+      {
+        id: "rds",
+        name: "RDS Instance",
+        desc: "Managed SQL database",
+        icon: Database,
+      },
     ],
   },
   {
-    title: 'Networking',
+    title: "Networking",
     items: [
-      { name: 'VPC', desc: 'Isolated virtual network', icon: Globe },
-      { name: 'Load Balancer', desc: 'Distribute traffic across resources', icon: Repeat },
-      { name: 'Security Group', desc: 'Virtual firewall for instances', icon: Shield },
+      { id: "vpc", name: "VPC", desc: "Isolated virtual network", icon: Globe },
+      {
+        id: "elb",
+        name: "Load Balancer",
+        desc: "Distribute traffic across resources",
+        icon: Repeat,
+      },
+      {
+        id: "sg",
+        name: "Security Group",
+        desc: "Virtual firewall for instances",
+        icon: Shield,
+      },
     ],
   },
   {
-    title: 'Security',
+    title: "Security",
     items: [
-      { name: 'IAM Role', desc: 'Permissions for AWS resources', icon: Lock },
+      {
+        id: "iam",
+        name: "IAM Role",
+        desc: "Permissions for AWS resources",
+        icon: Lock,
+      },
     ],
   },
 ];

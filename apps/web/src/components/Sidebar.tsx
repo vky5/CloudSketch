@@ -129,9 +129,11 @@ export default function Sidebar() {
                 {openSections[section.title] && (
                   <div className="mt-2 space-y-3">
                     {section.items.map((item) => (
+                      // this is the each button
                       <div
                         key={item.name}
                         className="bg-[#1F2937] hover:bg-[#374151] rounded-md px-3 py-2 text-sm flex items-start gap-2 cursor-pointer"
+                        onClick={()=>setSelectedTool(item.id)}
                       >
                         <item.icon className="w-4 h-4 mt-0.5 text-blue-400" />
                         <div>

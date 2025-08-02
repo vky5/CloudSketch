@@ -1,13 +1,17 @@
-import { Handle, Position, NodeProps } from  '@xyflow/react';
-import { Server } from "lucide-react"; 
+import { Handle, Position, NodeProps } from "@xyflow/react";
+import { Server } from "lucide-react";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { FaGear } from "react-icons/fa6";
 
-export default function EC2Node({ data, id }: NodeProps) {
+export default function EC2Node({ data, selected, id }: NodeProps) {
   const openSettings = useDiagramStore((state) => state.openSettings);
 
   return (
-    <div className="bg-[#0E0F11] border border-sidebar-border text-sidebar-foreground rounded-xl shadow-md p-4 min-w-[240px] relative">
+    <div
+      className={`w-full h-full relative border rounded-xl shadow-md bg-[#020817]/75 text-white px-6 py-4 ${
+        selected ? "border-blue-500" : ""
+      } `}
+    >
       {/* Connection Handles */}
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
