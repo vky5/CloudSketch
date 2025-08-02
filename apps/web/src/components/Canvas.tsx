@@ -239,6 +239,8 @@ function FlowContent() {
   return (
     <div className="w-full h-full overflow-hidden" ref={canvasRef}>
       <ReactFlow
+        fitView={false}
+        // defaultZoom={1}
         nodes={memoizedNodes}
         edges={edges}
         onNodeClick={onNodeClick}
@@ -250,7 +252,7 @@ function FlowContent() {
         onPaneClick={handlePaneClick}
         nodeTypes={nodeTypes}
         onInit={(instance) => {
-          instance.fitView();
+          instance.setViewport({ x: 0, y: 0, zoom: 1 });
         }}
         fitViewOptions={{ padding: 0.5 }}
         panOnDrag={selectedTool === "hand"}
@@ -275,7 +277,7 @@ function FlowContent() {
         }}
       >
         <Controls />
-        <Background gap={11} size={1} bgColor="#020817" />
+        <Background gap={11} size={1} bgColor="#020817" color="#1E293B" />
       </ReactFlow>
 
       {renderGhostShape(selectedTool)}

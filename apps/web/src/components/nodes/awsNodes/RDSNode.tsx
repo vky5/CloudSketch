@@ -1,15 +1,15 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { Server } from "lucide-react";
+import { Database } from "lucide-react";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { FaGear } from "react-icons/fa6";
 import { useState } from "react";
 
-export default function EC2Node({ data, selected, id }: NodeProps) {
+export default function RDSNode({ data, selected, id }: NodeProps) {
   const openSettings = useDiagramStore((state) => state.openSettings);
   const [hovered, setHovered] = useState(false);
 
-  const instanceType = data.instanceType?.toString() || "t2.micro";
-  const amiId = data.amiId?.toString() || "ami-12345678";
+  const engine = data.engine?.toString() || "MySQL";
+  const instanceClass = data.instanceClass?.toString() || "db.t3.micro";
 
   return (
     <div
@@ -25,14 +25,12 @@ export default function EC2Node({ data, selected, id }: NodeProps) {
       <Handle type="source" position={Position.Left} />
       <Handle type="source" position={Position.Right} />
 
-      {/* Floating Gear Button - Hover/Selected */}
+      {/* Floating Gear on Hover - Just Outside Top-Right */}
       {(hovered || selected) && (
         <button
           onClick={() => openSettings(id)}
-          className={`absolute -top-3 -right-3 bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow transition-opacity duration-200 ${
-            hovered || selected ? "opacity-100 scale-100" : "opacity-0 scale-90"
-          }`}
-          title="Edit EC2 Settings"
+          className="absolute -top-3 -right-3 bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow transition-opacity duration-200"
+          title="Edit RDS Settings"
         >
           <FaGear className="w-3.5 h-3.5 hover:text-[#3B82F6] text-white" />
         </button>
@@ -40,16 +38,16 @@ export default function EC2Node({ data, selected, id }: NodeProps) {
 
       {/* Node Content */}
       <div className="flex items-center gap-3 mt-1">
-        <Server className="w-6 h-6 text-[#FF9900]" />
+        <Database className="w-6 h-6 text-[#527FFF]" /> {/* AWS RDS Blue */}
         <div className="flex flex-col space-y-0.5 text-xs">
           <span className="font-medium text-sm leading-tight truncate">
-            EC2 Instance
+            RDS Instance
           </span>
           <span className="text-muted-foreground text-[11px] truncate leading-tight mt-1">
-            Type: {instanceType}
+            Engine: {engine}
           </span>
           <span className="text-muted-foreground text-[11px] truncate leading-tight">
-            AMI: {amiId}
+            Size: {instanceClass}
           </span>
         </div>
       </div>
