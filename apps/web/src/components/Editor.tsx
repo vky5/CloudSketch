@@ -1,20 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect , useState} from "react";
 import Editor from "@monaco-editor/react";
 import { X } from "lucide-react";
+import { useTerraformStore } from "@/store/useTerraformStore";
 
 export default function TerraformEditor({ onClose }: { onClose: () => void }) {
-  const [code, setCode] = useState(
-    `# Terraform Code Output\n\nresource "aws_instance" "example" {\n  ami           = "ami-12345678"\n  instance_type = "t2.micro"\n}`
-  );
+  const { getAllAsString } = useTerraformStore();
+  const code = getAllAsString(); // Get combined terraform code
+  const editorRef = useRef<HTMLDivElement>(null);
   const [editorWidth, setEditorWidth] = useState(500);
   const [isDragging, setIsDragging] = useState(false);
-  const editorRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = () => {
-    setIsDragging(true);
-  };
+  const handleMouseDown = () => setIsDragging(true);
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
@@ -23,9 +21,7 @@ export default function TerraformEditor({ onClose }: { onClose: () => void }) {
     setEditorWidth(clampedWidth);
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  const handleMouseUp = () => setIsDragging(false);
 
   useEffect(() => {
     if (isDragging) {
@@ -69,10 +65,10 @@ export default function TerraformEditor({ onClose }: { onClose: () => void }) {
       >
         <Editor
           value={code}
-          onChange={(val) => setCode(val || "")}
           language="hcl"
           onMount={handleEditorMount}
           options={{
+            readOnly: true,
             minimap: { enabled: false },
             fontSize: 13,
             fontFamily: "Fira Code, monospace",
@@ -82,21 +78,19 @@ export default function TerraformEditor({ onClose }: { onClose: () => void }) {
         />
       </div>
 
-      {/* Custom Draggable Divider */}
+      {/* Draggable Divider */}
       <div
         className={`w-[5px] h-full ${
           isDragging ? "bg-blue-500" : "bg-[#1f1f23]"
         } relative cursor-col-resize flex flex-col items-center justify-center`}
         onMouseDown={handleMouseDown}
       >
-        {/* Resize Lines */}
         <div className="space-y-[4px] bg-[#111] py-2 px-[2px] rounded-lg shadow-md">
           <div className="w-[15px] h-[2px] bg-[#3B82F6] rounded shadow-sm"></div>
           <div className="w-[15px] h-[2px] bg-[#3B82F6] rounded shadow-sm"></div>
           <div className="w-[15px] h-[2px] bg-[#3B82F6] rounded shadow-sm"></div>
         </div>
 
-        {/* Close Button */}
         <button
           onClick={onClose}
           title="Close Editor"

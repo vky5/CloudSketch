@@ -16,6 +16,7 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { nodeTypes } from "./Canvas/nodeTypes";
 import GhostRectangle from "./nodes/ghosts/GhostRectangle";
 import GhostRhombus from "./nodes/ghosts/GhostRhombus";
+import { syncNodeWithBackend } from "@/utils/terraformSync";
 
 function FlowContent() {
   const {
@@ -162,7 +163,7 @@ function FlowContent() {
 
   // this is just adding the node to canvas, done by adding to Node array in state and rest everything does reactflow
   const handlePaneClick = useCallback(
-    (event: React.MouseEvent) => {
+    async (event: React.MouseEvent) => {
       const validNodeTypes = Object.keys(nodeTypes);
       if (!validNodeTypes.includes(selectedTool)) return;
 
@@ -179,9 +180,15 @@ function FlowContent() {
         },
       };
 
-      addNode(newNode);
-      openSettings(newNode.id);
-      setSelectedTool("hand"); // when node is added switch to hand tool
+      try {
+        await syncNodeWithBackend(newNode); // Wait for backend response before adding
+        addNode(newNode);
+        openSettings(newNode.id);
+        setSelectedTool("hand");
+      } catch (err) {
+        console.error("Failed to sync with backend:", err);
+        // TODO show error toast or disable node addition
+      }
     },
     [selectedTool, screenToFlowPosition, addNode, openSettings]
   );

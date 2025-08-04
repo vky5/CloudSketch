@@ -10,7 +10,7 @@ import (
 
 // the paylaod from frontend
 type GenerateRequest struct {
-	NodeId string
+	NodeID string
 	Type   string
 	Data   map[string]any
 }
@@ -38,7 +38,7 @@ func GenerateTerraform(c *gin.Context) {
 	node := models.Node{
 		Type:   req.Type,
 		Data:   req.Data,
-		NodeID: req.NodeId,
+		NodeID: req.NodeID,
 	}
 
 	// Generate Terraform block
