@@ -13,7 +13,7 @@ type TemplateGenerator[T models.NodeIdentifable] struct { // T can be of any tim
 	TemplatePath string
 }
 
-// this is all thanks to implicit typing. unlike in ts we need to use implements or in java go checks if all the func are satisfied and if it does, that can be passed as NodeIdentifable. It can be used to limit that any type that is being passed as 
+// this is all thanks to implicit typing. unlike in ts we need to use implements or in java go checks if all the func are satisfied and if it does, that can be passed as NodeIdentifable. It can be used to limit that any type that is being passed as
 // The generic type must have this
 
 // Generic template for terraform generation
@@ -46,7 +46,6 @@ func (g TemplateGenerator[T]) Generate(node models.Node) (string, error) {
 
 	return buf.String(), nil
 }
-
 
 /*
 Question?? How is Generator able to take EC2Generator as its type??
