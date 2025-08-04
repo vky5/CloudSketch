@@ -11,3 +11,9 @@ type EC2Config struct {
 	TagName        string   `json:"TagName"`            // AWS instance tag
 	NodeID         string   `json:"NodeID"`             // Injected for tracking
 }
+
+// since EC2Config has now declared SetNodeId it can be passed to the NodeIdentifable type 
+// That doesnt care about extra fields it has
+func (e *EC2Config) SetNodeId(id string) {
+	e.NodeID = id
+}
