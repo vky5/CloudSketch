@@ -1,5 +1,19 @@
 # CloudSketch
 
+## To Run Frontend
+```bash
+cd apps/web
+pnpm install
+pnpm run start
+```
+
+## To run backend
+```bash
+cd apps/sketchCore
+go run ./cmd
+```
+
+
 | Node Type       | Key Fields (`node.data`)                                      |
 | --------------- | ------------------------------------------------------------- |
 | EC2 Instance    | `ami`, `instance_type`, `key_name`, `security_groups`, `tags` |
