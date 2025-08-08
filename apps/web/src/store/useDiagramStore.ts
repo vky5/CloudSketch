@@ -67,7 +67,7 @@ export const useDiagramStore = create<DiagramState>((set) => ({
   setSelectedTool: (tool) => set({ selectedTool: tool }),
 
   openSettings: (id) => set({ settingOpenNodeId: id }), // this will be used to give open setting of a selected node (if there is any & also prevent the drag of non selected tool; for selection of node for border like excalidraw or drag)
-  selectedNode: (id)=> set({ selectedNodeId: id }), // this will be used to select a node 
+  selectedNode: (id) => set({ selectedNodeId: id }), // this will be used to select a node
   closeSettings: () => set({ settingOpenNodeId: null }),
 
   selectNodes: (ids) => set({ selectedNodeIds: ids }), // this is for the selection and here the ids is the array of ids that is selected

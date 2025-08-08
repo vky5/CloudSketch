@@ -4,10 +4,11 @@ import { formSchemaRegistry } from "@/config/formSchemaRegistry";
 import { X } from "lucide-react";
 import React from "react";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
+import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 
 function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
-  const { settingOpenNodeId, closeSettings, nodes, updateNodeData } = useDiagramStore();
-  const { securityGroups, keyPairs, subnets } = useTerraformResourceStore();
+  const { settingOpenNodeId, nodes, updateNodeData } = useDiagramStore();
+  const { securityGroups, keyPairs } = useTerraformResourceStore();
 
   if (!settingOpenNodeId) return null;
 
@@ -47,8 +48,6 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
           options = securityGroups;
         } else if (field.dynamicOptionsSource === "keyPairs") {
           options = keyPairs;
-        } else if (field.dynamicOptionsSource === "subnets") {
-          options = subnets;
         }
 
         return (
@@ -79,7 +78,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
   const handleSaveAndClose = async () => {
     await syncNodeWithBackend(node);
-    closeSettings();
+    closeSettingsorConfig();
   };
 
   return (
@@ -90,7 +89,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
       <div className="flex items-center justify-between px-4 py-2 border-b border-[#2e2e32]">
         <h2 className="text-lg font-semibold">Settings</h2>
         <button
-          onClick={closeSettings}
+          onClick={closeSettingsorConfig}
           title="Close Settings"
           className="text-red-400 hover:text-red-600 transition"
         >
@@ -98,11 +97,18 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
         </button>
       </div>
 
-      <div className="p-4 overflow-y-auto flex-1 scrollbar-hide" style={{scrollbarWidth: "none"}}>
-        <p className="text-xs mb-4 text-gray-400">Node ID: {settingOpenNodeId}</p>
+      <div
+        className="p-4 overflow-y-auto flex-1 scrollbar-hide"
+        style={{ scrollbarWidth: "none" }}
+      >
+        <p className="text-xs mb-4 text-gray-400">
+          Node ID: {settingOpenNodeId}
+        </p>
 
         {formFields.length === 0 ? (
-          <p className="text-sm text-gray-400">No settings available for this node type.</p>
+          <p className="text-sm text-gray-400">
+            No settings available for this node type.
+          </p>
         ) : (
           formFields.map(renderField)
         )}

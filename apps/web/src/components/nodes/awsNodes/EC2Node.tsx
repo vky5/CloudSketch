@@ -1,11 +1,10 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Server } from "lucide-react";
-import { useDiagramStore } from "@/store/useDiagramStore";
+import openSettings from "@/utils/openSettings";
 import { FaGear } from "react-icons/fa6";
 import { useState } from "react";
 
 export default function EC2Node({ data, selected, id }: NodeProps) {
-  const openSettings = useDiagramStore((state) => state.openSettings);
   const [hovered, setHovered] = useState(false);
 
   const instanceType = data.instanceType?.toString() || "t2.micro";
