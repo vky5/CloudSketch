@@ -29,7 +29,7 @@ function FlowContent() {
     selectedTool,
     setSelectedTool,
     selectedNodeId,
-    openSettings,
+    selectedNode,
     selectedNodeIds,
     selectNodes,
     clearSelectedNodes,
@@ -183,14 +183,14 @@ function FlowContent() {
       try {
         await syncNodeWithBackend(newNode); // Wait for backend response before adding
         addNode(newNode);
-        openSettings(newNode.id);
+        selectedNode(newNode.id);
         setSelectedTool("hand");
       } catch (err) {
         console.error("Failed to sync with backend:", err);
         // TODO show error toast or disable node addition
       }
     },
-    [selectedTool, screenToFlowPosition, addNode, openSettings]
+    [selectedTool, screenToFlowPosition, addNode, selectedNode]
   );
 
   // this is a utility to count the number of renders remove it
@@ -212,7 +212,7 @@ function FlowContent() {
   // when node is clicked select it
   const onNodeClick = useCallback((event, node) => {
     console.log("Node clicked:", node.id);
-    openSettings(node.id); // to select the node for opening settings and
+    selectedNode(node.id); // to select the node for opening settings and
   }, []);
 
   //

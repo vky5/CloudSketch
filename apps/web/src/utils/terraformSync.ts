@@ -21,7 +21,8 @@ export async function syncNodeWithBackend(node: Node) {
       reqObj,
     );
 
-    const block = res.data;
+    const block = res.data.terraform;
+    console.log("Received block from backend:", block);
     const blockMap = { [node.id]: block };
 
     const existingBlock = terraformBlocks[node.id];

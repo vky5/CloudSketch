@@ -1,56 +1,123 @@
-import { useDiagramStore } from '@/store/useDiagramStore'
+import { useDiagramStore } from "@/store/useDiagramStore";
+import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
+import { formSchemaRegistry } from "@/config/formSchemaRegistry";
+import { X } from "lucide-react";
+import React from "react";
+import { syncNodeWithBackend } from "@/utils/terraformSync";
 
-export default function NodeSettingsPanel() {
-  const { selectedNodeId, nodes, updateNodeData, closeSettings } = useDiagramStore()
+function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
+  const { settingOpenNodeId, closeSettings, nodes, updateNodeData } = useDiagramStore();
+  const { securityGroups, keyPairs, subnets } = useTerraformResourceStore();
 
-  const node = nodes.find((n) => n.id === selectedNodeId)
+  if (!settingOpenNodeId) return null;
 
-  if (!node) return null
+  const node = nodes.find((n) => n.id === settingOpenNodeId);
+  if (!node) return null;
 
-  const data = node.data || {}
+  const nodeType = node.type!;
+  const formFields = formSchemaRegistry[nodeType] || [];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    updateNodeData(node.id, { ...data, [name]: value })
-  }
+  const handleChange = (key: string, value: string) => {
+    updateNodeData(settingOpenNodeId, { [key]: value });
+  };
+
+  const renderField = (field: any) => {
+    const currentValue = (node.data?.[field.key] as string) || "";
+
+    switch (field.type) {
+      case "text":
+        return (
+          <div key={field.key} className="mb-4">
+            <label className="block text-sm mb-1 font-medium text-gray-300">
+              {field.label}
+            </label>
+            <input
+              type="text"
+              value={currentValue}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              placeholder={field.placeholder || ""}
+              className="w-full px-3 py-2 bg-[#2a2a2e] text-white rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs"
+            />
+          </div>
+        );
+
+      case "dropdown": {
+        let options: string[] = [];
+        if (field.dynamicOptionsSource === "securityGroups") {
+          options = securityGroups;
+        } else if (field.dynamicOptionsSource === "keyPairs") {
+          options = keyPairs;
+        } else if (field.dynamicOptionsSource === "subnets") {
+          options = subnets;
+        }
+
+        return (
+          <div key={field.key} className="mb-4">
+            <label className="block text-sm mb-1 font-medium text-gray-300">
+              {field.label}
+            </label>
+            <select
+              value={currentValue}
+              onChange={(e) => handleChange(field.key, e.target.value)}
+              className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-sm rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select {field.label}</option>
+              {options.map((opt: string) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      }
+
+      default:
+        return null;
+    }
+  };
+
+  const handleSaveAndClose = async () => {
+    await syncNodeWithBackend(node);
+    closeSettings();
+  };
 
   return (
-    <div className="fixed right-0 top-0 h-full w-80 bg-[#111827] text-white p-4 border-l border-gray-700 shadow-lg z-50">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-bold">Settings: {node.data.label}</h2>
-        <button onClick={closeSettings} className="text-gray-400 hover:text-white">✖️</button>
+    <div
+      className="fixed top-17 h-[calc(97vh-48px)] bg-[#232329] text-white shadow-lg z-[1001] rounded-l-md flex flex-col"
+      style={{ right: `${editorWidth}px`, width: "350px" }}
+    >
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[#2e2e32]">
+        <h2 className="text-lg font-semibold">Settings</h2>
+        <button
+          onClick={closeSettings}
+          title="Close Settings"
+          className="text-red-400 hover:text-red-600 transition"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* Form: customize based on node type */}
-      {node.type === 'customNode' && (
-        <>
-          <label className="block text-sm mb-1">Instance Type</label>
-          <input
-            name="instanceType"
-            value={data.instanceType || ''}
-            onChange={handleChange}
-            className="w-full mb-3 p-1 rounded bg-gray-800 border border-gray-600"
-            placeholder="e.g., t2.micro"
-          />
+      <div className="p-4 overflow-y-auto flex-1 scrollbar-hide" style={{scrollbarWidth: "none"}}>
+        <p className="text-xs mb-4 text-gray-400">Node ID: {settingOpenNodeId}</p>
 
-          <label className="block text-sm mb-1">Security Group</label>
-          <input
-            name="securityGroup"
-            value={data.securityGroup || ''}
-            onChange={handleChange}
-            className="w-full mb-3 p-1 rounded bg-gray-800 border border-gray-600"
-            placeholder="e.g., sg-123456"
-          />
-        </>
-      )}
+        {formFields.length === 0 ? (
+          <p className="text-sm text-gray-400">No settings available for this node type.</p>
+        ) : (
+          formFields.map(renderField)
+        )}
+      </div>
 
-      {/* Save/Close Buttons */}
-      <button
-        onClick={closeSettings}
-        className="mt-4 w-full bg-orange-500 hover:bg-orange-600 p-2 rounded"
-      >
-        Close Panel
-      </button>
+      <div className="px-4 py-3 border-t border-[#2e2e32]">
+        <button
+          onClick={handleSaveAndClose}
+          className="w-full bg-blue-600 px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
+        >
+          Save & Close
+        </button>
+      </div>
     </div>
-  )
+  );
 }
+
+export default NodeSettingsPanel;

@@ -5,11 +5,18 @@ import Editor from "@monaco-editor/react";
 import { X } from "lucide-react";
 import { useTerraformStore } from "@/store/useTerraformStore";
 
-export default function TerraformEditor({ onClose }: { onClose: () => void }) {
+export default function TerraformEditor({
+  onClose,
+  editorWidth,
+  setEditorWidth
+}: {
+  onClose: () => void,
+  editorWidth: number,
+  setEditorWidth: (width: number) => void
+}) {
   const { getAllAsString } = useTerraformStore();
-  const code = getAllAsString(); // Get combined terraform code
+  const code = getAllAsString();
   const editorRef = useRef<HTMLDivElement>(null);
-  const [editorWidth, setEditorWidth] = useState(500);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleMouseDown = () => setIsDragging(true);
@@ -18,7 +25,7 @@ export default function TerraformEditor({ onClose }: { onClose: () => void }) {
     if (!isDragging) return;
     const newWidth = window.innerWidth - e.clientX;
     const clampedWidth = Math.min(Math.max(newWidth, 300), 800);
-    setEditorWidth(clampedWidth);
+    setEditorWidth(clampedWidth);  // Update parent
   };
 
   const handleMouseUp = () => setIsDragging(false);
@@ -57,7 +64,6 @@ export default function TerraformEditor({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed top-17 right-0 h-[calc(100vh-48px)] z-[1000] flex flex-row-reverse">
-      {/* Editor Panel */}
       <div
         ref={editorRef}
         style={{ width: editorWidth }}
@@ -78,10 +84,9 @@ export default function TerraformEditor({ onClose }: { onClose: () => void }) {
         />
       </div>
 
-      {/* Draggable Divider */}
       <div
         className={`w-[5px] h-full ${
-          isDragging ? "bg-blue-500" : "bg-[#1f1f23]"
+          isDragging ? "bg-[#3B82F6]" : "bg-blue-950"
         } relative cursor-col-resize flex flex-col items-center justify-center`}
         onMouseDown={handleMouseDown}
       >

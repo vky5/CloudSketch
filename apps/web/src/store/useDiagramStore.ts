@@ -18,6 +18,7 @@ interface DiagramState {
   edges: Edge[];
   selectedNodeId: string | null; // for signle selected node (enables drag drop and resize)
   selectedTool: string;
+  settingOpenNodeId: string | null; // for opening settings of a selected node
   selectedNodeIds: string[]; // for tracking multiple selected nodes
 
   setNodes: (changes: NodeChange[]) => void;
@@ -26,7 +27,8 @@ interface DiagramState {
   addEdge: (edge: Edge | Connection) => void;
 
   setSelectedTool: (tool: string) => void;
-  openSettings: (id: string) => void;
+  openSettings: (id: string) => void; // this will be used to open settings for a selected node only (earlier was using it for settings as well)
+  selectedNode: (id: string) => void; // this will be used to select a node
   closeSettings: () => void;
   selectNodes: (ids: string[]) => void; // set a large number of nodes in selected in selectedNodeIds
   clearSelectedNodes: () => void;
@@ -40,6 +42,7 @@ export const useDiagramStore = create<DiagramState>((set) => ({
   selectedNodeId: null,
   selectedTool: "select", // Default tool
   selectedNodeIds: [],
+  settingOpenNodeId: null,
 
   setNodes: (changes) =>
     set((state) => ({
@@ -63,8 +66,9 @@ export const useDiagramStore = create<DiagramState>((set) => ({
 
   setSelectedTool: (tool) => set({ selectedTool: tool }),
 
-  openSettings: (id) => set({ selectedNodeId: id }), // this will be used to give open setting of a selected node (if there is any & also prevent the drag of non selected tool; for selection of node for border like excalidraw or drag)
-  closeSettings: () => set({ selectedNodeId: null }),
+  openSettings: (id) => set({ settingOpenNodeId: id }), // this will be used to give open setting of a selected node (if there is any & also prevent the drag of non selected tool; for selection of node for border like excalidraw or drag)
+  selectedNode: (id)=> set({ selectedNodeId: id }), // this will be used to select a node 
+  closeSettings: () => set({ settingOpenNodeId: null }),
 
   selectNodes: (ids) => set({ selectedNodeIds: ids }), // this is for the selection and here the ids is the array of ids that is selected
   clearSelectedNodes: () => set({ selectedNodeIds: [] }),
