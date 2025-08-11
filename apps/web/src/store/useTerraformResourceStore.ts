@@ -1,47 +1,67 @@
 import { create } from "zustand";
 
-interface TerraformResourceStore {
-  securityGroups: string[];
-  keyPairs: string[];
+export type ResourceType = "securityGroup" | "keyPair" | "vpc";
 
-  addSecurityGroup: (sg: string) => void;
-  deleteSecurityGroup: (sg: string) => void;
-
-  addKeyPair: (kp: string) => void;
-  deleteKeyPair: (kp: string) => void;
-
-  resetAll: () => void; // Optional: clear all for reset button
-
-  // vpc will be handled in the userdiagramstore as a node
+interface GenericResource {
+  id: string;
+  type: ResourceType;
+  data: {
+    label: string;
+    [key: string]: any; // called  index signature in TypeScript
+  };
 }
 
-export const useTerraformResourceStore = create<TerraformResourceStore>((set) => ({
-  securityGroups: [],
-  keyPairs: [],
+interface TerraformResourceStore {
+  resources: GenericResource[];
 
-  addSecurityGroup: (sg) =>
-    set((state) => ({
-      securityGroups: [...state.securityGroups, sg],
-    })),
+  settingOpenResourceId: string | null;
 
-  deleteSecurityGroup: (sg) =>
-    set((state) => ({
-      securityGroups: state.securityGroups.filter((item) => item !== sg),
-    })),
+  openSettings: (id: string) => void;
+  closeSettings: () => void;
 
-  addKeyPair: (kp) =>
-    set((state) => ({
-      keyPairs: [...state.keyPairs, kp],
-    })),
+  addResource: (type: ResourceType, data: any) => string;
+  updateResource: (id: string, data: Partial<any>) => void;
+  deleteResource: (id: string) => void;
 
-  deleteKeyPair: (kp) =>
-    set((state) => ({
-      keyPairs: state.keyPairs.filter((item) => item !== kp),
-    })),
+  getResourceById: (id: string) => GenericResource | undefined;
+  getResourcesByType: (type: ResourceType) => GenericResource[];
 
-  resetAll: () =>
-    set(() => ({
-      securityGroups: [],
-      keyPairs: [],
-    })),
-}));
+  resetAll: () => void;
+}
+
+export const useTerraformResourceStore = create<TerraformResourceStore>(
+  (set, get) => ({
+    resources: [],
+    settingOpenResourceId: null,
+
+    openSettings: (id) => set({ settingOpenResourceId: id }),
+    closeSettings: () => set({ settingOpenResourceId: null }),
+
+    addResource: (type, data) => {
+      const id = crypto.randomUUID();
+      set((state) => ({
+        resources: [...state.resources, { id, type, data }],
+      }));
+      return id;
+    },
+
+    updateResource: (id, data) =>
+      set((state) => ({
+        resources: state.resources.map((res) =>
+          res.id === id ? { ...res, data: { ...res.data, ...data } } : res
+        ),
+      })),
+
+    deleteResource: (id) =>
+      set((state) => ({
+        resources: state.resources.filter((res) => res.id !== id),
+      })),
+
+    getResourceById: (id) => get().resources.find((res) => res.id === id),
+
+    getResourcesByType: (type) =>
+      get().resources.filter((res) => res.type === type),
+
+    resetAll: () => ({ resources: [] }),
+  })
+);

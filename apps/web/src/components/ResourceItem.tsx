@@ -3,12 +3,15 @@ import { Trash2 } from "lucide-react";
 export default function ResourceItem({
   name,
   onDelete,
+  onClick,
 }: {
   name: string;
   onDelete: () => void;
+  onClick?: () => void;
 }) {
   return (
     <div
+      onClick={onClick}
       className="flex items-center justify-between px-4 py-2 rounded-lg w-full
                  text-sm font-medium text-neutral-200
                   hover:bg-[#3a3a3f]

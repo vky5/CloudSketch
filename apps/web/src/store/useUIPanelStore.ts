@@ -6,10 +6,12 @@ type ConfigPanelStore = {
   isSettingsOpen: boolean;
   isEditorOpen: boolean;
 
+  settingsVersion: "resource" | "node"; // two types of settigns
+
   setEditorState: (newState: boolean) => void;
 
   openConfig: () => void;
-  openSettings: () => void;
+  openSettings: (type: "resource" | "node") => void;
   closePanels: () => void;
 };
 
@@ -17,6 +19,8 @@ export const useUIPanelStore = create<ConfigPanelStore>((set) => ({
   isEditorOpen: false,
   isConfigOpen: false,
   isSettingsOpen: false,
+
+  settingsVersion: "node",
 
   setEditorState: (newState) =>
     set(() => ({
@@ -29,10 +33,11 @@ export const useUIPanelStore = create<ConfigPanelStore>((set) => ({
       isSettingsOpen: false,
     })),
 
-  openSettings: () =>
+  openSettings: (type) =>
     set(() => ({
       isConfigOpen: false,
       isSettingsOpen: true,
+      settingsVersion: type,
     })),
 
   closePanels: () =>

@@ -8,7 +8,7 @@ import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 
 function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const { settingOpenNodeId, nodes, updateNodeData } = useDiagramStore();
-  const { securityGroups, keyPairs } = useTerraformResourceStore();
+  const { resources } = useTerraformResourceStore();
 
   if (!settingOpenNodeId) return null;
 
@@ -44,10 +44,17 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
       case "dropdown": {
         let options: string[] = [];
-        if (field.dynamicOptionsSource === "securityGroups") {
-          options = securityGroups;
+        if (resources.length==0){
+          // do nothing 
+        }
+        else if (field.dynamicOptionsSource === "securityGroups") {
+          options = resources.map((sg) =>
+            sg.type === "securityGroup" ? sg.data.label : ""
+          );
         } else if (field.dynamicOptionsSource === "keyPairs") {
-          options = keyPairs;
+          options = resources.map((kp) =>
+            kp.type === "keyPair" ? kp.data.label : ""
+          );
         }
 
         return (

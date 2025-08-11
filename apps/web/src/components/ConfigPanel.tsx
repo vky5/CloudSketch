@@ -1,25 +1,32 @@
-// components/TerraformSideMenu.tsx
 "use client";
 
+import { useState } from "react";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { Shield, KeyRound, X } from "lucide-react";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import ResourceFolder from "./ResourceFolder";
 import ResourceItem from "./ResourceItem";
+import openSettings from "@/utils/openSettings";
+import { ResourceType } from "@/store/useTerraformResourceStore";
 
 export default function TerraformSideMenu({
   editorWidth,
 }: {
   editorWidth: number;
 }) {
-  const {
-    securityGroups,
-    keyPairs,
-    deleteKeyPair,
-    deleteSecurityGroup,
-    addSecurityGroup,
-    addKeyPair,
-  } = useTerraformResourceStore();
+  const { resources, addResource, deleteResource } =
+    useTerraformResourceStore();
+
+  // Helper to filter resources by type
+  const securityGroups = resources.filter((r) => r.type === "securityGroup");
+  const keyPairs = resources.filter((r) => r.type === "keyPair");
+
+  // To add new Resources based on the type passed as parameter
+  const handleNewResource = (labelType: ResourceType) => {
+    const newLabel = `labelType-${Date.now()}`;
+    const id = addResource(labelType, { label: newLabel });
+    openSettings(id, "resource");
+  };
 
   return (
     <div
@@ -44,13 +51,14 @@ export default function TerraformSideMenu({
         <ResourceFolder
           title="Security Groups"
           icon={<Shield className="w-4 h-4 text-blue-400" />}
-          onAdd={() => addSecurityGroup("sg-" + Date.now())}
+          onAdd={() => handleNewResource("securityGroup")}
         >
-          {securityGroups.map((sg, i) => (
-            <div key={sg}>
+          {securityGroups.map(({ id, data }, i) => (
+            <div key={id}>
               <ResourceItem
-                name={sg}
-                onDelete={() => deleteSecurityGroup(sg)}
+                name={data.label}
+                onDelete={() => deleteResource(id)}
+                onClick={() => openSettings(id, "resource")}
               />
               {i !== securityGroups.length - 1 && (
                 <hr className="my-1 border-t border-[#3f3f46] w-[90%] mx-auto opacity-70" />
@@ -63,11 +71,15 @@ export default function TerraformSideMenu({
         <ResourceFolder
           title="Key Pairs"
           icon={<KeyRound className="w-4 h-4 text-yellow-400" />}
-          onAdd={() => addKeyPair("key-" + Date.now())}
+          onAdd={() => handleNewResource("keyPair")}
         >
-          {keyPairs.map((kp, i) => (
-            <div key={kp}>
-              <ResourceItem name={kp} onDelete={() => deleteKeyPair(kp)} />
+          {keyPairs.map(({ id, data }, i) => (
+            <div key={id}>
+              <ResourceItem
+                name={data.label}
+                onDelete={() => deleteResource(id)}
+                onClick={() => openSettings(id, "resource")}
+              />
               {i !== keyPairs.length - 1 && (
                 <hr className="my-1 border-t border-[#3f3f46] w-[80%] mx-auto" />
               )}

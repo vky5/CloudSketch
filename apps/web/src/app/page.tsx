@@ -8,25 +8,42 @@ import TerraformEditor from "@/components/Editor";
 import NodeSettingsPanel from "@/components/NodeSettingsPanel";
 import { useUIPanelStore } from "@/store/useUIPanelStore";
 import SideMenuConfig from "@/components/ConfigPanel";
+import ResourceSettingsPanel from "@/components/ResourceSettingsPanel";
 
 export default function HomePage() {
   const [editorWidth, setEditorWidth] = useState(500);
-  const { isEditorOpen, setEditorState, isSettingsOpen, isConfigOpen, openConfig } =
-    useUIPanelStore();
+  const {
+    isEditorOpen,
+    setEditorState,
+    isSettingsOpen,
+    isConfigOpen,
+    openConfig,
+    settingsVersion,
+  } = useUIPanelStore();
 
   return (
     <div className="w-full h-screen overflow-hidden bg-[#0b0c0e]">
-      <Header onGenerateTerraform={() => setEditorState(true)} onToggleConfigPanel={openConfig}/>
+      <Header
+        onGenerateTerraform={() => setEditorState(true)}
+        onToggleConfigPanel={openConfig}
+      />
       <Sidebar />
       <main className="h-full w-full">
         <Canvas />
       </main>
+      
+      {isSettingsOpen &&
+        (settingsVersion === "node" ? (
+          <NodeSettingsPanel editorWidth={isEditorOpen ? editorWidth + 5 : 0} />
+        ) : (
+          <ResourceSettingsPanel
+            editorWidth={isEditorOpen ? editorWidth + 5 : 0}
+          />
+        ))}
 
-      {isSettingsOpen && (
-        <NodeSettingsPanel editorWidth={isEditorOpen ? editorWidth + 5 : 0} />
+      {isConfigOpen && (
+        <SideMenuConfig editorWidth={isEditorOpen ? editorWidth + 5 : 0} />
       )}
-
-      {isConfigOpen && <SideMenuConfig editorWidth={isEditorOpen ? editorWidth + 5 : 0} />}
 
       {isEditorOpen && (
         <TerraformEditor

@@ -27,7 +27,7 @@ export default function EC2Node({ data, selected, id }: NodeProps) {
       {/* Floating Gear Button - Hover/Selected */}
       {(hovered || selected) && (
         <button
-          onClick={() => openSettings(id)}
+          onClick={() => openSettings(id, "node")}
           className={`absolute -top-3 -right-3 bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow transition-opacity duration-200 ${
             hovered || selected ? "opacity-100 scale-100" : "opacity-0 scale-90"
           }`}
