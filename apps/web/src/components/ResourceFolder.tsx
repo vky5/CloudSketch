@@ -1,4 +1,3 @@
-// components/ResourceFolder.tsx
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ReactNode, useState } from "react";
 
