@@ -23,8 +23,8 @@ export default function TerraformSideMenu({
 
   // To add new Resources based on the type passed as parameter
   const handleNewResource = (labelType: ResourceType) => {
-    const newLabel = `labelType-${Date.now()}`;
-    const id = addResource(labelType, { label: newLabel });
+    const newLabel = `${labelType}-${Date.now()}`;
+    const id = addResource(labelType, { Name: newLabel });
     openSettings(id, "resource");
   };
 
@@ -56,7 +56,7 @@ export default function TerraformSideMenu({
           {securityGroups.map(({ id, data }, i) => (
             <div key={id}>
               <ResourceItem
-                name={data.label}
+                name={data.Name}
                 onDelete={() => deleteResource(id)}
                 onClick={() => openSettings(id, "resource")}
               />
@@ -76,7 +76,7 @@ export default function TerraformSideMenu({
           {keyPairs.map(({ id, data }, i) => (
             <div key={id}>
               <ResourceItem
-                name={data.label}
+                name={data.Name}
                 onDelete={() => deleteResource(id)}
                 onClick={() => openSettings(id, "resource")}
               />

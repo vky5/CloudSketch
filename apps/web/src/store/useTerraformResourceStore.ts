@@ -6,7 +6,7 @@ interface GenericResource {
   id: string;
   type: ResourceType;
   data: {
-    label: string;
+    Name: string;
     [key: string]: any; // called  index signature in TypeScript
   };
 }

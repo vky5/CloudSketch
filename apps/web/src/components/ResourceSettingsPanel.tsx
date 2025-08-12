@@ -102,6 +102,7 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
   // Handles "Save & Close"
   const handleSaveAndClose = () => {
+    console.log(resource)
     openConfig()
   };
 
