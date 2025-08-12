@@ -52,7 +52,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
           );
         } else if (field.dynamicOptionsSource === "keyPairs") {
           options = resources.map((kp) =>
-            kp.type === "keyPair" ? kp.data.label : ""
+            kp.type === "keypair" ? kp.data.label : ""
           );
         }
 
@@ -83,7 +83,11 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   };
 
   const handleSaveAndClose = async () => {
-    await syncNodeWithBackend(node);
+    await syncNodeWithBackend({
+      id: node.id,
+      type: node.type!,
+      data: node.data,
+    });
     closeSettingsorConfig();
   };
 

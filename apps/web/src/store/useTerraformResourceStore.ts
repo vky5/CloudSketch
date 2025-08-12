@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ResourceType = "securityGroup" | "keyPair" | "vpc";
+export type ResourceType = "securityGroup" | "keypair" | "vpc";
 
 interface GenericResource {
   id: string;

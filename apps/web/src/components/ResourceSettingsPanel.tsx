@@ -6,6 +6,7 @@ import { X, ArrowLeft } from "lucide-react";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import { formSchemaRegistry } from "@/config/formSchemaRegistry"; // Resource type → form schema mapping
 import { useUIPanelStore } from "@/store/useUIPanelStore";
+import { syncNodeWithBackend } from "@/utils/terraformSync";
 
 function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
   // Store hooks
@@ -24,7 +25,8 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const resource = resources.find((r) => r.id === settingOpenResourceId);
   if (!resource) return null;
 
-  const resourceType = resource.type!; // Resource type (e.g., aws_instance)
+  const resourceType = resource.type!; // Resource type (e.g., keypair)
+  console.log(resource);
   const formFields = formSchemaRegistry[resourceType] || []; // Fields to render from schema
 
   // Handles updating a resource property
@@ -101,9 +103,13 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
   };
 
   // Handles "Save & Close"
-  const handleSaveAndClose = () => {
-    console.log(resource)
-    openConfig()
+  const handleSaveAndClose = async () => {
+    await syncNodeWithBackend({
+      id: resource.id,
+      data: resource.data,
+      type: resource.type,
+    });
+    openConfig();
   };
 
   return (

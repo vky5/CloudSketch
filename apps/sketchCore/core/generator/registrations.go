@@ -28,9 +28,18 @@ var generators = []GeneratorRegistration{
 		NodeType: "sg", 
 		DisplayName: "Security Group",
 		Category: "Resource",
-		RequiredFields: []string{"Name"},
+		RequiredFields: []string{"Name", "NodeID"},
 		Generator: TemplateGenerator[*models.SGConfig]{
 			TemplatePath: "templates/sg.tmpl",
+		},
+	},
+	{
+		NodeType: "keypair",
+		DisplayName: "Key Pair",
+		Category: "Resource",
+		RequiredFields: []string{"Name", "PublicKey", "NodeID"},
+		Generator: TemplateGenerator[*models.KeyPairConfig]{
+			TemplatePath: "templates/kp.tmpl",
 		},
 	},
 }

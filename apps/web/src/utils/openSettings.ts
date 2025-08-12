@@ -9,8 +9,6 @@ export default function openSettings(id: string, type: "node" | "resource") {
   } else {
     useTerraformResourceStore.getState().openSettings(id);
     useUIPanelStore.getState().openSettings("resource");
-
-    console.log("settings tried to open : ", id);
   }
 }
 
