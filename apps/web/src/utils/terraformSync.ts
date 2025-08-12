@@ -5,7 +5,7 @@ import { useTerraformStore } from "@/store/useTerraformStore";
 // Fixed version using getState() — no hooks outside components
 export async function syncNodeWithBackend(node: Node) {
   const reqObj = {
-    NodeID: node.id,
+    NodeID: node.id, // so we are passing the normal id as NodeId
     Type: node.type,
     Data: {
       ...node.data, // Spread operator to include all data properties
@@ -22,7 +22,6 @@ export async function syncNodeWithBackend(node: Node) {
     );
 
     const block = res.data.terraform;
-    console.log("Received block from backend:", block);
     const blockMap = { [node.id]: block };
 
     const existingBlock = terraformBlocks[node.id];
