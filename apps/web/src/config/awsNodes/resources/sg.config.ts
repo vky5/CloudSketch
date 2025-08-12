@@ -41,10 +41,3 @@ export const securityGroupFormSchema: NodeField[] = [
 //     fields: egressRuleFields,
 //   },
 ];
-
-export interface SecurityGroupData {
-  id: string;
-  Name: string;
-  Description: string;
-  Tags?: string;
-}

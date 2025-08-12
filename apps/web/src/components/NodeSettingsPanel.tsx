@@ -37,17 +37,16 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
               value={currentValue}
               onChange={(e) => handleChange(field.key, e.target.value)}
               placeholder={field.placeholder || ""}
-              className="w-full px-3 py-2 bg-[#2a2a2e] text-white rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs"
+              className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs"
             />
           </div>
         );
 
       case "dropdown": {
         let options: string[] = [];
-        if (resources.length==0){
-          // do nothing 
-        }
-        else if (field.dynamicOptionsSource === "securityGroups") {
+        if (resources.length === 0) {
+          // do nothing
+        } else if (field.dynamicOptionsSource === "securityGroups") {
           options = resources.map((sg) =>
             sg.type === "securityGroup" ? sg.data.label : ""
           );
@@ -65,7 +64,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
             <select
               value={currentValue}
               onChange={(e) => handleChange(field.key, e.target.value)}
-              className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-sm rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select {field.label}</option>
               {options.map((opt: string) => (
