@@ -181,7 +181,11 @@ function FlowContent() {
       };
 
       try {
-        await syncNodeWithBackend(newNode); // Wait for backend response before adding
+        await syncNodeWithBackend({
+          id: newNode.id,
+          type: newNode.type!,
+          data: newNode.data,
+        }); // Wait for backend response before adding
         addNode(newNode);
         selectedNode(newNode.id);
         setSelectedTool("hand");

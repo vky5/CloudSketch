@@ -7,8 +7,8 @@ import { useState } from "react";
 export default function EC2Node({ data, selected, id }: NodeProps) {
   const [hovered, setHovered] = useState(false);
 
-  const instanceType = data.instanceType?.toString() || "t2.micro";
-  const amiId = data.amiId?.toString() || "ami-12345678";
+  const instanceType = data.InstanceType?.toString() || "None";
+  const amiId = data.AMI?.toString() || "None";
 
   return (
     <div

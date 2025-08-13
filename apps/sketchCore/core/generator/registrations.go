@@ -9,9 +9,9 @@ import (
 type GeneratorRegistration struct {
 	NodeType       string // used by client to tell which template they need
 	DisplayName    string
-	Category       string // This is to tell what kind of 
-	RequiredFields []string // fields that are required (Not using in anyway rnn)
-	Generator      terraform.BlockGenerator // a func which generates the 
+	Category       string                   // This is to tell what kind of
+	RequiredFields []string                 // fields that are required (Not using in anyway rnn)
+	Generator      terraform.BlockGenerator // a func which generates the
 }
 
 var generators = []GeneratorRegistration{
@@ -25,21 +25,29 @@ var generators = []GeneratorRegistration{
 		},
 	},
 	{
-		NodeType: "securitygroup", 
-		DisplayName: "Security Group",
-		Category: "Resource",
+		NodeType:       "securitygroup",
+		DisplayName:    "Security Group",
+		Category:       "Resource",
 		RequiredFields: []string{"Name", "NodeID"},
 		Generator: TemplateGenerator[*models.SGConfig]{
 			TemplatePath: "templates/sg.tmpl",
 		},
 	},
 	{
-		NodeType: "keypair",
-		DisplayName: "Key Pair",
-		Category: "Resource",
+		NodeType:       "keypair",
+		DisplayName:    "Key Pair",
+		Category:       "Resource",
 		RequiredFields: []string{"Name", "PublicKey", "NodeID"},
 		Generator: TemplateGenerator[*models.KeyPairConfig]{
 			TemplatePath: "templates/kp.tmpl",
+		},
+	}, {
+		NodeType:       "s3",
+		DisplayName:    "S3 Bucket",
+		Category:       "Storage",
+		RequiredFields: []string{"BucketName", ""},
+		Generator: TemplateGenerator[*models.S3Config]{
+			TemplatePath: "templates/s3.tmpl",
 		},
 	},
 }

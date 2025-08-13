@@ -1,0 +1,16 @@
+resource "aws_s3_bucket" "{{ .BucketName }}" {
+  bucket = "{{ .BucketName }}"
+  acl    = "private"
+
+  tags = {
+    Name = "{{ .BucketName }}"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "{{ .BucketName }}_block" {
+  bucket                  = aws_s3_bucket.{{ .BucketName }}.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}

@@ -1,15 +1,14 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Archive } from "lucide-react";
-import { useDiagramStore } from "@/store/useDiagramStore";
+import openSettings from "@/utils/openSettings";
 import { FaGear } from "react-icons/fa6";
 import { useState } from "react";
 
 export default function S3Node({ data, selected, id }: NodeProps) {
-  const openSettings = useDiagramStore((state) => state.openSettings);
   const [hovered, setHovered] = useState(false);
 
-  const bucketName = data.bucketName?.toString() || "my-bucket";
-  const storageClass = data.storageClass?.toString() || "Standard";
+  const bucketName = data.BucketName?.toString() || "my-bucket";
+  // const storageClass = data.storageClass?.toString() || "Standard";
 
   return (
     <div
@@ -25,11 +24,13 @@ export default function S3Node({ data, selected, id }: NodeProps) {
       <Handle type="source" position={Position.Left} />
       <Handle type="source" position={Position.Right} />
 
-      {/* Floating Gear on Hover - Just Outside Top-Right */}
+      {/* Floating Gear Button - Hover/Selected */}
       {(hovered || selected) && (
         <button
-          onClick={() => openSettings(id)}
-          className="absolute -top-3 -right-3 bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow transition-opacity duration-200"
+          onClick={() => openSettings(id, "node")}
+          className={`absolute -top-3 -right-3 bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow transition-opacity duration-200 ${
+            hovered || selected ? "opacity-100 scale-100" : "opacity-0 scale-90"
+          }`}
           title="Edit S3 Settings"
         >
           <FaGear className="w-3.5 h-3.5 hover:text-[#3B82F6] text-white" />
@@ -38,7 +39,7 @@ export default function S3Node({ data, selected, id }: NodeProps) {
 
       {/* Node Content */}
       <div className="flex items-center gap-3 mt-1">
-        <Archive className="w-6 h-6 text-[#D64028]" /> {/* AWS S3 Orange */}
+        <Archive className="w-6 h-6 text-[#FF4F00]" /> {/* AWS S3 Orange */}
         <div className="flex flex-col space-y-0.5 text-xs">
           <span className="font-medium text-sm leading-tight truncate">
             S3 Bucket
@@ -47,7 +48,7 @@ export default function S3Node({ data, selected, id }: NodeProps) {
             Name: {bucketName}
           </span>
           <span className="text-muted-foreground text-[11px] truncate leading-tight">
-            Storage: {storageClass}
+            {/* Storage: {storageClass} */}
           </span>
         </div>
       </div>
