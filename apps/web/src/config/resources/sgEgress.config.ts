@@ -36,11 +36,4 @@ export const egressRuleFields: NodeField[] = [
     required: false,
     placeholder: "::/0",
   },
-  {
-    key: "Description",
-    label: "Rule Description",
-    type: "text",
-    required: false,
-    placeholder: "Optional note for this rule",
-  },
 ];
