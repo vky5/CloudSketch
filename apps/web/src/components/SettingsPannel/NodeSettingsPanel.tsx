@@ -1,14 +1,13 @@
 import { useDiagramStore } from "@/store/useDiagramStore";
-import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { formSchemaRegistry } from "@/config/formSchemaRegistry";
 import { X } from "lucide-react";
 import React from "react";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
+import RenderForm from "./RenderForm";
 
 function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const { settingOpenNodeId, nodes, updateNodeData } = useDiagramStore();
-  const { resources } = useTerraformResourceStore();
 
   if (!settingOpenNodeId) return null;
 
@@ -20,66 +19,6 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
   const handleChange = (key: string, value: string) => {
     updateNodeData(settingOpenNodeId, { [key]: value });
-  };
-
-  const renderField = (field: any) => {
-    const currentValue = (node.data?.[field.key] as string) || "";
-
-    switch (field.type) {
-      case "text":
-        return (
-          <div key={field.key} className="mb-4">
-            <label className="block text-sm mb-1 font-medium text-gray-300">
-              {field.label}
-            </label>
-            <input
-              type="text"
-              value={currentValue}
-              onChange={(e) => handleChange(field.key, e.target.value)}
-              placeholder={field.placeholder || ""}
-              className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs"
-            />
-          </div>
-        );
-
-      case "dropdown": {
-        let options: string[] = [];
-        if (resources.length === 0) {
-          // do nothing
-        } else if (field.dynamicOptionsSource === "securityGroups") {
-          options = resources.map((sg) =>
-            sg.type === "securityGroup" ? sg.data.label : ""
-          );
-        } else if (field.dynamicOptionsSource === "keyPairs") {
-          options = resources.map((kp) =>
-            kp.type === "keypair" ? kp.data.label : ""
-          );
-        }
-
-        return (
-          <div key={field.key} className="mb-4">
-            <label className="block text-sm mb-1 font-medium text-gray-300">
-              {field.label}
-            </label>
-            <select
-              value={currentValue}
-              onChange={(e) => handleChange(field.key, e.target.value)}
-              className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select {field.label}</option>
-              {options.map((opt: string) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-        );
-      }
-
-      default:
-        return null;
-    }
   };
 
   const handleSaveAndClose = async () => {
@@ -120,7 +59,14 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
             No settings available for this node type.
           </p>
         ) : (
-          formFields.map(renderField)
+          formFields.map((field) => (
+            <RenderForm
+              key={field.key}
+              field={field}
+              currentNode={(node.data?.[field.key] as string) || ""}
+              handleChange={handleChange}
+            />
+          ))
         )}
       </div>
 

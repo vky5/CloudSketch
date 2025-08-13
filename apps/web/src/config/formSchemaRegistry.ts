@@ -5,6 +5,6 @@ import { keyPairFormSchema } from "./resources/keypair.config";
 
 export const formSchemaRegistry: Record<string, NodeField[]> = {
   ec2: ec2FormSchema,
-  securityGroup: securityGroupFormSchema,
+  securitygroup: securityGroupFormSchema,
   keypair: keyPairFormSchema,
 };

@@ -18,7 +18,7 @@ export default function TerraformSideMenu({
     useTerraformResourceStore();
 
   // Helper to filter resources by type
-  const securityGroups = resources.filter((r) => r.type === "securityGroup");
+  const securityGroups = resources.filter((r) => r.type === "securitygroup");
   const keyPairs = resources.filter((r) => r.type === "keypair");
 
   // To add new Resources based on the type passed as parameter
@@ -51,7 +51,7 @@ export default function TerraformSideMenu({
         <ResourceFolder
           title="Security Groups"
           icon={<Shield className="w-4 h-4 text-blue-400" />}
-          onAdd={() => handleNewResource("securityGroup")}
+          onAdd={() => handleNewResource("securitygroup")}
         >
           {securityGroups.map(({ id, data }, i) => (
             <div key={id}>

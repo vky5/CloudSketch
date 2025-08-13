@@ -23,14 +23,14 @@ export const ingressRuleFields: NodeField[] = [
     placeholder: "e.g., 22",
   },
   {
-    key: "CidrBlocks",
+    key: "CidrIPv4",
     label: "CIDR IPv4",
     type: "text",
     required: true,
     placeholder: "e.g., 0.0.0.0/0",
   },
   {
-    key: "Ipv6CidrBlocks",
+    key: "CidrIPv6",
     label: "CIDR IPv6",
     type: "text",
     required: false,

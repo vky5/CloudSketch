@@ -25,7 +25,7 @@ var generators = []GeneratorRegistration{
 		},
 	},
 	{
-		NodeType: "sg", 
+		NodeType: "securitygroup", 
 		DisplayName: "Security Group",
 		Category: "Resource",
 		RequiredFields: []string{"Name", "NodeID"},

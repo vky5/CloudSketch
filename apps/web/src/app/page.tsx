@@ -5,10 +5,10 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Canvas from "@/components/Canvas";
 import TerraformEditor from "@/components/Editor";
-import NodeSettingsPanel from "@/components/NodeSettingsPanel";
+import NodeSettingsPanel from "@/components/SettingsPannel/NodeSettingsPanel";
 import { useUIPanelStore } from "@/store/useUIPanelStore";
 import SideMenuConfig from "@/components/ConfigPanel";
-import ResourceSettingsPanel from "@/components/ResourceSettingsPanel";
+import ResourceSettingsPanel from "@/components/SettingsPannel/ResourceSettingsPanel";
 
 export default function HomePage() {
   const [editorWidth, setEditorWidth] = useState(500);

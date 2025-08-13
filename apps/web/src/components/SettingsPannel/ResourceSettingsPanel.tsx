@@ -7,16 +7,13 @@ import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import { formSchemaRegistry } from "@/config/formSchemaRegistry"; // Resource type → form schema mapping
 import { useUIPanelStore } from "@/store/useUIPanelStore";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
+import RenderForm from "./RenderForm";
 
 function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
-  // Store hooks
-  const {
-    settingOpenResourceId, // ID of resource whose settings are open
-    resources, // All Terraform resources in state
-    updateResource, // Function to update resource data
-  } = useTerraformResourceStore();
+  const { settingOpenResourceId, resources, updateResource } =
+    useTerraformResourceStore();
 
-  const { openConfig } = useUIPanelStore(); // For switching to Config panel
+  const { openConfig } = useUIPanelStore();
 
   // If no resource is open in settings, hide the panel
   if (!settingOpenResourceId) return null;
@@ -24,82 +21,14 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
   // Find the current resource object
   const resource = resources.find((r) => r.id === settingOpenResourceId);
   if (!resource) return null;
+  console.log(resource)
 
   const resourceType = resource.type!; // Resource type (e.g., keypair)
-  console.log(resource);
   const formFields = formSchemaRegistry[resourceType] || []; // Fields to render from schema
 
   // Handles updating a resource property
   const handleChange = (key: string, value: string) => {
     updateResource(settingOpenResourceId, { [key]: value });
-  };
-
-  // Renders the correct input type for each field
-  const renderField = (field: any) => {
-    const currentValue = (resource.data?.[field.key] as string) || "";
-
-    switch (field.type) {
-      // Simple text input
-      case "text":
-        return (
-          <div key={field.key} className="mb-4">
-            <label className="block text-xs mb-1 font-medium text-gray-300">
-              {field.label}
-            </label>
-            <input
-              type="text"
-              value={currentValue}
-              onChange={(e) => handleChange(field.key, e.target.value)}
-              placeholder={field.placeholder || ""}
-              className="w-full px-3 py-2 bg-[#2a2a2e] text-xs text-white rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs"
-            />
-          </div>
-        );
-
-      // Dropdown (select)
-      case "dropdown": {
-        let options: string[] = field.options || [];
-        return (
-          <div key={field.key} className="mb-4">
-            <label className="block text-xs mb-1 font-medium text-gray-300">
-              {field.label}
-            </label>
-            <select
-              value={currentValue}
-              onChange={(e) => handleChange(field.key, e.target.value)}
-              className="w-full px-3 py-2 bg-[#2a2a2e] text-xs text-white rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select {field.label}</option>
-              {options.map((opt: string) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-        );
-      }
-
-      // Multi-line textarea
-      case "textarea":
-        return (
-          <div key={field.key} className="mb-4">
-            <label className="block text-xs mb-1 font-medium text-gray-300">
-              {field.label}
-            </label>
-            <textarea
-              value={currentValue}
-              onChange={(e) => handleChange(field.key, e.target.value)}
-              placeholder={field.placeholder || ""}
-              rows={3}
-              className="w-full px-3 py-2 bg-[#2a2a2e] text-xs text-white rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs resize-none"
-            />
-          </div>
-        );
-
-      default:
-        return null;
-    }
   };
 
   // Handles "Save & Close"
@@ -160,7 +89,14 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
             No settings available for this resource type.
           </p>
         ) : (
-          formFields.map(renderField)
+          formFields.map((field) => (
+            <RenderForm
+              key={field.key}
+              field={field}
+              currentNode={(resource.data?.[field.key] as string) || ""}
+              handleChange={handleChange}
+            />
+          ))
         )}
       </div>
 
