@@ -1,0 +1,47 @@
+# IAM Role
+resource "aws_iam_role" "{{.Name}}" {
+  name = "{{.Name}}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+            Service = [
+                {{- range $i, $svc := .Services }}
+                "{{$svc}}",
+                {{- end }}
+            ]
+        }
+
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    CreatedBy = "CloudSketch"
+    NodeID    = "{{.NodeID}}"
+  }
+}
+
+# Attach selected managed policies
+{{if .ManagedPolicies}}
+{{range $i, $policy := .ManagedPolicies}}
+resource "aws_iam_role_policy_attachment" "{{$.Name}}_{{$i}}" {
+  role       = aws_iam_role.{{$.Name}}.name
+  policy_arn = "{{$policy}}"
+}
+{{end}}
+{{end}}
+
+# Attach custom policies
+{{if .CustomPolicies}}
+{{range $i, $policy := .CustomPolicies}}
+resource "aws_iam_role_policy_attachment" "{{$.Name}}_{{$i}}_custom" {
+  role       = aws_iam_role.{{$.Name}}.name
+  policy_arn = "{{$policy}}"
+}
+{{end}}
+{{end}}

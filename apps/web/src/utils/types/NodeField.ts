@@ -4,7 +4,9 @@ type FieldType =
   | "dropdown"
   | "checkbox"
   | "number"
-  | "group";
+  | "group"
+  | "multiselect"
+  | "multitext";
 
 export interface NodeField {
   key: string; // internal key in node.data (used by backend to link the data to the struct)

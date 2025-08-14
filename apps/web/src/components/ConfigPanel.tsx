@@ -20,6 +20,7 @@ export default function TerraformSideMenu({
   // Helper to filter resources by type
   const securityGroups = resources.filter((r) => r.type === "securitygroup");
   const keyPairs = resources.filter((r) => r.type === "keypair");
+  const IAM = resources.filter((r) => r.type === "iam");
 
   // To add new Resources based on the type passed as parameter
   const handleNewResource = (labelType: ResourceType) => {
@@ -81,6 +82,27 @@ export default function TerraformSideMenu({
                 onClick={() => openSettings(id, "resource")}
               />
               {i !== keyPairs.length - 1 && (
+                <hr className="my-1 border-t border-[#3f3f46] w-[80%] mx-auto" />
+              )}
+            </div>
+          ))}
+        </ResourceFolder>
+
+        {/* IAM */}
+        <ResourceFolder
+          title="IAM"
+          icon={<KeyRound className="w-4 h-4 text-yellow-400" />}
+          onAdd={() => handleNewResource("iam")}
+
+        >
+          {IAM.map(({ id, data }, i) => (
+            <div key={id}>
+              <ResourceItem
+                name={data.Name}
+                onDelete={() => deleteResource(id)}
+                onClick={() => openSettings(id, "resource")}
+              />
+              {i !== IAM.length - 1 && (
                 <hr className="my-1 border-t border-[#3f3f46] w-[80%] mx-auto" />
               )}
             </div>

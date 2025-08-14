@@ -45,9 +45,17 @@ var generators = []GeneratorRegistration{
 		NodeType:       "s3",
 		DisplayName:    "S3 Bucket",
 		Category:       "Storage",
-		RequiredFields: []string{"BucketName", ""},
+		RequiredFields: []string{"BucketName", "NodeID"},
 		Generator: TemplateGenerator[*models.S3Config]{
 			TemplatePath: "templates/s3.tmpl",
+		},
+	}, {
+		NodeType:       "iam",
+		DisplayName:    "IAM",
+		Category:       "Resource",
+		RequiredFields: []string{"Name", "NodeID", "Services", "ManagedPolicies"},
+		Generator: TemplateGenerator[*models.IAMConfig]{
+			TemplatePath: "templates/iam.tmpl",
 		},
 	},
 }

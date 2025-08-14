@@ -183,6 +183,114 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
         </div>
       );
     }
+    case "multiselect": {
+      const selectedOptions: string[] = Array.isArray(currentValue)
+        ? currentValue
+        : [];
+
+      const toggleOption = (option: string) => {
+        if (selectedOptions.includes(option)) {
+          handleChange(
+            field.key,
+            selectedOptions.filter((o) => o !== option)
+          );
+        } else {
+          handleChange(field.key, [...selectedOptions, option]);
+        }
+      };
+
+      return (
+        <div key={field.key} className="mb-4">
+          <label className="block text-sm mb-1 font-medium text-gray-300">
+            {field.label}
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {field.options?.map((option: string, idx: number) => {
+              const isSelected = selectedOptions.includes(option);
+              return (
+                <button
+                  key={`${field.key}-${idx}`}
+                  type="button"
+                  onClick={() => toggleOption(option)}
+                  className={`px-3 py-1 text-xs rounded-md border ${
+                    isSelected
+                      ? "bg-blue-600 border-blue-600 text-white"
+                      : "bg-[#2a2a2e] border-[#3b3b3f] text-gray-300"
+                  } hover:bg-blue-500 hover:text-white`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    case "multitext": {
+      const items: string[] = Array.isArray(currentValue) ? currentValue : [];
+
+      const addItem = () => handleChange(field.key, [...items, ""]);
+      const updateItem = (index: number, value: string) => {
+        const updated = [...items];
+        updated[index] = value;
+        handleChange(field.key, updated);
+      };
+      const removeItem = (index: number) =>
+        handleChange(
+          field.key,
+          items.filter((_, i) => i !== index)
+        );
+
+      return (
+        <div
+          key={field.key}
+          className="mb-6 border border-[#3b3b3f] rounded-md p-3"
+        >
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-medium text-gray-300">
+              {field.label}
+            </label>
+            <button
+              type="button"
+              onClick={addItem}
+              className="flex items-center justify-center text-[#0EA85D] font-extrabold p-1 rounded-full hover:text-green-700"
+              title="Add item"
+            >
+              <FiPlus size={16} />
+            </button>
+          </div>
+
+          {items.length === 0 && (
+            <p className="text-xs text-gray-500">No {field.label} added yet.</p>
+          )}
+
+          {items.map((item, idx) => (
+            <div
+              key={idx}
+              className="relative mb-3 p-2 bg-[#2a2a2e] rounded-md border border-[#3b3b3f]"
+            >
+              <button
+                type="button"
+                onClick={() => removeItem(idx)}
+                className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+                title="Remove item"
+              >
+                <FiTrash2 size={16} />
+              </button>
+
+              <input
+                type="text"
+                value={item}
+                onChange={(e) => updateItem(idx, e.target.value)}
+                placeholder={field.placeholder || ""}
+                className="w-full px-3 py-1 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs"
+              />
+            </div>
+          ))}
+        </div>
+      );
+    }
 
     default:
       return null;

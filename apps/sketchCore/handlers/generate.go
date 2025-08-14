@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -44,6 +45,7 @@ func GenerateTerraform(c *gin.Context) {
 	// Generate Terraform block
 	tfBlock, err := generator.Generate(node) // we separate the node.Data in the Generate func defined in templateGenerator
 	if err != nil {
+		fmt.Print(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate Terraform"})
 		return
 	}
