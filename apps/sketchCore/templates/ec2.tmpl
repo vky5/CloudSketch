@@ -1,36 +1,35 @@
 resource "aws_instance" "{{.Name}}" {
-    # AMI Id 
-    ami = "{{or .AMI "TODO: Provide AMI ID"}}"
+  ami           = "{{or .AMI "TODO: Provide AMI ID"}}"
+  instance_type = "{{or .InstanceType "TODO: provide instance type"}}"
 
-    # Instance type 
-    instance_type = "{{or .InstanceType "TODO: provide instance type"}}"
+  {{- if .InstanceProfile }}
+  iam_instance_profile = aws_iam_instance_profile.{{.InstanceProfile}}.name
+  {{- end }}
 
-    # Security Groups: list of ids ec2 gonna use 
-    vpc_security_group_ids = [
-        {{if .SecurityGroups}}
-            {{range $i, $sg := .SecurityGroups}}{{if $i}},{{end}}"{{$sg}}"{{end}}
-        {{else}}
-            "TODO: add security group IDs"
-        {{end}}
-    ]
+  vpc_security_group_ids = [
+    {{- if .SecurityGroups }}
+      {{- range $i, $sg := .SecurityGroups }}
+        {{- if $i}},{{end}}"{{$sg}}"
+      {{- end }}
+    {{- else }}
+      "TODO: add security group IDs"
+    {{- end }}
+  ]
 
-    # Optional Key Pair for SSH access
-    {{if .KeyName}}
-        key_name = "{{.KeyName}}"
-    {{else}}
-        # key_name = "TODO: add key pair name if needed"
-    {{end}}
+  {{- if .KeyName }}
+  key_name = "{{.KeyName}}"
+  {{- else }}
+  # key_name = "TODO: add key pair name if needed"
+  {{- end }}
 
-    # Optional subnet for this instance
-    {{if .SubnetID}}
-        subnet_id = "{{.SubnetID}}"
-    {{else}}
-        # subnet_id = "TODO: add subnet ID if required"
-    {{end}}
+  {{- if .SubnetID }}
+  subnet_id = "{{.SubnetID}}"
+  {{- else }}
+  # subnet_id = "TODO: add subnet ID if required"
+  {{- end }}
 
-    # Tag for identifying this instance
-    tags = {
-        Name = "{{or .TagName "TODO: set Name tag"}}"
-        NodeID   = "{{.NodeID}}"
-    }
+  tags = {
+    Name   = "{{or .TagName "TODO: set Name tag"}}"
+    NodeID = "{{.NodeID}}"
+  }
 }

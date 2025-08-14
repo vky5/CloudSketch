@@ -1,4 +1,3 @@
-import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { NodeField } from "@/utils/types/NodeField";
 import React from "react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
@@ -10,7 +9,6 @@ interface Props {
 }
 
 function RenderForm({ field, currentNode, handleChange }: Props) {
-  const { resources } = useTerraformResourceStore();
   const currentValue = currentNode;
 
   switch (field.type) {
@@ -33,15 +31,7 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
     case "dropdown": {
       let options: string[] = [];
 
-      if (field.dynamicOptionsSource === "securityGroups") {
-        options = resources
-          .filter((sg) => sg.type === "securitygroup")
-          .map((sg) => sg.data.label);
-      } else if (field.dynamicOptionsSource === "keyPairs") {
-        options = resources
-          .filter((kp) => kp.id === "keypair")
-          .map((kp) => kp.data.label);
-      } else if (field.options) {
+      if (field.options) {
         options = field.options;
       }
 
@@ -199,30 +189,40 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
         }
       };
 
+      const hasOptions =
+        Array.isArray(field.options) && field.options.length > 0;
+
       return (
         <div key={field.key} className="mb-4">
           <label className="block text-sm mb-1 font-medium text-gray-300">
             {field.label}
           </label>
-          <div className="flex flex-wrap gap-2">
-            {field.options?.map((option: string, idx: number) => {
-              const isSelected = selectedOptions.includes(option);
-              return (
-                <button
-                  key={`${field.key}-${idx}`}
-                  type="button"
-                  onClick={() => toggleOption(option)}
-                  className={`px-3 py-1 text-xs rounded-md border ${
-                    isSelected
-                      ? "bg-blue-600 border-blue-600 text-white"
-                      : "bg-[#2a2a2e] border-[#3b3b3f] text-gray-300"
-                  } hover:bg-blue-500 hover:text-white`}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
+
+          {hasOptions ? (
+            <div className="flex flex-wrap gap-2">
+              {field.options!.map((option: string, idx: number) => {
+                const isSelected = selectedOptions.includes(option);
+                return (
+                  <button
+                    key={`${field.key}-${idx}`}
+                    type="button"
+                    onClick={() => toggleOption(option)}
+                    className={`px-3 py-1 text-xs rounded-md border transition-colors ${
+                      isSelected
+                        ? "bg-blue-600 border-blue-600 text-white"
+                        : "bg-[#2a2a2e] border-[#3b3b3f] text-gray-300 hover:bg-blue-500 hover:text-white"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="w-full px-3 py-2 bg-[#1f1f23] text-gray-500 text-xs rounded-md border border-[#3b3b3f] italic">
+              No options available
+            </div>
+          )}
         </div>
       );
     }

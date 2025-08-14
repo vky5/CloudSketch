@@ -10,6 +10,7 @@ type EC2Config struct {
 	SubnetID       string   `json:"SubnetID,omitempty"` // Optional subnet
 	TagName        string   `json:"TagName"`            // AWS instance tag
 	NodeID         string   `json:"NodeID"`             // Injected for tracking
+	InstanceProfile string `json:"InstanceProfile,omitempty"`
 }
 
 // since EC2Config has now declared SetNodeId it can be passed to the NodeIdentifable type 

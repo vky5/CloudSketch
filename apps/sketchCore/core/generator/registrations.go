@@ -57,5 +57,13 @@ var generators = []GeneratorRegistration{
 		Generator: TemplateGenerator[*models.IAMConfig]{
 			TemplatePath: "templates/iam.tmpl",
 		},
+	},{
+		NodeType: "instanceprofile",
+		DisplayName: "Instance Profile",
+		Category: "Resource",
+		RequiredFields: []string{"Name", "NodeID", "ParentRoleName"},
+		Generator: TemplateGenerator[*models.InstanceProfileConfig]{
+			TemplatePath: "templates/instance_profile.tmpl",
+		},
 	},
 }

@@ -1,3 +1,4 @@
+import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { NodeField } from "@/utils/types/NodeField";
 
 export const ec2FormSchema: NodeField[] = [
@@ -25,14 +26,24 @@ export const ec2FormSchema: NodeField[] = [
   {
     key: "SecurityGroups",
     label: "Security Groups",
-    type: "dropdown",
-    dynamicOptionsSource: "securityGroups",
+    type: "multiselect",
+    get options() {
+      return useTerraformResourceStore
+        .getState()
+        .resources.filter((sg) => sg.type === "securitygroup" && sg.data?.Name)
+        .map((sg) => sg.data.Name);
+    },
   },
   {
     key: "KeyName",
     label: "Key Pair",
     type: "dropdown",
-    dynamicOptionsSource: "keyPairs",
+    get options() {
+      return useTerraformResourceStore
+        .getState()
+        .resources.filter((kp) => kp.type === "keypair" && kp.data?.Name1)
+        .map((kp) => kp.data.Name);
+    },
   },
   {
     key: "SubnetID",

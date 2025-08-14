@@ -16,6 +16,5 @@ export interface NodeField {
   required?: boolean;
   options?: string[]; // for dropdowns
   description?: string; // help text
-  dynamicOptionsSource?: "securityGroups" | "keyPairs"; // for dynamic dropdowns
   fields?: NodeField[];
 }

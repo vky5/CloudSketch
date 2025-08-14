@@ -17,6 +17,7 @@ import { nodeTypes } from "./Canvas/nodeTypes";
 import GhostRectangle from "./nodes/ghosts/GhostRectangle";
 import GhostRhombus from "./nodes/ghosts/GhostRhombus";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
+import EC2S3 from "@/lib/edges/ec2-s3";
 
 function FlowContent() {
   const {
@@ -210,9 +211,21 @@ function FlowContent() {
 
   // Add connection as a new edge
   const onConnect = (params: Edge | Connection) => {
+    const sourceNode = nodes.find((n) => n.id === params.source);
+    const targetNode = nodes.find((n) => n.id === params.target);
+
+    if (!sourceNode || !targetNode) return;
+
+    const isEC2toS3 =
+      (sourceNode.type === "ec2" && targetNode.type === "s3") ||
+      (sourceNode.type === "s3" && targetNode.type === "ec2");
+
+    if (isEC2toS3) {
+      EC2S3(params); // <- Your custom logic
+    }
+
     addEdge(params);
   };
-
   // when node is clicked select it
   const onNodeClick = useCallback((event, node) => {
     console.log("Node clicked:", node.id);

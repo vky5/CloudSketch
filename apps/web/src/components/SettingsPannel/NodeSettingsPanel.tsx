@@ -16,6 +16,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
   const nodeType = node.type!;
   const formFields = formSchemaRegistry[nodeType] || [];
+  console.log(formFields)
 
   const handleChange = (key: string, value: string) => {
     updateNodeData(settingOpenNodeId, { [key]: value });
