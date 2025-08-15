@@ -93,7 +93,7 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
             <RenderForm
               key={field.key}
               field={field}
-              currentNode={(resource.data?.[field.key] as string) || ""}
+              currentNode={resource.data?.[field.key]}
               handleChange={handleChange}
             />
           ))

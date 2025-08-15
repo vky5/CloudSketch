@@ -1,5 +1,7 @@
 package models
 
+import "fmt"
+
 type InstanceProfileConfig struct {
 	Name           string `json:"Name"`
 	ParentRoleName string `json:"ParentRoleName"`
@@ -7,5 +9,6 @@ type InstanceProfileConfig struct {
 }
 
 func (ip *InstanceProfileConfig) SetNodeId(id string) {
+	fmt.Print(*ip)
 	ip.NodeID = id
 }

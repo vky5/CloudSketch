@@ -14,41 +14,55 @@ const handleNewResource = (labelType: ResourceType) => {
     .addResource(labelType, { Name: newLabel });
 };
 
+const handleChange = (key: string, value: any, id: string) => {
+  useTerraformResourceStore.getState().updateResource(id, { [key]: value });
+};
+
 export default async function EC2S3(edge: Edge | Connection, id?: string) {
   // first is adding the iam role if not present
   try {
+    let iam;
     if (!id) {
       const idCreated = handleNewResource("iam");
+      handleChange("Services", ["ec2.amazonaws.com"], idCreated);
+      handleChange(
+        "ManagedPolicies",
+        ["arn:aws:iam::aws:policy/AmazonS3FullAccess"],
+        idCreated
+      );
       id = idCreated;
+      // if IAM role is present use it else use what is provided
+      iam = useTerraformResourceStore
+        .getState()
+        .resources.find((rs) => rs.id === id);
+
       await syncNodeWithBackend({
         id,
         type: "iam",
         data: {
-          Services: ["ec2.amazonaws.com"],
-          ManagedPolicies: ["arn:aws:iam::aws:policy/AmazonS3FullAccess"],
+          Name: iam?.data.Name,
+          Services: iam?.data.Services,
+          ManagedPolicies: iam?.data.ManagedPolicies,
         },
       });
     }
 
-    // if IAM role is present use it else use what is provided
-    const iam = useTerraformResourceStore
-      .getState()
-      .resources.find((rs) => rs.id === id);
-
     // create the instance profile type
     const instanceProfileId = handleNewResource("instanceprofile");
-    await syncNodeWithBackend({
-      id: instanceProfileId,
-      type: "instanceprofile",
-      data: {
-        ParentRoleName: iam?.data.Name,
-      },
-    });
 
     // setting up the ec2 to assume the role through profile instance
     const instanceProfileName = useTerraformResourceStore
       .getState()
       .resources.find((ip) => ip.id === instanceProfileId);
+
+    await syncNodeWithBackend({
+      id: instanceProfileId,
+      type: "instanceprofile",
+      data: {
+        Name: instanceProfileName?.data.Name,
+        ParentRoleName: iam?.data.Name,
+      },
+    });
 
     const ec2State = useDiagramStore
       .getState()
