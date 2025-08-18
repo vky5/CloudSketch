@@ -1,0 +1,28 @@
+resource "aws_db_instance" "{{.Name}}" {
+  allocated_storage    = {{or .AllocatedStorage 20}}
+  storage_type         = "{{or .StorageType "gp2"}}"
+  engine               = "{{or .Engine "postgres"}}"
+  engine_version       = "{{or .EngineVersion "15.3"}}"
+  instance_class       = "{{or .InstanceClass "db.t3.micro"}}"
+  db_name              = "{{or .DBName "mydb"}}"
+  username             = "{{or .Username "admin"}}"
+  password             = "{{or .Password "changeme"}}"
+  skip_final_snapshot  = true
+
+    {{- if .SecurityGroups }}
+    vpc_security_group_ids = [
+        {{- range $i, $sg := .SecurityGroups }}
+            {{- if $i}},{{end}}aws_security_group.{{$sg}}.id
+        {{- end }}
+    ]
+    {{- end }}
+
+  {{- if .SubnetGroupName }}
+  db_subnet_group_name = "{{.SubnetGroupName}}"
+  {{- end }}
+
+  tags = {
+    Name   = "{{.TagName}}"
+    NodeID = "{{.NodeID}}"
+  }
+}

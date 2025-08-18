@@ -1,15 +1,14 @@
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Database } from "lucide-react";
-import { useDiagramStore } from "@/store/useDiagramStore";
+import openSettings from "@/utils/openSettings";
 import { FaGear } from "react-icons/fa6";
 import { useState } from "react";
 
 export default function RDSNode({ data, selected, id }: NodeProps) {
-  const openSettings = useDiagramStore((state) => state.openSettings);
   const [hovered, setHovered] = useState(false);
 
-  const engine = data.engine?.toString() || "MySQL";
-  const instanceClass = data.instanceClass?.toString() || "db.t3.micro";
+  const engine = data.Engine?.toString() || "MySQL";
+  const instanceClass = data.InstanceClass?.toString() || "db.t3.micro";
 
   return (
     <div
@@ -25,11 +24,13 @@ export default function RDSNode({ data, selected, id }: NodeProps) {
       <Handle type="source" position={Position.Left} />
       <Handle type="source" position={Position.Right} />
 
-      {/* Floating Gear on Hover - Just Outside Top-Right */}
+      {/* Floating Gear Button - Hover/Selected */}
       {(hovered || selected) && (
         <button
-          onClick={() => openSettings(id)}
-          className="absolute -top-3 -right-3 bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow transition-opacity duration-200"
+          onClick={() => openSettings(id, "node")}
+          className={`absolute -top-3 -right-3 bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow transition-opacity duration-200 ${
+            hovered || selected ? "opacity-100 scale-100" : "opacity-0 scale-90"
+          }`}
           title="Edit RDS Settings"
         >
           <FaGear className="w-3.5 h-3.5 hover:text-[#3B82F6] text-white" />
