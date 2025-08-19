@@ -1,13 +1,14 @@
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { formSchemaRegistry } from "@/config/formSchemaRegistry";
 import { X } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import RenderForm from "./RenderForm";
 
 function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const { settingOpenNodeId, nodes, updateNodeData } = useDiagramStore();
+  const [isValid, setIsValid] = useState(false);
 
   if (!settingOpenNodeId) return null;
 
@@ -23,6 +24,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   };
 
   const handleSaveAndClose = async () => {
+    if (!isValid) return;
     await syncNodeWithBackend({
       id: node.id,
       type: node.type!,
@@ -30,6 +32,38 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
     });
     closeSettingsorConfig();
   };
+
+  // Validate required fields whenever node.data changes
+  useEffect(() => {
+    if (!formFields.length) {
+      setIsValid(true);
+      return;
+    }
+
+    // find all required fields in schema
+    const requiredFields = formFields.filter((f) => f.required);
+
+    // check if each required field exists and has a non-empty value
+    const missing = requiredFields.filter((field) => {
+      const value = node.data?.[field.key];
+      return value === undefined || value === null || value === "";
+    });
+
+    setIsValid(missing.length === 0);
+  }, [node.data, formFields]);
+
+  // Trigger save & close on Enter key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && isValid) {
+        handleSaveAndClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isValid, node.data]);
 
   return (
     <div
@@ -74,7 +108,13 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
       <div className="px-4 py-3 border-t border-[#2e2e32]">
         <button
           onClick={handleSaveAndClose}
-          className="w-full bg-blue-600 px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
+          disabled={!isValid}
+          className={`w-full px-4 py-2 rounded-md text-sm font-medium transition 
+            ${
+              isValid
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-gray-600 text-gray-300 cursor-not-allowed"
+            }`}
         >
           Save & Close
         </button>

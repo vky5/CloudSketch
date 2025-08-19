@@ -2,19 +2,42 @@ import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Archive } from "lucide-react";
 import openSettings from "@/utils/openSettings";
 import { FaGear } from "react-icons/fa6";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { s3FormConfig } from "@/config/awsNodes/s3.config";
 
 export default function S3Node({ data, selected, id }: NodeProps) {
   const [hovered, setHovered] = useState(false);
+  const [isValid, setIsValid] = useState(true);
 
   const bucketName = data.BucketName?.toString() || "my-bucket";
   // const storageClass = data.storageClass?.toString() || "Standard";
+  useEffect(() => {
+    const checkNode = () => {
+      // find all required fields in schema
+      const requiredFields = s3FormConfig.filter((f) => f.required);
+
+      // check if each required field exists and has a non-empty value
+      const missing = requiredFields.filter((field) => {
+        const value = data[field.key];
+        return value === undefined || value === null || value === "";
+      });
+
+      setIsValid(missing.length === 0);
+    };
+
+    checkNode();
+  }, [data]);
 
   return (
     <div
-      className={`min-w-[160px] max-w-[180px] relative border rounded-lg shadow bg-[#020817]/75 text-white px-3 py-1.5 ${
-        selected ? "border-blue-500" : "border-sidebar-border"
-      }`}
+      className={`w-[180px] relative border rounded-lg shadow bg-[#020817]/75 text-white px-3 py-1.5 
+        ${
+          selected
+            ? "border-blue-500"
+            : isValid
+            ? "border-white"
+            : "border-red-500"
+        }`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -39,16 +62,19 @@ export default function S3Node({ data, selected, id }: NodeProps) {
 
       {/* Node Content */}
       <div className="flex items-center gap-3 mt-1">
-        <Archive className="w-6 h-6 text-[#FF4F00]" /> {/* AWS S3 Orange */}
-        <div className="flex flex-col space-y-0.5 text-xs">
+        {/* Fixed icon so it never gets squashed */}
+        <div className="flex-shrink-0">
+          <Archive className="w-6 h-6 text-[#FF4F00]" /> {/* AWS S3 Orange */}
+        </div>
+
+        {/* Text with truncation */}
+        <div className="flex flex-col space-y-0.5 text-xs min-w-0 max-w-[150px]">
           <span className="font-medium text-sm leading-tight truncate">
             S3 Bucket
           </span>
-          <span className="text-muted-foreground text-[11px] truncate leading-tight mt-1">
-            Name: {bucketName}
-          </span>
+
           <span className="text-muted-foreground text-[11px] truncate leading-tight">
-            {/* Storage: {storageClass} */}
+            Name: {bucketName}
           </span>
         </div>
       </div>

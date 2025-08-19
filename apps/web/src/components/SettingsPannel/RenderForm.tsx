@@ -16,15 +16,21 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
       ? []
       : "");
 
+  // Utility for label with red asterisk if required
+  const renderLabel = (label: string) => (
+    <label className="block text-sm mb-1 font-medium text-gray-300">
+      {label}
+      {field.required && <span className="text-red-500 ml-1">*</span>}
+    </label>
+  );
+
   switch (field.type) {
     case "text":
     case "textarea":
     case "number":
       return (
         <div key={field.key} className="mb-4">
-          <label className="block text-sm mb-1 font-medium text-gray-300">
-            {field.label}
-          </label>
+          {renderLabel(field.label)}
           {field.type === "textarea" ? (
             <textarea
               value={currentValue}
@@ -58,9 +64,7 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
       const options: string[] = field.options || [];
       return (
         <div key={field.key} className="mb-4">
-          <label className="block text-sm mb-1 font-medium text-gray-300">
-            {field.label}
-          </label>
+          {renderLabel(field.label)}
           <select
             value={currentValue}
             onChange={(e) => handleChange(field.key, e.target.value)}
@@ -90,7 +94,7 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
       const hasOptions = Array.isArray(field.options) && field.options.length > 0;
       return (
         <div key={field.key} className="mb-4">
-          <label className="block text-sm mb-1 font-medium text-gray-300">{field.label}</label>
+          {renderLabel(field.label)}
           {hasOptions ? (
             <div className="flex flex-wrap gap-2">
               {field.options!.map((option, idx) => {
@@ -134,7 +138,7 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
       return (
         <div key={field.key} className="mb-6 border border-[#3b3b3f] rounded-md p-3">
           <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-gray-300">{field.label}</label>
+            {renderLabel(field.label)}
             <button
               type="button"
               onClick={addItem}
@@ -196,7 +200,7 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
         <div key={field.key} className="mb-6 border border-[#3b3b3f] rounded-md p-3">
           <div className="flex justify-between items-center mb-2">
             <div>
-              <label className="block text-sm font-medium text-gray-300">{field.label}</label>
+              {renderLabel(field.label)}
               {field.description && <p className="text-xs text-gray-400">{field.description}</p>}
             </div>
             <button

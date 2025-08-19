@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { X, ArrowLeft } from "lucide-react";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
@@ -14,6 +14,7 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
     useTerraformResourceStore();
 
   const { openConfig } = useUIPanelStore();
+  const [isValid, setIsValid] = useState(false);
 
   // If no resource is open in settings, hide the panel
   if (!settingOpenResourceId) return null;
@@ -33,6 +34,7 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
   // Handles "Save & Close"
   const handleSaveAndClose = async () => {
+    if (!isValid) return; // prevent saving if invalid
     await syncNodeWithBackend({
       id: resource.id,
       data: resource.data,
@@ -40,6 +42,38 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
     });
     openConfig();
   };
+
+  // Validate required fields whenever resource.data changes
+  useEffect(() => {
+    if (!formFields.length) {
+      setIsValid(true);
+      return;
+    }
+
+    // find all required fields in schema
+    const requiredFields = formFields.filter((f) => f.required);
+
+    // check if each required field exists and has a non-empty value
+    const missing = requiredFields.filter((field) => {
+      const value = resource.data?.[field.key];
+      return value === undefined || value === null || value === "";
+    });
+
+    setIsValid(missing.length === 0);
+  }, [resource.data, formFields]);
+
+  // Trigger save & close on Enter key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && isValid) {
+        handleSaveAndClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isValid, resource.data]);
 
   return (
     <div
@@ -104,7 +138,13 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
       <div className="px-4 py-3 border-t border-[#2e2e32]">
         <button
           onClick={handleSaveAndClose}
-          className="w-full bg-blue-600 px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
+          disabled={!isValid}
+          className={`w-full px-4 py-2 rounded-md text-sm font-medium transition 
+            ${
+              isValid
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-gray-600 text-gray-300 cursor-not-allowed"
+            }`}
         >
           Save & Close
         </button>
