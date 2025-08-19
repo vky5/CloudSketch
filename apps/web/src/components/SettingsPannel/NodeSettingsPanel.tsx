@@ -2,9 +2,9 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { formSchemaRegistry } from "@/config/formSchemaRegistry";
 import { X } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { syncNodeWithBackend } from "@/utils/terraformSync";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import RenderForm from "./RenderForm";
+import saveLogic from "@/lib/customSaveLogics/saveLogicRegistry";
 
 function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const { settingOpenNodeId, nodes, updateNodeData } = useDiagramStore();
@@ -17,7 +17,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
   const nodeType = node.type!;
   const formFields = formSchemaRegistry[nodeType] || [];
-  console.log(formFields)
+  console.log(formFields);
 
   const handleChange = (key: string, value: string) => {
     updateNodeData(settingOpenNodeId, { [key]: value });
@@ -25,7 +25,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
   const handleSaveAndClose = async () => {
     if (!isValid) return;
-    await syncNodeWithBackend({
+    await saveLogic({
       id: node.id,
       type: node.type!,
       data: node.data,

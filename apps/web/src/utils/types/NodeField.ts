@@ -6,7 +6,8 @@ type FieldType =
   | "number"
   | "group"
   | "multiselect"
-  | "multitext";
+  | "multitext"
+  | "toggle";
 
 export interface NodeField {
   key: string; // internal key in node.data (used by backend to link the data to the struct)

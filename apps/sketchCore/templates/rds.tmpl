@@ -1,28 +1,32 @@
 resource "aws_db_instance" "{{.Name}}" {
-  allocated_storage    = {{or .AllocatedStorage 20}}
-  storage_type         = "{{or .StorageType "gp2"}}"
-  engine               = "{{or .Engine "postgres"}}"
-  engine_version       = "{{or .EngineVersion "15.3"}}"
-  instance_class       = "{{or .InstanceClass "db.t3.micro"}}"
-  db_name              = "{{or .DBName "mydb"}}"
-  username             = "{{or .Username "admin"}}"
-  password             = "{{or .Password "changeme"}}"
+  allocated_storage    = {{or .AllocatedStorage "TODO: set allocated storage"}}
+  storage_type         = "{{or .StorageType "TODO: set storage type"}}"
+  engine               = "{{or .Engine "TODO: set engine"}}"
+  engine_version       = "{{or .EngineVersion "TODO: set engine version"}}"
+  instance_class       = "{{or .InstanceClass "TODO: set instance class"}}"
+  db_name              = "{{or .DBName "TODO: set DB name"}}"
+  username             = "{{or .Username "TODO: set master username"}}"
+  password             = "{{or .Password "TODO: set master password"}}"
   skip_final_snapshot  = true
 
-    {{- if .SecurityGroups }}
-    vpc_security_group_ids = [
-        {{- range $i, $sg := .SecurityGroups }}
-            {{- if $i}},{{end}}aws_security_group.{{$sg}}.id
-        {{- end }}
-    ]
-    {{- end }}
+  {{- if .SecurityGroups }}
+  vpc_security_group_ids = [
+      {{- range $i, $sg := .SecurityGroups }}
+          {{- if $i}},{{end}}aws_security_group.{{$sg}}.id
+      {{- end }}
+  ]
+  {{- else }}
+  # TODO: add security group IDs
+  {{- end }}
 
   {{- if .SubnetGroupName }}
   db_subnet_group_name = "{{.SubnetGroupName}}"
+  {{- else }}
+  # TODO: add subnet group name if required
   {{- end }}
 
   tags = {
-    Name   = "{{.TagName}}"
+    Name   = "{{or .TagName "TODO: set Name tag"}}"
     NodeID = "{{.NodeID}}"
   }
 }

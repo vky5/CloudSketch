@@ -59,6 +59,12 @@ export const rdsFormSchema: NodeField[] = [
     required: true,
   },
   {
+    key: "AutoGenerateSG",
+    label: "Automatically Generated SG",
+    type: "toggle",
+    options: ["no", "yes"],
+  },
+  {
     key: "SecurityGroups",
     label: "Security Groups",
     type: "multiselect",
@@ -74,13 +80,6 @@ export const rdsFormSchema: NodeField[] = [
     label: "Subnet",
     type: "dropdown",
     placeholder: "Optional subnet ID",
-    required: false,
-  },
-  {
-    key: "Port",
-    label: "Port",
-    type: "number",
-    placeholder: "e.g., 3306 for MySQL, 5432 for Postgres",
     required: false,
   },
   {

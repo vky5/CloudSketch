@@ -12,7 +12,9 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
   // Determine the "safe" current value based on field type
   const currentValue =
     currentNode ??
-    (field.type === "multiselect" || field.type === "multitext" || field.type === "group"
+    (field.type === "multiselect" ||
+    field.type === "multitext" ||
+    field.type === "group"
       ? []
       : "");
 
@@ -82,7 +84,9 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
     }
 
     case "multiselect": {
-      const selectedOptions: string[] = Array.isArray(currentValue) ? currentValue : [];
+      const selectedOptions: string[] = Array.isArray(currentValue)
+        ? currentValue
+        : [];
       const toggleOption = (option: string) =>
         handleChange(
           field.key,
@@ -91,7 +95,8 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
             : [...selectedOptions, option]
         );
 
-      const hasOptions = Array.isArray(field.options) && field.options.length > 0;
+      const hasOptions =
+        Array.isArray(field.options) && field.options.length > 0;
       return (
         <div key={field.key} className="mb-4">
           {renderLabel(field.label)}
@@ -133,10 +138,16 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
         handleChange(field.key, updated);
       };
       const removeItem = (index: number) =>
-        handleChange(field.key, items.filter((_, i) => i !== index));
+        handleChange(
+          field.key,
+          items.filter((_, i) => i !== index)
+        );
 
       return (
-        <div key={field.key} className="mb-6 border border-[#3b3b3f] rounded-md p-3">
+        <div
+          key={field.key}
+          className="mb-6 border border-[#3b3b3f] rounded-md p-3"
+        >
           <div className="flex justify-between items-center mb-2">
             {renderLabel(field.label)}
             <button
@@ -149,10 +160,15 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
             </button>
           </div>
 
-          {items.length === 0 && <p className="text-xs text-gray-500">No {field.label} added yet.</p>}
+          {items.length === 0 && (
+            <p className="text-xs text-gray-500">No {field.label} added yet.</p>
+          )}
 
           {items.map((item, idx) => (
-            <div key={idx} className="relative mb-3 p-2 bg-[#2a2a2e] rounded-md border border-[#3b3b3f]">
+            <div
+              key={idx}
+              className="relative mb-3 p-2 bg-[#2a2a2e] rounded-md border border-[#3b3b3f]"
+            >
               <button
                 type="button"
                 onClick={() => removeItem(idx)}
@@ -176,7 +192,9 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
     }
 
     case "group": {
-      const items: Record<string, any>[] = Array.isArray(currentValue) ? currentValue : [];
+      const items: Record<string, any>[] = Array.isArray(currentValue)
+        ? currentValue
+        : [];
 
       const addItem = () => {
         const emptyItem = (field.fields || []).reduce((acc, f) => {
@@ -193,15 +211,23 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
       };
 
       const removeItem = (index: number) => {
-        handleChange(field.key, items.filter((_, i) => i !== index));
+        handleChange(
+          field.key,
+          items.filter((_, i) => i !== index)
+        );
       };
 
       return (
-        <div key={field.key} className="mb-6 border border-[#3b3b3f] rounded-md p-3">
+        <div
+          key={field.key}
+          className="mb-6 border border-[#3b3b3f] rounded-md p-3"
+        >
           <div className="flex justify-between items-center mb-2">
             <div>
               {renderLabel(field.label)}
-              {field.description && <p className="text-xs text-gray-400">{field.description}</p>}
+              {field.description && (
+                <p className="text-xs text-gray-400">{field.description}</p>
+              )}
             </div>
             <button
               type="button"
@@ -213,10 +239,15 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
             </button>
           </div>
 
-          {items.length === 0 && <p className="text-xs text-gray-500">No {field.label} added yet.</p>}
+          {items.length === 0 && (
+            <p className="text-xs text-gray-500">No {field.label} added yet.</p>
+          )}
 
           {items.map((item, idx) => (
-            <div key={idx} className="relative mb-3 p-3 bg-[#2a2a2e] rounded-md border border-[#3b3b3f]">
+            <div
+              key={idx}
+              className="relative mb-3 p-3 bg-[#2a2a2e] rounded-md border border-[#3b3b3f]"
+            >
               <button
                 type="button"
                 onClick={() => removeItem(idx)}
@@ -231,11 +262,87 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
                   key={subField.key}
                   field={subField}
                   currentNode={item[subField.key]}
-                  handleChange={(subKey, subValue) => updateItem(idx, subKey, subValue)}
+                  handleChange={(subKey, subValue) =>
+                    updateItem(idx, subKey, subValue)
+                  }
                 />
               ))}
             </div>
           ))}
+        </div>
+      );
+    }
+
+    case "toggle": {
+      const options: string[] = field.options || [];
+      const currentValue = currentNode ?? options[0]; // default to left/off
+      if (options.length !== 2) {
+        console.warn(`Toggle field ${field.key} should have exactly 2 options`);
+        return null;
+      }
+
+      const handleToggle = (value: string) => handleChange(field.key, value);
+
+      return (
+        <div key={field.key} className="mb-4">
+          <label className="block text-sm mb-1 font-medium text-gray-300">
+            {field.label}{" "}
+            {field.required && <span className="text-red-500">*</span>}
+          </label>
+          <div className="flex w-full border rounded-md overflow-hidden border-[#3b3b3f]">
+            {options.map((opt, idx) => {
+              const isActive = currentValue === opt;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleToggle(opt)}
+                  className={`flex-1 px-3 py-1 text-xs transition-colors ${
+                    isActive
+                      ? "bg-blue-600 text-white"
+                      : "bg-[#2a2a2e] text-gray-300 hover:bg-blue-500 hover:text-white"
+                  }`}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+    case "toggle": {
+      const options: string[] = field.options || [];
+      const currentValue = currentNode ?? options[0]; // default to left/off
+      if (options.length !== 2) {
+        console.warn(`Toggle field ${field.key} should have exactly 2 options`);
+        return null;
+      }
+
+      const handleToggle = () =>
+        handleChange(
+          field.key,
+          currentValue === options[0] ? options[1] : options[0]
+        );
+
+      return (
+        <div key={field.key} className="mb-4 flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+            {field.label}{" "}
+            {field.required && <span className="text-red-500">*</span>}
+          </label>
+          <div
+            onClick={handleToggle}
+            className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+              currentValue === options[1] ? "bg-blue-600" : "bg-gray-700"
+            }`}
+          >
+            <div
+              className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                currentValue === options[1] ? "translate-x-6" : "translate-x-0"
+              }`}
+            />
+          </div>
         </div>
       );
     }
