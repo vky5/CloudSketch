@@ -73,5 +73,13 @@ var generators = []GeneratorRegistration{
 		Generator: TemplateGenerator[*models.RDSConfig]{
 			TemplatePath: "templates/rds.tmpl",
 		},
+	},{
+		NodeType: "ebs",
+		DisplayName: "Elastic Block Storage",
+		Category: "Storage",
+		RequiredFields: []string{"Name", "VolumeType", "Size"},
+		Generator: TemplateGenerator[*models.EBSConfig]{
+			TemplatePath: "templates/ebs.tmpl",
+		},
 	},
 }

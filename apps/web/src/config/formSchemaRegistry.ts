@@ -5,6 +5,7 @@ import { keyPairFormSchema } from "./resources/keypair.config";
 import { s3FormConfig } from "./awsNodes/s3.config";
 import { iamFormSchema } from "./resources/iam.config";
 import { rdsFormSchema } from "./awsNodes/rds.config";
+import { ebsFormSchema } from "./awsNodes/ebs.config";
 
 export const formSchemaRegistry: Record<string, NodeField[]> = {
   ec2: ec2FormSchema,
@@ -13,4 +14,5 @@ export const formSchemaRegistry: Record<string, NodeField[]> = {
   s3: s3FormConfig,
   iam: iamFormSchema,
   rds: rdsFormSchema,
+  ebs: ebsFormSchema,
 };

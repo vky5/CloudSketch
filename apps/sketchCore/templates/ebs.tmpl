@@ -1,0 +1,24 @@
+resource "aws_ebs_volume" "{{.Name}}" {
+  availability_zone = "{{or .AvailabilityZone "TODO: provide AZ matching instance"}}"
+  size              = {{or .Size "TODO: provide size in GB"}}
+  type              = "{{or .VolumeType "gp3"}}"
+
+  {{- if .Encrypted }}
+  encrypted = true
+  {{- else }}
+  # encrypted = true   # TODO: enable encryption if required
+  {{- end }}
+
+  tags = {
+    Name   = "{{or .TagName "TODO: set Name tag"}}"
+    NodeID = "{{.NodeID}}"
+  }
+}
+
+resource "aws_volume_attachment" "{{.Name}}_attach" {
+  device_name = "{{or .DeviceName "TODO: provide device name (e.g., /dev/sdf)"}}"
+  volume_id   = aws_ebs_volume.{{.Name}}.id
+  instance_id = aws_instance.{{.NodeID}}.id   # NodeID links to instance
+
+  force_detach = true
+}

@@ -6,6 +6,7 @@ import TextNode from "../nodes/tools/TextNode";
 import LambdaNode from "../nodes/awsNodes/LambdaNode";
 import RDSNode from "../nodes/awsNodes/RDSNode";
 import S3Node from "../nodes/awsNodes/S3Node";
+import EBSNode from "../nodes/awsNodes/EBSNode";
 
 export const nodeTypes = {
   ec2: EC2Node,
@@ -15,4 +16,5 @@ export const nodeTypes = {
   lambda: LambdaNode,
   rds: RDSNode,
   s3: S3Node,
+  ebs: EBSNode,
 };
