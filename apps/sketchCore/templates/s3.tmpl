@@ -1,4 +1,4 @@
-resource "aws_s3_bucket" "{{ .BucketName }}" {
+resource "aws_s3_bucket" "{{ .NodeID }}" {
   bucket = "{{ .BucketName }}"
   acl    = "private"
 

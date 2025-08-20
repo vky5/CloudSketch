@@ -1,6 +1,6 @@
 package models
 
-// EBSConfig represents the Terraform config for EBS Volume
+// EBSConfig represents the Terraform config for creating an EBS Volume
 type EBSConfig struct {
 	Name                string `json:"Name"`                          // Terraform resource name
 	VolumeType          string `json:"VolumeType"`                    // e.g., gp2, gp3, io1
@@ -12,12 +12,11 @@ type EBSConfig struct {
 	MultiAttachEnabled  bool   `json:"MultiAttachEnabled,omitempty"`  // Allow multiple attachments
 	Encrypted           bool   `json:"Encrypted,omitempty"`           // Whether the volume is encrypted
 	DeleteOnTermination bool   `json:"DeleteOnTermination,omitempty"` // Delete volume when instance terminates
-	DeviceName          string `json:"DeviceName,omitempty"`          // e.g., /dev/sdh
-	InstanceId          string `json:"InstanceId,omitempty"`          // For attachment
 	TagName             string `json:"TagName,omitempty"`             // Optional tag for volume
-	NodeID              string `json:"NodeID"`                        // Injected for tracking
+	NodeID              string `json:"NodeID"`                        // Internal tracking ID
 }
 
+// SetNodeId sets the internal NodeID for tracking
 func (e *EBSConfig) SetNodeId(id string) {
 	e.NodeID = id
 }

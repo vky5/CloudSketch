@@ -37,13 +37,6 @@ export const ebsFormSchema: NodeField[] = [
     required: false,
   },
   {
-    key: "DeviceName",
-    label: "Device Name",
-    type: "text",
-    placeholder: "e.g., /dev/sdh",
-    required: false,
-  },
-  {
     key: "TagName",
     label: "Tag Name",
     type: "text",

@@ -1,4 +1,4 @@
-resource "aws_instance" "{{.Name}}" {
+resource "aws_instance" "{{.NodeID}}" {
   ami           = "{{or .AMI "TODO: Provide AMI ID"}}"
   instance_type = "{{or .InstanceType "TODO: provide instance type"}}"
 

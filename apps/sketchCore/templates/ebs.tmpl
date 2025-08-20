@@ -1,4 +1,4 @@
-resource "aws_ebs_volume" "{{.Name}}" {
+resource "aws_ebs_volume" "{{.NodeID}}" {
   availability_zone = "{{or .AvailabilityZone "TODO: provide AZ matching instance"}}"
   size              = {{or .Size "TODO: provide size in GB"}}
   type              = "{{or .VolumeType "gp3"}}"
@@ -13,12 +13,4 @@ resource "aws_ebs_volume" "{{.Name}}" {
     Name   = "{{or .TagName "TODO: set Name tag"}}"
     NodeID = "{{.NodeID}}"
   }
-}
-
-resource "aws_volume_attachment" "{{.Name}}_attach" {
-  device_name = "{{or .DeviceName "TODO: provide device name (e.g., /dev/sdf)"}}"
-  volume_id   = aws_ebs_volume.{{.Name}}.id
-  instance_id = aws_instance.{{.NodeID}}.id   # NodeID links to instance
-
-  force_detach = true
 }

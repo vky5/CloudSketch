@@ -17,7 +17,8 @@ import { nodeTypes } from "./Canvas/nodeTypes";
 import GhostRectangle from "./nodes/ghosts/GhostRectangle";
 import GhostRhombus from "./nodes/ghosts/GhostRhombus";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
-import EC2S3 from "@/lib/edges/ec2-s3";
+import canConnect, { keyGen } from "@/config/connectionsConfig";
+import connectionLogic from "@/lib/nodeConnections/connectionLogicRegistry";
 
 function FlowContent() {
   const {
@@ -210,18 +211,36 @@ function FlowContent() {
   }, [nodes, selectedNodeId, selectedTool]);
 
   // Add connection as a new edge
-  const onConnect = (params: Edge | Connection) => {
+  // Hook into React Flow onConnect
+  const onConnect = async (params: Edge | Connection) => {
     const sourceNode = nodes.find((n) => n.id === params.source);
     const targetNode = nodes.find((n) => n.id === params.target);
 
-    if (!sourceNode || !targetNode) return;
+    if (!sourceNode || !targetNode) {
+      return;
+    }
 
-    const isEC2toS3 =
-      (sourceNode.type === "ec2" && targetNode.type === "s3") ||
-      (sourceNode.type === "s3" && targetNode.type === "ec2");
+    console.log(sourceNode);
+    console.log(targetNode);
 
-    if (isEC2toS3) {
-      EC2S3(params); // <- Your custom logic
+    const key = keyGen(sourceNode.type!, targetNode.type!);
+    await connectionLogic(
+      key,
+      {
+        id: sourceNode.id,
+        type: sourceNode.type!,
+        data: sourceNode.data,
+      },
+      {
+        id: targetNode.id,
+        type: targetNode.type!,
+        data: targetNode.data,
+      }
+    );
+
+    if (!canConnect(sourceNode.type!, targetNode.type!)) {
+      alert(`❌ Cannot connect ${sourceNode.type} to ${targetNode.type}`);
+      return;
     }
 
     addEdge(params);

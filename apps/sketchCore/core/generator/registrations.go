@@ -57,29 +57,37 @@ var generators = []GeneratorRegistration{
 		Generator: TemplateGenerator[*models.IAMConfig]{
 			TemplatePath: "templates/iam.tmpl",
 		},
-	},{
-		NodeType: "instanceprofile",
-		DisplayName: "Instance Profile",
-		Category: "Resource",
+	}, {
+		NodeType:       "instanceprofile",
+		DisplayName:    "Instance Profile",
+		Category:       "Resource",
 		RequiredFields: []string{"Name", "NodeID", "ParentRoleName"},
 		Generator: TemplateGenerator[*models.InstanceProfileConfig]{
 			TemplatePath: "templates/instance_profile.tmpl",
 		},
-	},{
-		NodeType: "rds",
-		DisplayName: "RDS",
-		Category: "Database",
+	}, {
+		NodeType:       "rds",
+		DisplayName:    "RDS",
+		Category:       "Database",
 		RequiredFields: []string{"Name", "TagName", "NodeID"},
 		Generator: TemplateGenerator[*models.RDSConfig]{
 			TemplatePath: "templates/rds.tmpl",
 		},
-	},{
-		NodeType: "ebs",
-		DisplayName: "Elastic Block Storage",
-		Category: "Storage",
+	}, {
+		NodeType:       "ebs",
+		DisplayName:    "Elastic Block Storage",
+		Category:       "Storage",
 		RequiredFields: []string{"Name", "VolumeType", "Size"},
 		Generator: TemplateGenerator[*models.EBSConfig]{
 			TemplatePath: "templates/ebs.tmpl",
+		},
+	}, {
+		NodeType:       "ec2ebs",
+		DisplayName:    "Attach EBS Volume to EC2",
+		Category:       "Connection",
+		RequiredFields: []string{"NodeID", "VolumeID", "DeviceName", "EC2NodeID"},
+		Generator: TemplateGenerator[*models.AttachEBSConfig]{
+			TemplatePath: "templates/attach_ebs.tmpl",
 		},
 	},
 }

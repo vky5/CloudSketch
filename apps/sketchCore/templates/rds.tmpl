@@ -1,4 +1,4 @@
-resource "aws_db_instance" "{{.Name}}" {
+resource "aws_db_instance" "{{.NodeID}}" {
   allocated_storage    = {{or .AllocatedStorage "TODO: set allocated storage"}}
   storage_type         = "{{or .StorageType "TODO: set storage type"}}"
   engine               = "{{or .Engine "TODO: set engine"}}"
