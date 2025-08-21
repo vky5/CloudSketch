@@ -7,7 +7,7 @@ import {
 } from "@/store/useTerraformResourceStore";
 
 // To add new Resources based on the type passed as parameter
-const handleNewResource = (labelType: ResourceType) => {
+export function handleNewResource(labelType: ResourceType)  {
   const newLabel = `${labelType}-${Date.now()}`;
   const id = useTerraformResourceStore
     .getState()

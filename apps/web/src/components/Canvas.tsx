@@ -18,7 +18,10 @@ import GhostRectangle from "./nodes/ghosts/GhostRectangle";
 import GhostRhombus from "./nodes/ghosts/GhostRhombus";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import canConnect, { keyGen } from "@/config/connectionsConfig";
-import connectionLogic from "@/lib/nodeConnections/connectionLogicRegistry";
+import connectionLogic, {
+  serializeConnectionOrder,
+} from "@/lib/nodeConnections/connectionLogicRegistry";
+import { resourceBlock } from "@/utils/types/resource";
 
 function FlowContent() {
   const {
@@ -174,7 +177,7 @@ function FlowContent() {
 
       const newNode: Node = {
         id: crypto.randomUUID(),
-        type: selectedTool,
+        type: selectedTool || "unknown",
         position,
         draggable: false,
         data: {
@@ -215,36 +218,49 @@ function FlowContent() {
   const onConnect = async (params: Edge | Connection) => {
     const sourceNode = nodes.find((n) => n.id === params.source);
     const targetNode = nodes.find((n) => n.id === params.target);
+    if (!sourceNode || !targetNode) return;
 
-    if (!sourceNode || !targetNode) {
+    if (!sourceNode.type || !targetNode.type) {
+      console.warn("One of the nodes has no type, skipping connection");
       return;
     }
 
-    console.log(sourceNode);
-    console.log(targetNode);
+    const sourceBlock: resourceBlock = {
+      id: sourceNode.id,
+      type: sourceNode.type,
+      data: sourceNode.data,
+    };
 
-    const key = keyGen(sourceNode.type!, targetNode.type!);
-    await connectionLogic(
-      key,
-      {
-        id: sourceNode.id,
-        type: sourceNode.type!,
-        data: sourceNode.data,
-      },
-      {
-        id: targetNode.id,
-        type: targetNode.type!,
-        data: targetNode.data,
-      }
+    const targetBlock: resourceBlock = {
+      id: targetNode.id,
+      type: targetNode.type,
+      data: targetNode.data,
+    };
+
+    // serialize the order so that the connections can function bidirectionally
+    const { source, target } = serializeConnectionOrder(
+      sourceBlock,
+      targetBlock
     );
 
-    if (!canConnect(sourceNode.type!, targetNode.type!)) {
-      alert(`❌ Cannot connect ${sourceNode.type} to ${targetNode.type}`);
+    // generating the key from sourceBlock and targetBlock
+    const key = keyGen(source.type, target.type);
+
+    // connection logic to generate the connection block
+    await connectionLogic(
+      key,
+      { id: source.id, type: source.type, data: source.data },
+      { id: target.id, type: target.type, data: target.data }
+    );
+
+    if (!canConnect(source.type!, target.type!)) {
+      alert(`❌ Cannot connect ${source.type} to ${target.type}`);
       return;
     }
 
     addEdge(params);
   };
+
   // when node is clicked select it
   const onNodeClick = useCallback((event, node) => {
     console.log("Node clicked:", node.id);
