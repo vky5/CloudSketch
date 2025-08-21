@@ -1,13 +1,13 @@
 import EC2EBS from "./ec2-ebs";
 import { resourceBlock } from "@/utils/types/resource";
-// import EC2S3 from "./ec2-s3";
+import EC2S3 from "./ec2-s3";
 
 const connectionHandler: Record<
   connectionKeys,
   (sourceNode: resourceBlock, destinationNode: resourceBlock) => Promise<any>
 > = {
   ec2ebs: EC2EBS,
-  // ec2s3: EC2S3,
+  ec2s3: EC2S3,
 };
 
 export default function connectionLogic(
@@ -21,14 +21,14 @@ export default function connectionLogic(
   return handler(sourceNode, destinationNode);
 }
 
-export type connectionKeys = "ec2ebs";
+export type connectionKeys = "ec2ebs" | "ec2s3";
 
 export function serializeConnectionOrder(
   a: resourceBlock,
   b: resourceBlock
 ): { source: resourceBlock; target: resourceBlock } {
   const canonical: Record<string, string[]> = {
-    ec2: ["ebs"],
+    ec2: ["ebs", "s3"],
   };
 
   if (canonical[a.type]?.includes(b.type)) {

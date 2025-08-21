@@ -1,5 +1,5 @@
 # IAM Role
-resource "aws_iam_role" "{{.Name}}" {
+resource "aws_iam_role" "{{.NodeID}}" {
   name = "{{.Name}}"
 
   assume_role_policy = jsonencode({

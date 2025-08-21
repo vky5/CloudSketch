@@ -1,4 +1,4 @@
-resource "aws_iam_instance_profile" "{{.Name}}" {
+resource "aws_iam_instance_profile" "{{.NodeID}}" {
   name = "{{.Name}}"
   role = aws_iam_role.{{.ParentRoleName}}.name
 }

@@ -7,8 +7,8 @@ resource "aws_s3_bucket" "{{ .NodeID }}" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "{{ .BucketName }}_block" {
-  bucket                  = aws_s3_bucket.{{ .BucketName }}.id
+resource "aws_s3_bucket_public_access_block" "{{ .NodeID }}_block" {
+  bucket                  = aws_s3_bucket.{{ .NodeID }}.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true

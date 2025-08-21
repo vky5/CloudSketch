@@ -1,86 +1,62 @@
 import { resourceBlock } from "@/utils/types/resource";
 import { handleNewResource } from "../customSaveLogics/rdsSaveHandle";
+import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
+import { syncNodeWithBackend } from "@/utils/terraformSync";
 
+const handleChange = (key: string, value: any, id: string) => {
+  useTerraformResourceStore.getState().updateResource(id, { [key]: value });
+};
 
-export default function EC2S3(
+export default async function EC2S3(
   sourceNode: resourceBlock,
-  destinationNode: resourceBlock,
-){
+  destinationNode: resourceBlock
+) {
   // first step is creating an IAM policy
-  const [iamName, id] = handleNewResource("iam")
-  
+  const [iamName, iamID] = handleNewResource("iam");
+  handleChange("Services", ["ec2.amazonaws.com"], iamID);
+  handleChange(
+    "ManagedPolicies",
+    ["arn:aws:iam::aws:policy/AmazonS3FullAccess"],
+    iamID
+  );
 
+  console.log("source : ", sourceNode)
+  console.log("destination : ", destinationNode)
+
+
+  await syncNodeWithBackend({
+    id: iamID,
+    type: "iam",
+    data: {
+      Name: iamName,
+      Services: ["ec2.amazonaws.com"],
+      ManagedPolicies: ["arn:aws:iam::aws:policy/AmazonS3FullAccess"],
+    },
+  });
+
+  const [instanceProfileName, instanceProfileId] =
+    handleNewResource("instanceprofile");
+  await syncNodeWithBackend({
+    id: instanceProfileId,
+    type: "instanceprofile",
+    data: {
+      Name: instanceProfileName,
+      ParentRoleName: iamName,
+    },
+  });
+
+  await syncNodeWithBackend({
+    id: sourceNode.id,
+    type: "ec2",
+    data: {
+      ...sourceNode.data,
+      InstanceProfile: instanceProfileName,
+    },
+  });
 }
-
-
-
-
-
 
 /*
 IAM Role <-- attach multiple policies here
 Instance Profile <-- contains that single IAM Role
 EC2 Instance <-- uses that single Instance Profile
 */
-
-
-
-const idCreated = handleNewResource("iam");
-      handleChange("Services", ["ec2.amazonaws.com"], idCreated);
-      handleChange(
-        "ManagedPolicies",
-        ["arn:aws:iam::aws:policy/AmazonS3FullAccess"],
-        idCreated
-      );
-      id = idCreated;
-      // if IAM role is present use it else use what is provided
-      iam = useTerraformResourceStore
-        .getState()
-        .resources.find((rs) => rs.id === id);
-
-      await syncNodeWithBackend({
-        id,
-        type: "iam",
-        data: {
-          Name: iam?.data.Name,
-          Services: iam?.data.Services,
-          ManagedPolicies: iam?.data.ManagedPolicies,
-        },
-      });
-
-
-
-
-    // create the instance profile type
-    const instanceProfileId = handleNewResource("instanceprofile");
-
-    // setting up the ec2 to assume the role through profile instance
-    const instanceProfileName = useTerraformResourceStore
-      .getState()
-      .resources.find((ip) => ip.id === instanceProfileId);
-
-    await syncNodeWithBackend({
-      id: instanceProfileId,
-      type: "instanceprofile",
-      data: {
-        Name: instanceProfileName?.data.Name,
-        ParentRoleName: iam?.data.Name,
-      },
-    });
-
-
-     const ec2State = useDiagramStore
-      .getState()
-      .nodes.find((nds) => nds.id === edge.source);
-
-    await syncNodeWithBackend({
-      id: edge.source,
-      type: "ec2",
-      data: {
-        ...ec2State?.data,
-        InstanceProfile: instanceProfileName?.data.Name,
-      },
-    });
-  } catch (error) {
-    console.log(error);
-  }

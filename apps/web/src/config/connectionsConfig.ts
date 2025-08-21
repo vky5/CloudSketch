@@ -29,6 +29,8 @@ export function keyGen(
 ): connectionKeys | null {
   if (sourceType === "ec2" && destinationType === "ebs") {
     return "ec2ebs";
+  } else if (sourceType === "ec2" && destinationType === "s3") {
+    return "ec2s3";
   }
 
   return null;

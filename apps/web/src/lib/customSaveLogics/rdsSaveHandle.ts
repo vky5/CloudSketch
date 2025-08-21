@@ -1,5 +1,5 @@
 import { resourceBlock } from "@/utils/types/resource";
-import { defaultSave } from "./saveLogicRegistry";
+import { defaultSave } from "@/utils/defaultSave";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import {
   useTerraformResourceStore,
@@ -7,14 +7,14 @@ import {
 } from "@/store/useTerraformResourceStore";
 
 // To add new Resources based on the type passed as parameter
-export function handleNewResource(labelType: ResourceType)  {
+export function handleNewResource(labelType: ResourceType) {
   const newLabel = `${labelType}-${Date.now()}`;
   const id = useTerraformResourceStore
     .getState()
     .addResource(labelType, { Name: newLabel });
 
   return [newLabel, id];
-};
+}
 
 const defaultRdsPorts: Record<string, number> = {
   mysql: 3306,
