@@ -1,29 +1,31 @@
-import { Connection, Edge } from "@xyflow/react";
-import {
-  ResourceType,
-  useTerraformResourceStore,
-} from "@/store/useTerraformResourceStore";
-import { syncNodeWithBackend } from "@/utils/terraformSync";
-import { useDiagramStore } from "@/store/useDiagramStore";
+import { resourceBlock } from "@/utils/types/resource";
+import { handleNewResource } from "../customSaveLogics/rdsSaveHandle";
 
-// To add new Resources based on the type passed as parameter
-const handleNewResource = (labelType: ResourceType) => {
-  const newLabel = `${labelType}-${Date.now()}`;
-  return useTerraformResourceStore
-    .getState()
-    .addResource(labelType, { Name: newLabel });
-};
 
-const handleChange = (key: string, value: any, id: string) => {
-  useTerraformResourceStore.getState().updateResource(id, { [key]: value });
-};
+export default function EC2S3(
+  sourceNode: resourceBlock,
+  destinationNode: resourceBlock,
+){
+  // first step is creating an IAM policy
+  const [iamName, id] = handleNewResource("iam")
+  
 
-export default async function EC2S3(edge: Edge | Connection, id?: string) {
-  // first is adding the iam role if not present
-  try {
-    let iam;
-    if (!id) {
-      const idCreated = handleNewResource("iam");
+}
+
+
+
+
+
+
+/*
+IAM Role <-- attach multiple policies here
+Instance Profile <-- contains that single IAM Role
+EC2 Instance <-- uses that single Instance Profile
+*/
+
+
+
+const idCreated = handleNewResource("iam");
       handleChange("Services", ["ec2.amazonaws.com"], idCreated);
       handleChange(
         "ManagedPolicies",
@@ -45,7 +47,9 @@ export default async function EC2S3(edge: Edge | Connection, id?: string) {
           ManagedPolicies: iam?.data.ManagedPolicies,
         },
       });
-    }
+
+
+
 
     // create the instance profile type
     const instanceProfileId = handleNewResource("instanceprofile");
@@ -64,7 +68,8 @@ export default async function EC2S3(edge: Edge | Connection, id?: string) {
       },
     });
 
-    const ec2State = useDiagramStore
+
+     const ec2State = useDiagramStore
       .getState()
       .nodes.find((nds) => nds.id === edge.source);
 
@@ -79,10 +84,3 @@ export default async function EC2S3(edge: Edge | Connection, id?: string) {
   } catch (error) {
     console.log(error);
   }
-}
-
-/*
-IAM Role <-- attach multiple policies here
-Instance Profile <-- contains that single IAM Role
-EC2 Instance <-- uses that single Instance Profile
-*/
