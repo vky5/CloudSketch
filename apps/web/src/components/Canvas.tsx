@@ -21,7 +21,7 @@ import canConnect, { keyGen } from "@/config/connectionsConfig";
 import connectionLogic, {
   serializeConnectionOrder,
 } from "@/lib/nodeConnections/connectionLogicRegistry";
-import { resourceBlock } from "@/utils/types/resource";
+import { ResourceBlock } from "@/utils/types/resource";
 
 function FlowContent() {
   const {
@@ -225,13 +225,13 @@ function FlowContent() {
       return;
     }
 
-    const sourceBlock: resourceBlock = {
+    const sourceBlock: ResourceBlock = {
       id: sourceNode.id,
       type: sourceNode.type,
       data: sourceNode.data,
     };
 
-    const targetBlock: resourceBlock = {
+    const targetBlock: ResourceBlock = {
       id: targetNode.id,
       type: targetNode.type,
       data: targetNode.data,

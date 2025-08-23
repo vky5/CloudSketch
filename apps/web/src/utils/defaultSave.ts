@@ -1,7 +1,7 @@
 import { syncNodeWithBackend } from "./terraformSync";
-import { resourceBlock } from "./types/resource";
+import { ResourceBlock } from "./types/resource";
 
-export function defaultSave(node: resourceBlock) {
+export function defaultSave(node: ResourceBlock) {
   return syncNodeWithBackend({
     id: node.id,
     type: node.type!,

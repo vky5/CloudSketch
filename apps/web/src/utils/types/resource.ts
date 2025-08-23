@@ -1,5 +1,7 @@
-export interface resourceBlock {
+export interface ResourceBlock {
   id: string;
   type: string;
-  data: any;
+  data: Record<string, unknown>; // generic catch-all
 }
+
+

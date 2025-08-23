@@ -1,10 +1,10 @@
 import EC2EBS from "./ec2-ebs";
-import { resourceBlock } from "@/utils/types/resource";
+import { ResourceBlock } from "@/utils/types/resource";
 import EC2S3 from "./ec2-s3";
 
 const connectionHandler: Record<
   connectionKeys,
-  (sourceNode: resourceBlock, destinationNode: resourceBlock) => Promise<any>
+  (sourceNode: ResourceBlock, destinationNode: ResourceBlock) => Promise<any>
 > = {
   ec2ebs: EC2EBS,
   ec2s3: EC2S3,
@@ -12,8 +12,8 @@ const connectionHandler: Record<
 
 export default function connectionLogic(
   key: connectionKeys | null,
-  sourceNode: resourceBlock,
-  destinationNode: resourceBlock
+  sourceNode: ResourceBlock,
+  destinationNode: ResourceBlock
 ) {
   if (!key) return Promise.resolve();
   const handler = connectionHandler[key];
@@ -24,9 +24,9 @@ export default function connectionLogic(
 export type connectionKeys = "ec2ebs" | "ec2s3";
 
 export function serializeConnectionOrder(
-  a: resourceBlock,
-  b: resourceBlock
-): { source: resourceBlock; target: resourceBlock } {
+  a: ResourceBlock,
+  b: ResourceBlock
+): { source: ResourceBlock; target: ResourceBlock } {
   const canonical: Record<string, string[]> = {
     ec2: ["ebs", "s3"],
   };

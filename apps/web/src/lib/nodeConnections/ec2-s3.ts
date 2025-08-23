@@ -1,4 +1,4 @@
-import { resourceBlock } from "@/utils/types/resource";
+import { ResourceBlock } from "@/utils/types/resource";
 import { handleNewResource } from "../customSaveLogics/rdsSaveHandle";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
@@ -8,8 +8,8 @@ const handleChange = (key: string, value: any, id: string) => {
 };
 
 export default async function EC2S3(
-  sourceNode: resourceBlock,
-  destinationNode: resourceBlock
+  sourceNode: ResourceBlock,
+  destinationNode: ResourceBlock
 ) {
   // first step is creating an IAM policy
   const [iamName, iamID] = handleNewResource("iam");

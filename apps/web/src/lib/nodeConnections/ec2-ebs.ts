@@ -1,9 +1,9 @@
 import { syncNodeWithBackend } from "@/utils/terraformSync";
-import { resourceBlock } from "@/utils/types/resource";
+import { ResourceBlock } from "@/utils/types/resource";
 
 export default function EC2EBS(
-  sourceNode: resourceBlock,
-  destinationNode: resourceBlock
+  sourceNode: ResourceBlock,
+  destinationNode: ResourceBlock
 ) {
   return syncNodeWithBackend({
     id: crypto.randomUUID(),

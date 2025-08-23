@@ -1,9 +1,9 @@
 import axios from "axios";
 import { useTerraformStore } from "@/store/useTerraformStore";
-import { resourceBlock } from "./types/resource";
+import { ResourceBlock } from "./types/resource";
 
 // Fixed version using getState() — no hooks outside components
-export async function syncNodeWithBackend(node: resourceBlock) {
+export async function syncNodeWithBackend(node: ResourceBlock) {
   const reqObj = {
     NodeID: node.id, // so we are passing the normal id as NodeId
     Type: node.type,
