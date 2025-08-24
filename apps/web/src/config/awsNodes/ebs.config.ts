@@ -44,3 +44,12 @@ export const ebsFormSchema: NodeField[] = [
     required: false,
   },
 ];
+
+export type ebsData = {
+  Name: string; // e.g., "my-ebs-volume"
+  VolumeType: "gp2" | "gp3" | "io1" | "io2" | "sc1" | "st1"; // restrict to dropdown options
+  Size: number; // in GB
+  Encrypted?: boolean; // toggle (optional)
+  DeleteOnTermination?: boolean; // toggle (optional)
+  TagName?: string; // optional string
+};

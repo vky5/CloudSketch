@@ -61,5 +61,15 @@ export const s3FormConfig: NodeField[] = [
   //   },
 ];
 
+export type s3Data = {
+  BucketName: string;
+  // DefaultStorageClass?: "STANDARD" | "INTELLIGENT_TIERING" | "STANDARD_IA" | "ONEZONE_IA" | "GLACIER" | "DEEP_ARCHIVE";
+  // LifecycleRules?: {
+  //   Enabled: boolean;
+  //   TransitionAfterDays?: number;
+  //   TransitionToClass?: "INTELLIGENT_TIERING" | "STANDARD_IA" | "ONEZONE_IA" | "GLACIER" | "DEEP_ARCHIVE";
+  // };
+};
+
 // StorageClass
 // Lifecycle is at bucket level (sets how the object will go from one storage class to another after how many days) // applies to all if no filtering is provided

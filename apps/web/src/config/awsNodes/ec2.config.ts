@@ -60,3 +60,13 @@ export const ec2FormSchema: NodeField[] = [
     required: false,
   },
 ];
+
+export type ec2Data = {
+  Name: string; // Resource Name
+  AMI: string; // AMI ID
+  InstanceType: string; // e.g., t2.micro
+  SecurityGroups?: string[]; // optional multiselect
+  KeyName?: string; // optional dropdown
+  SubnetID?: string; // optional
+  TagName?: string; // optional
+};

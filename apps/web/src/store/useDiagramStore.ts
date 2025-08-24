@@ -8,13 +8,14 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
 } from "@xyflow/react";
+import { AnyNode, ResourceBlock } from "@/utils/types/resource";
 /*
 Okay so two types Edge and Connnections
 Edge includes Id connections doesnt
 */
 
 interface DiagramState {
-  nodes: Node[];
+  nodes: AnyNode[];
   edges: Edge[];
   selectedNodeId: string | null; // for signle selected node (enables drag drop and resize)
   selectedTool: string;
@@ -23,7 +24,7 @@ interface DiagramState {
 
   setNodes: (changes: NodeChange[]) => void;
   setEdges: (changes: EdgeChange[]) => void;
-  addNode: (node: Node) => void;
+  addNode: (node: AnyNode) => void;
   addEdge: (edge: Edge | Connection) => void;
 
   setSelectedTool: (tool: string) => void;
@@ -32,7 +33,7 @@ interface DiagramState {
   closeSettings: () => void;
   selectNodes: (ids: string[]) => void; // set a large number of nodes in selected in selectedNodeIds
   clearSelectedNodes: () => void;
-  updateNodeData: (id: string, newData: any) => void;
+  updateNodeData: (id: string, newData: Partial<ResourceBlock["data"]>) => void;
   updateNodeDimensions: (id: string, width: number, height: number) => void;
 }
 
@@ -44,9 +45,9 @@ export const useDiagramStore = create<DiagramState>((set) => ({
   selectedNodeIds: [],
   settingOpenNodeId: null,
 
-  setNodes: (changes) =>
+  setNodes: (changes: NodeChange[]) =>
     set((state) => ({
-      nodes: applyNodeChanges(changes, state.nodes),
+      nodes: applyNodeChanges(changes, state.nodes) as AnyNode[],
     })),
 
   setEdges: (changes) =>
@@ -54,14 +55,17 @@ export const useDiagramStore = create<DiagramState>((set) => ({
       edges: applyEdgeChanges(changes, state.edges),
     })),
 
-  addNode: (node) =>
+  addNode: (node: AnyNode) =>
     set((state) => ({
       nodes: [...state.nodes, node],
     })),
 
-  addEdge: (edge) =>
+  addEdge: (edge: Edge | Connection) =>
     set((state) => ({
-      edges: [...state.edges, { ...edge, id: crypto.randomUUID() } as Edge], // sometimes the connection doesnt include
+      edges: [
+        ...state.edges,
+        { ...edge, id: "id" in edge ? edge.id : crypto.randomUUID() } as Edge, // sometimes the connection doesnt include
+      ],
     })),
 
   setSelectedTool: (tool) => set({ selectedTool: tool }),
@@ -73,14 +77,14 @@ export const useDiagramStore = create<DiagramState>((set) => ({
   selectNodes: (ids) => set({ selectedNodeIds: ids }), // this is for the selection and here the ids is the array of ids that is selected
   clearSelectedNodes: () => set({ selectedNodeIds: [] }),
 
-  updateNodeData: (id, newData) =>
+  updateNodeData: (id: string, newData: Partial<ResourceBlock["data"]>) =>
     set((state) => ({
       nodes: state.nodes.map((node) =>
         node.id === id ? { ...node, data: { ...node.data, ...newData } } : node
       ),
     })),
 
-  updateNodeDimensions: (id, width, height) =>
+  updateNodeDimensions: (id: string, width: number, height: number) =>
     set((state) => ({
       nodes: state.nodes.map((node) =>
         node.id === id ? { ...node, width, height } : node

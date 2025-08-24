@@ -91,6 +91,21 @@ export const rdsFormSchema: NodeField[] = [
   },
 ];
 
+export type rdsData = {
+  Name: string;
+  Engine: "mysql" | "postgres" | "mariadb" | "oracle-se2" | "sqlserver-ex";
+  EngineVersion?: string;
+  InstanceClass: "db.t3.micro" | "db.t3.small" | "db.t3.medium" | "db.t3.large";
+  AllocatedStorage: number;
+  DBName: string;
+  MasterUsername: string;
+  MasterPassword: string;
+  AutoGenerateSG?: boolean; // toggle optional
+  SecurityGroups?: string[]; // multiselect optional
+  SubnetID?: string; // optional
+  TagName?: string; // optional
+};
+
 // WHne you write this options: useTerraformStore.getState().resource...
 // it populates only once when the schema is first imported
 // for get() every time your form code accesses field.options, the getter runs fresh, pulling the latest store state.

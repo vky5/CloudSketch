@@ -3,9 +3,10 @@ import { Server } from "lucide-react";
 import openSettings from "@/utils/openSettings";
 import { FaGear } from "react-icons/fa6";
 import { useEffect, useState } from "react";
-import { ec2FormSchema } from "@/config/awsNodes/ec2.config";
+import { ec2Data, ec2FormSchema } from "@/config/awsNodes/ec2.config";
+import { AnyNodeProps } from "@/utils/types/resource";
 
-export default function EC2Node({ data, selected, id }: NodeProps) {
+export default function EC2Node({ data, selected, id }: AnyNodeProps<ec2Data>) {
   const [hovered, setHovered] = useState(false);
   const [isValid, setIsValid] = useState(true);
 
@@ -19,7 +20,8 @@ export default function EC2Node({ data, selected, id }: NodeProps) {
 
       // check if each required field exists and has a non-empty value
       const missing = requiredFields.filter((field) => {
-        const value = data[field.key];
+        const key = field.key as keyof ec2Data; 
+        const value = data[key]; // get the actual value from data
         return value === undefined || value === null || value === "";
       });
 

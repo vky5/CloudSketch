@@ -3,9 +3,10 @@ import { Database } from "lucide-react";
 import openSettings from "@/utils/openSettings";
 import { FaGear } from "react-icons/fa6";
 import { useState, useEffect } from "react";
-import { rdsFormSchema } from "@/config/awsNodes/rds.config";
+import { rdsData, rdsFormSchema } from "@/config/awsNodes/rds.config";
+import { AnyNodeProps } from "@/utils/types/resource";
 
-export default function RDSNode({ data, selected, id }: NodeProps) {
+export default function RDSNode({ data, selected, id }: AnyNodeProps<rdsData>) {
   const [hovered, setHovered] = useState(false);
   const [isValid, setIsValid] = useState(true);
 
@@ -16,8 +17,15 @@ export default function RDSNode({ data, selected, id }: NodeProps) {
   useEffect(() => {
     const requiredFields = rdsFormSchema.filter((f) => f.required);
     const missing = requiredFields.filter((field) => {
-      const value = data[field.key];
-      return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
+      const key = field.key as keyof rdsData;
+      const value = data[key];
+
+      return (
+        value === undefined ||
+        value === null ||
+        value === "" ||
+        (Array.isArray(value) && value.length === 0)
+      );
     });
     setIsValid(missing.length === 0);
   }, [data]);

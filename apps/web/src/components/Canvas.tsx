@@ -10,10 +10,11 @@ import {
   Node,
   ReactFlowProvider,
   useReactFlow,
+  NodeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useDiagramStore } from "@/store/useDiagramStore";
-import { nodeTypes } from "./Canvas/nodeTypes";
+import { nodeTypes, getDefaultDataForNode } from "./Canvas/nodeTypes";
 import GhostRectangle from "./nodes/ghosts/GhostRectangle";
 import GhostRhombus from "./nodes/ghosts/GhostRhombus";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
@@ -35,9 +36,7 @@ function FlowContent() {
     setSelectedTool,
     selectedNodeId,
     selectedNode,
-    selectedNodeIds,
     selectNodes,
-    clearSelectedNodes,
   } = useDiagramStore();
 
   // using hook to reference to canvas
@@ -175,14 +174,13 @@ function FlowContent() {
       const { clientX, clientY } = event;
       const position = screenToFlowPosition({ x: clientX, y: clientY });
 
-      const newNode: Node = {
+      const newNode: Node<ResourceBlock["data"]> = {
+        //this a generic created explicitley for data type!?? that makes total sense and we are accessing data type from reosurceblock
         id: crypto.randomUUID(),
         type: selectedTool || "unknown",
         position,
         draggable: false,
-        data: {
-          label: selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1),
-        },
+        data: getDefaultDataForNode(selectedTool),
       };
 
       try {
@@ -225,16 +223,17 @@ function FlowContent() {
       return;
     }
 
+    // explicitly type as ResourceBlock
     const sourceBlock: ResourceBlock = {
       id: sourceNode.id,
       type: sourceNode.type,
-      data: sourceNode.data,
+      data: sourceNode.data as ResourceBlock["data"],
     };
 
     const targetBlock: ResourceBlock = {
       id: targetNode.id,
       type: targetNode.type,
-      data: targetNode.data,
+      data: targetNode.data as ResourceBlock["data"],
     };
 
     // serialize the order so that the connections can function bidirectionally
@@ -262,14 +261,14 @@ function FlowContent() {
   };
 
   // when node is clicked select it
-  const onNodeClick = useCallback((event, node) => {
+  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     console.log("Node clicked:", node.id);
     selectedNode(node.id); // to select the node for opening settings and
   }, []);
 
-  //
+  // apply any changes happened to node to useDiagramStore
   const onNodesChangeHandler = useCallback(
-    (changes) => {
+    (changes: NodeChange[]) => {
       setNodes(changes);
     },
     [setNodes]

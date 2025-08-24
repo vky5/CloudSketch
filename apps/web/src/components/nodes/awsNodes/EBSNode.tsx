@@ -3,9 +3,10 @@ import { HardDrive } from "lucide-react";
 import openSettings from "@/utils/openSettings";
 import { FaGear } from "react-icons/fa6";
 import { useEffect, useState } from "react";
-import { ebsFormSchema } from "@/config/awsNodes/ebs.config";
+import { ebsData, ebsFormSchema } from "@/config/awsNodes/ebs.config";
+import { AnyNodeProps } from "@/utils/types/resource";
 
-export default function EBSNode({ data, selected, id }: NodeProps) {
+export default function EBSNode({ data, selected, id }: AnyNodeProps<ebsData>) {
   const [hovered, setHovered] = useState(false);
   const [isValid, setIsValid] = useState(true);
 
@@ -19,8 +20,15 @@ export default function EBSNode({ data, selected, id }: NodeProps) {
 
       // check if each required field exists and has a non-empty value
       const missing = requiredFields.filter((field) => {
-        const value = data[field.key];
-        return value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
+        const key = field.key as keyof ebsData; // key is "VolumeType" | "Size"
+        const value = data[key]; // get the actual value from data
+
+        return (
+          value === undefined ||
+          value === null ||
+          value === "" ||
+          (Array.isArray(value) && value.length === 0)
+        );
       });
 
       setIsValid(missing.length === 0);
@@ -65,7 +73,7 @@ export default function EBSNode({ data, selected, id }: NodeProps) {
       <div className="flex items-center gap-3 mt-1">
         {/* Fixed icon container */}
         <div className="flex-shrink-0">
-          <HardDrive className="w-6 h-6 text-[#6A5ACD]" /> 
+          <HardDrive className="w-6 h-6 text-[#6A5ACD]" />
         </div>
 
         {/* Text container with fixed width + truncation */}
