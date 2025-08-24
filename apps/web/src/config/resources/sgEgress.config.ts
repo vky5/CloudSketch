@@ -37,3 +37,12 @@ export const egressRuleFields: NodeField[] = [
     placeholder: "::/0",
   },
 ];
+
+
+export type EgressRuleData = {
+  Protocol: "tcp" | "udp" | "icmp" | "-1"; // protocol type
+  FromPort: number;                        // starting port
+  ToPort: number;                          // ending port
+  CidrIPv4: string;                        // IPv4 CIDR block
+  CidrIPv6?: string;                       // optional IPv6 CIDR block
+};

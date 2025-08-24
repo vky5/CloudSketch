@@ -1,6 +1,8 @@
 import { NodeField } from "@/utils/types/NodeField";
 import { ingressRuleFields } from "./sgIngress.config";
 import { egressRuleFields } from "./sgEgress.config";
+import type { IngressRuleData } from "./sgIngress.config";
+import type { EgressRuleData } from "./sgEgress.config";
 
 export const securityGroupFormSchema: NodeField[] = [
   {
@@ -41,3 +43,12 @@ export const securityGroupFormSchema: NodeField[] = [
     fields: egressRuleFields,
   },
 ];
+
+
+export type SecurityGroupData = {
+  Name: string;
+  Description?: string;
+  Tags?: string; // could later be refined into Record<string,string> if you parse JSON
+  IngressRules?: IngressRuleData[];
+  EgressRules?: EgressRuleData[];
+};

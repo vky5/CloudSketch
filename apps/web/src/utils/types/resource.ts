@@ -2,12 +2,22 @@ import { ebsData } from "@/config/awsNodes/ebs.config";
 import { ec2Data } from "@/config/awsNodes/ec2.config";
 import { rdsData } from "@/config/awsNodes/rds.config";
 import { s3Data } from "@/config/awsNodes/s3.config";
+import { iamData } from "@/config/resources/iam.config";
+import { keyPairData } from "@/config/resources/keypair.config";
+import { SecurityGroupData } from "@/config/resources/sg.config";
 import { Node, NodeProps } from "@xyflow/react";
 
 export interface ResourceBlock {
   id: string;
   type: string;
-  data: ebsData | ec2Data | rdsData | s3Data;
+  data:
+    | ebsData
+    | ec2Data
+    | rdsData
+    | s3Data
+    | iamData
+    | keyPairData
+    | SecurityGroupData;
 }
 
 export type AnyNode = Node<ResourceBlock["data"]>;

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { Shield, KeyRound, X } from "lucide-react";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
@@ -54,18 +53,21 @@ export default function TerraformSideMenu({
           icon={<Shield className="w-4 h-4 text-blue-400" />}
           onAdd={() => handleNewResource("securitygroup")}
         >
-          {securityGroups.map(({ id, data }, i) => (
-            <div key={id}>
-              <ResourceItem
-                name={data.Name}
-                onDelete={() => deleteResource(id)}
-                onClick={() => openSettings(id, "resource")}
-              />
-              {i !== securityGroups.length - 1 && (
-                <hr className="my-1 border-t border-[#3f3f46] w-[90%] mx-auto opacity-70" />
-              )}
-            </div>
-          ))}
+          {securityGroups.map(({ id, data }, i) => {
+            const dataRecord = data as Record<string, any>;
+            return (
+              <div key={id}>
+                <ResourceItem
+                  name={dataRecord.Name}
+                  onDelete={() => deleteResource(id)}
+                  onClick={() => openSettings(id, "resource")}
+                />
+                {i !== securityGroups.length - 1 && (
+                  <hr className="my-1 border-t border-[#3f3f46] w-[90%] mx-auto opacity-70" />
+                )}
+              </div>
+            );
+          })}
         </ResourceFolder>
 
         {/* Key Pairs */}
@@ -74,18 +76,21 @@ export default function TerraformSideMenu({
           icon={<KeyRound className="w-4 h-4 text-yellow-400" />}
           onAdd={() => handleNewResource("keypair")}
         >
-          {keyPairs.map(({ id, data }, i) => (
-            <div key={id}>
-              <ResourceItem
-                name={data.Name}
-                onDelete={() => deleteResource(id)}
-                onClick={() => openSettings(id, "resource")}
-              />
-              {i !== keyPairs.length - 1 && (
-                <hr className="my-1 border-t border-[#3f3f46] w-[80%] mx-auto" />
-              )}
-            </div>
-          ))}
+          {keyPairs.map(({ id, data }, i) => {
+            const dataRecord = data as Record<string, any>;
+            return (
+              <div key={id}>
+                <ResourceItem
+                  name={dataRecord.Name}
+                  onDelete={() => deleteResource(id)}
+                  onClick={() => openSettings(id, "resource")}
+                />
+                {i !== keyPairs.length - 1 && (
+                  <hr className="my-1 border-t border-[#3f3f46] w-[80%] mx-auto" />
+                )}
+              </div>
+            );
+          })}
         </ResourceFolder>
 
         {/* IAM */}
@@ -93,20 +98,22 @@ export default function TerraformSideMenu({
           title="IAM"
           icon={<KeyRound className="w-4 h-4 text-yellow-400" />}
           onAdd={() => handleNewResource("iam")}
-
         >
-          {IAM.map(({ id, data }, i) => (
-            <div key={id}>
-              <ResourceItem
-                name={data.Name}
-                onDelete={() => deleteResource(id)}
-                onClick={() => openSettings(id, "resource")}
-              />
-              {i !== IAM.length - 1 && (
-                <hr className="my-1 border-t border-[#3f3f46] w-[80%] mx-auto" />
-              )}
-            </div>
-          ))}
+          {IAM.map(({ id, data }, i) => {
+            const dataRecord = data as Record<string, any>;
+            return (
+              <div key={id}>
+                <ResourceItem
+                  name={dataRecord.Name}
+                  onDelete={() => deleteResource(id)}
+                  onClick={() => openSettings(id, "resource")}
+                />
+                {i !== IAM.length - 1 && (
+                  <hr className="my-1 border-t border-[#3f3f46] w-[80%] mx-auto" />
+                )}
+              </div>
+            );
+          })}
         </ResourceFolder>
       </div>
     </div>

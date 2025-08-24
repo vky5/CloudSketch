@@ -36,5 +36,12 @@ export const iamFormSchema: NodeField[] = [
     label: "Custom Policies",
     type: "multitext",
     placeholder: "arn:aws:iam::aws:policy/YourCustomPolicy",
-  }
+  },
 ];
+
+export type iamData = {
+  Name: string; // Role Name
+  Services: string[]; // multiselect
+  ManagedPolicies?: string[]; // optional multiselect
+  CustomPolicies?: string[]; // optional multitext
+};

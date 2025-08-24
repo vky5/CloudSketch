@@ -19,7 +19,12 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const formFields = formSchemaRegistry[nodeType] || [];
   console.log(formFields);
 
-  const handleChange = (key: string, value: string) => {
+  // Helper to safely get field value from union type
+  const getNodeFieldValue = (key: string) => {
+    return (node.data as Record<string, any>)[key];
+  };
+
+  const handleChange = (key: string, value: any) => {
     updateNodeData(settingOpenNodeId, { [key]: value });
   };
 
@@ -45,7 +50,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
     // check if each required field exists and has a non-empty value
     const missing = requiredFields.filter((field) => {
-      const value = node.data?.[field.key];
+      const value = getNodeFieldValue(field.key);
       return value === undefined || value === null || value === "";
     });
 
@@ -98,7 +103,7 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
             <RenderForm
               key={field.key}
               field={field}
-              currentNode={(node.data?.[field.key] as string) || ""}
+              currentNode={getNodeFieldValue(field.key)}
               handleChange={handleChange}
             />
           ))

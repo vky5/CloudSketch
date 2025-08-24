@@ -22,10 +22,13 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
   // Find the current resource object
   const resource = resources.find((r) => r.id === settingOpenResourceId);
   if (!resource) return null;
-  console.log(resource)
+  console.log(resource);
 
   const resourceType = resource.type!; // Resource type (e.g., keypair)
   const formFields = formSchemaRegistry[resourceType] || []; // Fields to render from schema
+
+  // Cast resource.data to Record<string, any> for dynamic access
+  const resourceData = resource.data as Record<string, any>;
 
   // Handles updating a resource property
   const handleChange = (key: string, value: string) => {
@@ -55,12 +58,12 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
     // check if each required field exists and has a non-empty value
     const missing = requiredFields.filter((field) => {
-      const value = resource.data?.[field.key];
+      const value = resourceData[field.key];
       return value === undefined || value === null || value === "";
     });
 
     setIsValid(missing.length === 0);
-  }, [resource.data, formFields]);
+  }, [resourceData, formFields]);
 
   // Trigger save & close on Enter key press
   useEffect(() => {
@@ -73,7 +76,7 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isValid, resource.data]);
+  }, [isValid, resourceData]);
 
   return (
     <div
@@ -127,7 +130,7 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
             <RenderForm
               key={field.key}
               field={field}
-              currentNode={resource.data?.[field.key]}
+              currentNode={resourceData[field.key]}
               handleChange={handleChange}
             />
           ))

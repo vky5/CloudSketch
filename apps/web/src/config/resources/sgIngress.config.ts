@@ -38,3 +38,12 @@ export const ingressRuleFields: NodeField[] = [
   },
 
 ];
+
+
+export type IngressRuleData = {
+  Protocol: "tcp" | "udp" | "icmp" | "-1"; // allowed protocols
+  FromPort: number;                        // starting port
+  ToPort: number;                          // ending port
+  CidrIPv4: string;                        // IPv4 CIDR block
+  CidrIPv6?: string;                       // optional IPv6 CIDR block
+};

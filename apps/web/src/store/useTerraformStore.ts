@@ -131,12 +131,5 @@ Ahh yes — now I get exactly what you’re thinking, and that’s actually a **
   * If yes → delete block + optionally remove from global resources.
   * If shared → just delete edge block, leave IAM role.
 
----
-
-This approach gives **full control**, avoids hidden IAM roles, and fits nicely with your **Zustand stores** design.
-
-If you want, I can sketch a **data flow + Terraform block mapping** for this system — showing **how edge selection → IAM role → Terraform store** works. It’ll make it very concrete.
-
-Do you want me to do that?
 
 */
