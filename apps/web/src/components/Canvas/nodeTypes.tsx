@@ -42,7 +42,7 @@ export function getDefaultDataForNode(
         MasterPassword: "",
       };
     case "s3":
-      return { BucketName: "" };
+      return { Name: "" };
     default:
       throw new Error(`Unknown node type: ${type}`);
   }

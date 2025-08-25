@@ -1,18 +1,18 @@
 "use client";
 
-import { useRef, useEffect , useState} from "react";
-import Editor from "@monaco-editor/react";
+import { useRef, useEffect, useState } from "react";
+import Editor, { OnMount } from "@monaco-editor/react";
 import { X } from "lucide-react";
 import { useTerraformStore } from "@/store/useTerraformStore";
 
 export default function TerraformEditor({
   onClose,
   editorWidth,
-  setEditorWidth
+  setEditorWidth,
 }: {
-  onClose: () => void,
-  editorWidth: number,
-  setEditorWidth: (width: number) => void
+  onClose: () => void;
+  editorWidth: number;
+  setEditorWidth: (width: number) => void;
 }) {
   const { getAllAsString } = useTerraformStore();
   const code = getAllAsString();
@@ -21,30 +21,28 @@ export default function TerraformEditor({
 
   const handleMouseDown = () => setIsDragging(true);
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
-    const newWidth = window.innerWidth - e.clientX;
-    const clampedWidth = Math.min(Math.max(newWidth, 300), 800);
-    setEditorWidth(clampedWidth);  // Update parent
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
-
+  // useEffect now handles the event listeners with inline functions
   useEffect(() => {
-    if (isDragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-    } else {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    }
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = window.innerWidth - e.clientX;
+      const clampedWidth = Math.min(Math.max(newWidth, 300), 800);
+      setEditorWidth(clampedWidth);
+    };
+
+    const handleMouseUp = () => setIsDragging(false);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, setEditorWidth]);
 
-  const handleEditorMount = (editor: any, monaco: any) => {
+  const handleEditorMount: OnMount = (editor, monaco) => {
     monaco.editor.defineTheme("cloudsketch-dark", {
       base: "vs-dark",
       inherit: true,

@@ -41,7 +41,7 @@ export const ec2FormSchema: NodeField[] = [
     get options() {
       return useTerraformResourceStore
         .getState()
-        .resources.filter((kp) => kp.type === "keypair" && kp.data?.Name1)
+        .resources.filter((kp) => kp.type === "keypair" && kp.data?.Name)
         .map((kp) => kp.data.Name);
     },
   },
@@ -69,4 +69,5 @@ export type ec2Data = {
   KeyName?: string; // optional dropdown
   SubnetID?: string; // optional
   TagName?: string; // optional
+  InstanceProfileName?: string;
 };

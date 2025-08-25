@@ -1,4 +1,4 @@
-import { Handle, Position, NodeProps } from "@xyflow/react";
+import { Handle, Position } from "@xyflow/react";
 import { Archive } from "lucide-react";
 import openSettings from "@/utils/openSettings";
 import { FaGear } from "react-icons/fa6";
@@ -11,7 +11,7 @@ export default function S3Node({ data, selected, id }: AnyNodeProps<s3Data>) {
   const [hovered, setHovered] = useState(false);
   const [isValid, setIsValid] = useState(true);
 
-  const bucketName = data.BucketName || "my-bucket";
+  const bucketName = data.Name || "my-bucket";
 
   useEffect(() => {
     const requiredFields = s3FormConfig.filter((f) => f.required);

@@ -4,20 +4,23 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { memo, useState, useEffect, useRef } from "react";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 
-function TextNode({ data, selected, width = 100, height = 50 }: NodeProps) {
+function TextNode({ data, selected, width = 100 }: NodeProps) {
   const [text, setText] = useState<string>(
     typeof data.label === "string" ? data.label : "Click to edit text"
   );
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const updateNodeData = useDiagramStore((state) => state.updateNodeData);
-  const updateNodeDimensions = useDiagramStore((state) => state.updateNodeDimensions);
+  const updateNodeDimensions = useDiagramStore(
+    (state) => state.updateNodeDimensions
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setText(newText);
-    updateNodeData(data.id as string, { label: newText });
+    updateNodeData(data.id as string, { Name: newText });
   };
 
   // Auto-resize height only
@@ -35,7 +38,7 @@ function TextNode({ data, selected, width = 100, height = 50 }: NodeProps) {
       // Sync height, keep width same
       updateNodeDimensions(data.id as string, width, scrollHeight);
     }
-  }, [text, width]);
+  }, [text, width, data.id, updateNodeDimensions]);
 
   // Restore autofocus
   useEffect(() => {
@@ -53,7 +56,7 @@ function TextNode({ data, selected, width = 100, height = 50 }: NodeProps) {
     if (data.label !== text) {
       setText(typeof data.label === "string" ? data.label : "");
     }
-  }, [data.label]);
+  }, [data.label, text]);
 
   return (
     <div

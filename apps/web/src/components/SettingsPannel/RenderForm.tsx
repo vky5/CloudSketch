@@ -1,76 +1,75 @@
+"use Client";
+
 import { NodeField } from "@/utils/types/NodeField";
 import React from "react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 
 interface Props {
   field: NodeField;
-  currentNode: any; // value from resource.data[field.key]
-  handleChange: (key: string, value: any) => void;
+  currentNode: unknown;
+  handleChange: (value: unknown) => void;
 }
 
 function RenderForm({ field, currentNode, handleChange }: Props) {
-  // Determine the "safe" current value based on field type
+  // default/fallback values
   const currentValue =
     currentNode ??
-    (field.type === "multiselect" ||
-    field.type === "multitext" ||
-    field.type === "group"
-      ? []
-      : "");
+    (["multiselect", "multitext", "group"].includes(field.type) ? [] : "");
 
-  // Utility for label with red asterisk if required
   const renderLabel = (label: string) => (
     <label className="block text-sm mb-1 font-medium text-gray-300">
       {label}
       {field.required && <span className="text-red-500 ml-1">*</span>}
     </label>
   );
-
   switch (field.type) {
+    /** ────────────── Text / Textarea / Number ────────────── */
     case "text":
     case "textarea":
     case "number":
       return (
-        <div key={field.key} className="mb-4">
+        <div className="mb-4">
           {renderLabel(field.label)}
           {field.type === "textarea" ? (
             <textarea
-              value={currentValue}
-              onChange={(e) => handleChange(field.key, e.target.value)}
+              value={String(currentValue ?? "")}
+              onChange={(e) => handleChange(e.target.value)}
               placeholder={field.placeholder || ""}
               rows={3}
-              className="w-full px-3 py-2 bg-[#2a2a2e] text-xs text-white rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs resize-none"
+              className="w-full px-3 py-2 bg-[#2a2a2e] text-xs text-white rounded-md border border-[#3b3b3f] focus:ring-2 focus:ring-blue-500 resize-none"
             />
           ) : (
             <input
               type={field.type === "number" ? "number" : "text"}
-              value={currentValue}
+              value={
+                field.type === "number"
+                  ? String(currentValue ?? "")
+                  : String(currentValue ?? "")
+              }
               onChange={(e) =>
                 handleChange(
-                  field.key,
-                  field.type === "number"
-                    ? e.target.value === ""
-                      ? ""
-                      : Number(e.target.value)
+                  field.type === "number" && e.target.value !== ""
+                    ? Number(e.target.value)
                     : e.target.value
                 )
               }
               placeholder={field.placeholder || ""}
-              className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs"
+              className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:ring-2 focus:ring-blue-500"
             />
           )}
         </div>
       );
 
+    /** ────────────── Dropdown ────────────── */
     case "dropdown": {
       const options: string[] = field.options || [];
       return (
-        <div key={field.key} className="mb-4">
+        <div className="mb-4">
           {renderLabel(field.label)}
           <select
-            value={currentValue}
-            onChange={(e) => handleChange(field.key, e.target.value)}
-            className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={String(currentValue ?? "")}
+            onChange={(e) => handleChange(e.target.value)}
+            className="w-full px-3 py-2 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select {field.label}</option>
             {options.map((opt, idx) => (
@@ -83,107 +82,87 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
       );
     }
 
+    /** ────────────── Multi-select ────────────── */
     case "multiselect": {
-      const selectedOptions: string[] = Array.isArray(currentValue)
+      const selected: string[] = Array.isArray(currentValue)
         ? currentValue
         : [];
       const toggleOption = (option: string) =>
         handleChange(
-          field.key,
-          selectedOptions.includes(option)
-            ? selectedOptions.filter((o) => o !== option)
-            : [...selectedOptions, option]
+          selected.includes(option)
+            ? selected.filter((o) => o !== option)
+            : [...selected, option]
         );
 
-      const hasOptions =
-        Array.isArray(field.options) && field.options.length > 0;
       return (
-        <div key={field.key} className="mb-4">
+        <div className="mb-4">
           {renderLabel(field.label)}
-          {hasOptions ? (
-            <div className="flex flex-wrap gap-2">
-              {field.options!.map((option, idx) => {
-                const isSelected = selectedOptions.includes(option);
-                return (
-                  <button
-                    key={`${field.key}-${idx}`}
-                    type="button"
-                    onClick={() => toggleOption(option)}
-                    className={`px-3 py-1 text-xs rounded-md border transition-colors ${
-                      isSelected
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "bg-[#2a2a2e] border-[#3b3b3f] text-gray-300 hover:bg-blue-500 hover:text-white"
-                    }`}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="w-full px-3 py-2 bg-[#1f1f23] text-gray-500 text-xs rounded-md border border-[#3b3b3f] italic">
-              No options available
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {(field.options || []).map((option, idx) => {
+              const isSelected = selected.includes(option);
+              return (
+                <button
+                  key={`${field.key}-${idx}`}
+                  type="button"
+                  onClick={() => toggleOption(option)}
+                  className={`px-3 py-1 text-xs rounded-md border ${
+                    isSelected
+                      ? "bg-blue-600 border-blue-600 text-white"
+                      : "bg-[#2a2a2e] border-[#3b3b3f] text-gray-300 hover:bg-blue-500 hover:text-white"
+                  }`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
         </div>
       );
     }
 
+    /** ────────────── Multi-text ────────────── */
     case "multitext": {
       const items: string[] = Array.isArray(currentValue) ? currentValue : [];
-      const addItem = () => handleChange(field.key, [...items, ""]);
-      const updateItem = (index: number, value: string) => {
+      const addItem = () => handleChange([...items, ""]);
+      const updateItem = (i: number, v: string) => {
         const updated = [...items];
-        updated[index] = value;
-        handleChange(field.key, updated);
+        updated[i] = v;
+        handleChange(updated);
       };
-      const removeItem = (index: number) =>
-        handleChange(
-          field.key,
-          items.filter((_, i) => i !== index)
-        );
+      const removeItem = (i: number) =>
+        handleChange(items.filter((_, x) => x !== i));
 
       return (
-        <div
-          key={field.key}
-          className="mb-6 border border-[#3b3b3f] rounded-md p-3"
-        >
+        <div className="mb-6 border border-[#3b3b3f] rounded-md p-3">
           <div className="flex justify-between items-center mb-2">
             {renderLabel(field.label)}
             <button
               type="button"
               onClick={addItem}
-              className="flex items-center justify-center text-[#0EA85D] font-extrabold p-1 rounded-full hover:text-green-700"
+              className="text-[#0EA85D] p-1 rounded-full hover:text-green-700"
               title="Add item"
             >
               <FiPlus size={16} />
             </button>
           </div>
 
-          {items.length === 0 && (
-            <p className="text-xs text-gray-500">No {field.label} added yet.</p>
-          )}
-
           {items.map((item, idx) => (
             <div
               key={idx}
-              className="relative mb-3 p-2 bg-[#2a2a2e] rounded-md border border-[#3b3b3f]"
+              className="relative mb-3 p-2 bg-[#2a2a2e] rounded-md"
             >
               <button
                 type="button"
                 onClick={() => removeItem(idx)}
                 className="absolute top-2 right-2 text-red-400 hover:text-red-600"
-                title="Remove item"
               >
                 <FiTrash2 size={16} />
               </button>
-
               <input
                 type="text"
                 value={item}
                 onChange={(e) => updateItem(idx, e.target.value)}
-                placeholder={field.placeholder || ""}
-                className="w-full px-3 py-1 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-xs"
+                className="w-full px-3 py-1 bg-[#2a2a2e] text-white text-xs rounded-md border border-[#3b3b3f] focus:ring-2 focus:ring-blue-500"
               />
             </div>
           ))}
@@ -191,80 +170,60 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
       );
     }
 
+    /** ────────────── Group ────────────── */
     case "group": {
-      const items: Record<string, any>[] = Array.isArray(currentValue)
-        ? currentValue
+      const items: Record<string, unknown>[] = Array.isArray(currentNode)
+        ? currentNode
         : [];
 
       const addItem = () => {
-        const emptyItem = (field.fields || []).reduce((acc, f) => {
+        const empty = (field.fields || []).reduce((acc, f) => {
           acc[f.key] = "";
           return acc;
-        }, {} as Record<string, any>);
-        handleChange(field.key, [...items, emptyItem]);
+        }, {} as Record<string, unknown>);
+        handleChange([...items, empty]);
       };
 
-      const updateItem = (index: number, subKey: string, subValue: any) => {
+      const updateItem = (i: number, k: string, v: unknown) => {
         const updated = [...items];
-        updated[index] = { ...updated[index], [subKey]: subValue };
-        handleChange(field.key, updated);
+        updated[i] = { ...updated[i], [k]: v };
+        handleChange(updated);
       };
 
-      const removeItem = (index: number) => {
-        handleChange(
-          field.key,
-          items.filter((_, i) => i !== index)
-        );
-      };
+      const removeItem = (i: number) =>
+        handleChange(items.filter((_, x) => x !== i));
 
       return (
-        <div
-          key={field.key}
-          className="mb-6 border border-[#3b3b3f] rounded-md p-3"
-        >
-          <div className="flex justify-between items-center mb-2">
-            <div>
-              {renderLabel(field.label)}
-              {field.description && (
-                <p className="text-xs text-gray-400">{field.description}</p>
-              )}
-            </div>
+        <div className="mb-6 border border-[#3b3b3f] rounded-md p-3">
+          <div className="flex justify-between mb-2">
+            {renderLabel(field.label)}
             <button
               type="button"
               onClick={addItem}
-              className="flex items-center justify-center text-[#0EA85D] font-extrabold p-1 rounded-full hover:text-green-700"
-              title="Add item"
+              className="text-[#0EA85D] p-1 rounded-full hover:text-green-700"
             >
               <FiPlus size={16} />
             </button>
           </div>
 
-          {items.length === 0 && (
-            <p className="text-xs text-gray-500">No {field.label} added yet.</p>
-          )}
-
           {items.map((item, idx) => (
             <div
               key={idx}
-              className="relative mb-3 p-3 bg-[#2a2a2e] rounded-md border border-[#3b3b3f]"
+              className="relative mb-3 p-3 bg-[#2a2a2e] rounded-md"
             >
               <button
                 type="button"
                 onClick={() => removeItem(idx)}
                 className="absolute top-2 right-2 text-red-400 hover:text-red-600"
-                title="Remove item"
               >
                 <FiTrash2 size={16} />
               </button>
-
-              {(field.fields || []).map((subField) => (
+              {(field.fields || []).map((sub) => (
                 <RenderForm
-                  key={subField.key}
-                  field={subField}
-                  currentNode={item[subField.key]}
-                  handleChange={(subKey, subValue) =>
-                    updateItem(idx, subKey, subValue)
-                  }
+                  key={sub.key}
+                  field={sub}
+                  currentNode={item[sub.key]}
+                  handleChange={(val) => updateItem(idx, sub.key, val)}
                 />
               ))}
             </div>
@@ -273,73 +232,25 @@ function RenderForm({ field, currentNode, handleChange }: Props) {
       );
     }
 
+    /** ────────────── Toggle ────────────── */
     case "toggle": {
-      const options: string[] = field.options || [];
-      const currentValue = currentNode ?? options[0]; // default to left/off
-      if (options.length !== 2) {
-        console.warn(`Toggle field ${field.key} should have exactly 2 options`);
-        return null;
-      }
-
-      const handleToggle = (value: string) => handleChange(field.key, value);
+      const options: string[] = field.options || ["Off", "On"];
+      const value = currentValue ?? options[0];
+      const toggle = () =>
+        handleChange(value === options[0] ? options[1] : options[0]);
 
       return (
-        <div key={field.key} className="mb-4">
-          <label className="block text-sm mb-1 font-medium text-gray-300">
-            {field.label}{" "}
-            {field.required && <span className="text-red-500">*</span>}
-          </label>
-          <div className="flex w-full border rounded-md overflow-hidden border-[#3b3b3f]">
-            {options.map((opt, idx) => {
-              const isActive = currentValue === opt;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleToggle(opt)}
-                  className={`flex-1 px-3 py-1 text-xs transition-colors ${
-                    isActive
-                      ? "bg-blue-600 text-white"
-                      : "bg-[#2a2a2e] text-gray-300 hover:bg-blue-500 hover:text-white"
-                  }`}
-                >
-                  {opt}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-    case "toggle": {
-      const options: string[] = field.options || [];
-      const currentValue = currentNode ?? options[0]; // default to left/off
-      if (options.length !== 2) {
-        console.warn(`Toggle field ${field.key} should have exactly 2 options`);
-        return null;
-      }
-
-      const handleToggle = () =>
-        handleChange(
-          field.key,
-          currentValue === options[0] ? options[1] : options[0]
-        );
-
-      return (
-        <div key={field.key} className="mb-4 flex items-center justify-between">
-          <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-            {field.label}{" "}
-            {field.required && <span className="text-red-500">*</span>}
-          </label>
+        <div className="mb-4 flex items-center justify-between">
+          {renderLabel(field.label)}
           <div
-            onClick={handleToggle}
+            onClick={toggle}
             className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-              currentValue === options[1] ? "bg-blue-600" : "bg-gray-700"
+              value === options[1] ? "bg-blue-600" : "bg-gray-700"
             }`}
           >
             <div
               className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                currentValue === options[1] ? "translate-x-6" : "translate-x-0"
+                value === options[1] ? "translate-x-6" : "translate-x-0"
               }`}
             />
           </div>

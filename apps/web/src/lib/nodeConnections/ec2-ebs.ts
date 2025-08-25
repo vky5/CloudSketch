@@ -5,10 +5,12 @@ export default function EC2EBS(
   sourceNode: ResourceBlock,
   destinationNode: ResourceBlock
 ) {
+  const id = crypto.randomUUID();
   return syncNodeWithBackend({
-    id: crypto.randomUUID(),
+    id: id,
     type: "ec2ebs",
     data: {
+      Name: id,
       EC2NodeID: sourceNode.id,
       VolumeID: destinationNode.id,
       DeviceName: "/dev/sdf",

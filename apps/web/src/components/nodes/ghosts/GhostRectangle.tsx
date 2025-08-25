@@ -1,6 +1,6 @@
 import React, { forwardRef } from "react";
 
-const GhostRectangle = forwardRef<HTMLDivElement, {}>((props, ref) => {
+const GhostRectangle = forwardRef<HTMLDivElement, unknown>((props, ref) => {
   return (
     <div
       ref={ref}

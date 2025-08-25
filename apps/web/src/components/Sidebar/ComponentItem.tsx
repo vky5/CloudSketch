@@ -1,9 +1,19 @@
-// components/ComponentItem.tsx
-'use client'
+"use client";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
+import { ComponentType } from "react";
 
-export function ComponentItem({ component, className }: { component: any; className?: string }) {
+interface ComponentItemProps {
+  component: {
+    icon: ComponentType<{ className?: string }>;
+    name: string;
+    description: string;
+    [key: string]: unknown; // in case there are additional props
+  };
+  className?: string;
+}
+
+export function ComponentItem({ component, className }: ComponentItemProps) {
   return (
     <div
       className={cn(
@@ -18,8 +28,10 @@ export function ComponentItem({ component, className }: { component: any; classN
       <component.icon className="h-5 w-5 text-blue-500 mt-1" />
       <div className="flex flex-col">
         <span className="text-sm font-medium text-white">{component.name}</span>
-        <span className="text-xs text-muted-foreground">{component.description}</span>
+        <span className="text-xs text-muted-foreground">
+          {component.description}
+        </span>
       </div>
     </div>
-  )
+  );
 }

@@ -4,7 +4,10 @@ import EC2S3 from "./ec2-s3";
 
 const connectionHandler: Record<
   connectionKeys,
-  (sourceNode: ResourceBlock, destinationNode: ResourceBlock) => Promise<any>
+  (
+    sourceNode: ResourceBlock,
+    destinationNode: ResourceBlock
+  ) => Promise<unknown>
 > = {
   ec2ebs: EC2EBS,
   ec2s3: EC2S3,
@@ -17,7 +20,7 @@ export default function connectionLogic(
 ) {
   if (!key) return Promise.resolve();
   const handler = connectionHandler[key];
-  if (!handler) return Promise.resolve(); // this is fallback mechanism
+  if (!handler) return Promise.resolve();
   return handler(sourceNode, destinationNode);
 }
 

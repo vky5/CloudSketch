@@ -1,6 +1,6 @@
 import React, { forwardRef } from "react";
 
-const GhostRhombus = forwardRef<HTMLDivElement, {}>((props, ref) => {
+const GhostRhombus = forwardRef<HTMLDivElement, unknown>((props, ref) => {
   const size = 100;
   const rotatedSize = size / Math.sqrt(2);
 

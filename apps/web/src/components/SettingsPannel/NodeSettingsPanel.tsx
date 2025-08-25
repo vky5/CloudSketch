@@ -1,74 +1,81 @@
+"use client";
+
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { formSchemaRegistry } from "@/config/formSchemaRegistry";
 import { X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import RenderForm from "./RenderForm";
 import saveLogic from "@/lib/customSaveLogics/saveLogicRegistry";
+import { ResourceBlock } from "@/utils/types/resource";
+import { NodeField } from "@/utils/types/NodeField";
 
 function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const { settingOpenNodeId, nodes, updateNodeData } = useDiagramStore();
   const [isValid, setIsValid] = useState(false);
 
-  if (!settingOpenNodeId) return null;
+  const node = nodes.find((n) => n.id === settingOpenNodeId) as
+    | ResourceBlock
+    | undefined;
 
-  const node = nodes.find((n) => n.id === settingOpenNodeId);
-  if (!node) return null;
+  const nodeType = node?.type ?? null;
 
-  const nodeType = node.type!;
-  const formFields = formSchemaRegistry[nodeType] || [];
-  console.log(formFields);
+  const formFields: NodeField[] = useMemo(() => {
+    return nodeType ? formSchemaRegistry[nodeType] || [] : [];
+  }, [nodeType]);
 
-  // Helper to safely get field value from union type
-  const getNodeFieldValue = (key: string) => {
-    return (node.data as Record<string, any>)[key];
-  };
+  const getNodeFieldValue = useCallback(
+    (key: keyof ResourceBlock["data"]): unknown => {
+      if (!node) return undefined;
+      return node.data[key];
+    },
+    [node]
+  );
 
-  const handleChange = (key: string, value: any) => {
-    updateNodeData(settingOpenNodeId, { [key]: value });
-  };
+  const handleChange = useCallback(
+    (key: keyof ResourceBlock["data"], value: unknown) => {
+      if (!settingOpenNodeId) return;
+      updateNodeData(settingOpenNodeId, {
+        [key]: value,
+      } as Partial<ResourceBlock["data"]>);
+    },
+    [settingOpenNodeId, updateNodeData]
+  );
 
-  const handleSaveAndClose = async () => {
-    if (!isValid) return;
+  const handleSaveAndClose = useCallback(async () => {
+    if (!isValid || !node) return;
     await saveLogic({
       id: node.id,
       type: node.type!,
       data: node.data,
     });
     closeSettingsorConfig();
-  };
+  }, [isValid, node]);
 
-  // Validate required fields whenever node.data changes
   useEffect(() => {
+    if (!node) return;
     if (!formFields.length) {
       setIsValid(true);
       return;
     }
 
-    // find all required fields in schema
     const requiredFields = formFields.filter((f) => f.required);
-
-    // check if each required field exists and has a non-empty value
     const missing = requiredFields.filter((field) => {
-      const value = getNodeFieldValue(field.key);
+      const value = getNodeFieldValue(field.key as keyof ResourceBlock["data"]);
       return value === undefined || value === null || value === "";
     });
-
     setIsValid(missing.length === 0);
-  }, [node.data, formFields]);
+  }, [node, formFields, getNodeFieldValue]);
 
-  // Trigger save & close on Enter key press
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && isValid) {
-        handleSaveAndClose();
-      }
+      if (e.key === "Enter" && isValid) handleSaveAndClose();
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isValid, node.data]);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isValid, handleSaveAndClose]);
+
+  if (!settingOpenNodeId || !node) return null;
 
   return (
     <div
@@ -103,8 +110,12 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
             <RenderForm
               key={field.key}
               field={field}
-              currentNode={getNodeFieldValue(field.key)}
-              handleChange={handleChange}
+              currentNode={getNodeFieldValue(
+                field.key as keyof typeof node.data
+              )}
+              handleChange={(value) =>
+                handleChange(field.key as keyof typeof node.data, value)
+              }
             />
           ))
         )}
@@ -114,12 +125,11 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
         <button
           onClick={handleSaveAndClose}
           disabled={!isValid}
-          className={`w-full px-4 py-2 rounded-md text-sm font-medium transition 
-            ${
-              isValid
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "bg-gray-600 text-gray-300 cursor-not-allowed"
-            }`}
+          className={`w-full px-4 py-2 rounded-md text-sm font-medium transition ${
+            isValid
+              ? "bg-blue-600 hover:bg-blue-700 text-white"
+              : "bg-gray-600 text-gray-300 cursor-not-allowed"
+          }`}
         >
           Save & Close
         </button>

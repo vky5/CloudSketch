@@ -2,7 +2,7 @@ import { NodeField } from "@/utils/types/NodeField";
 
 export const s3FormConfig: NodeField[] = [
   {
-    key: "BucketName",
+    key: "Name",
     label: "Bucket Name",
     type: "text",
     required: true,
@@ -62,7 +62,7 @@ export const s3FormConfig: NodeField[] = [
 ];
 
 export type s3Data = {
-  BucketName: string;
+  Name: string;
   // DefaultStorageClass?: "STANDARD" | "INTELLIGENT_TIERING" | "STANDARD_IA" | "ONEZONE_IA" | "GLACIER" | "DEEP_ARCHIVE";
   // LifecycleRules?: {
   //   Enabled: boolean;

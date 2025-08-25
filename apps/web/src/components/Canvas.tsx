@@ -46,7 +46,7 @@ function FlowContent() {
   const mousePos = useRef({ x: 0, y: 0 });
   const { screenToFlowPosition } = useReactFlow();
 
-  // for selection and drawign the selection rectangle
+  // for selection and drawing the selection rectangle
   useEffect(() => {
     if (selectedTool !== "select") return;
 
@@ -119,9 +119,9 @@ function FlowContent() {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };
-  }, [selectedTool, nodes, screenToFlowPosition, selectNodes]);
+  }, [selectedTool, nodes, selectNodes]);
 
-  // Track the
+  // Track the mouse position for ghost movement
   useEffect(() => {
     const updatePosition = (e: MouseEvent) => {
       mousePos.current = { x: e.clientX, y: e.clientY };
@@ -175,7 +175,7 @@ function FlowContent() {
       const position = screenToFlowPosition({ x: clientX, y: clientY });
 
       const newNode: Node<ResourceBlock["data"]> = {
-        //this a generic created explicitley for data type!?? that makes total sense and we are accessing data type from reosurceblock
+        // this a generic created explicitley for data type!?? that makes total sense and we are accessing data type from reosurceblock
         id: crypto.randomUUID(),
         type: selectedTool || "unknown",
         position,
@@ -197,11 +197,11 @@ function FlowContent() {
         // TODO show error toast or disable node addition
       }
     },
-    [selectedTool, screenToFlowPosition, addNode, selectedNode]
+    [selectedTool, screenToFlowPosition, addNode, selectedNode, setSelectedTool]
   );
 
   // this is a utility to count the number of renders remove it
-  useEffect(() => console.log("Rendered"));
+  useEffect(() => console.log("Rendered"), []);
 
   // DUNNO what this one does
   const memoizedNodes = useMemo(() => {
@@ -209,62 +209,68 @@ function FlowContent() {
       ...node,
       draggable: node.id === selectedNodeId,
     }));
-  }, [nodes, selectedNodeId, selectedTool]);
+  }, [nodes, selectedNodeId]);
 
   // Add connection as a new edge
   // Hook into React Flow onConnect
-  const onConnect = async (params: Edge | Connection) => {
-    const sourceNode = nodes.find((n) => n.id === params.source);
-    const targetNode = nodes.find((n) => n.id === params.target);
-    if (!sourceNode || !targetNode) return;
+  const onConnect = useCallback(
+    async (params: Edge | Connection) => {
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const targetNode = nodes.find((n) => n.id === params.target);
+      if (!sourceNode || !targetNode) return;
 
-    if (!sourceNode.type || !targetNode.type) {
-      console.warn("One of the nodes has no type, skipping connection");
-      return;
-    }
+      if (!sourceNode.type || !targetNode.type) {
+        console.warn("One of the nodes has no type, skipping connection");
+        return;
+      }
 
-    // explicitly type as ResourceBlock
-    const sourceBlock: ResourceBlock = {
-      id: sourceNode.id,
-      type: sourceNode.type,
-      data: sourceNode.data as ResourceBlock["data"],
-    };
+      // explicitly type as ResourceBlock
+      const sourceBlock: ResourceBlock = {
+        id: sourceNode.id,
+        type: sourceNode.type,
+        data: sourceNode.data as ResourceBlock["data"],
+      };
 
-    const targetBlock: ResourceBlock = {
-      id: targetNode.id,
-      type: targetNode.type,
-      data: targetNode.data as ResourceBlock["data"],
-    };
+      const targetBlock: ResourceBlock = {
+        id: targetNode.id,
+        type: targetNode.type,
+        data: targetNode.data as ResourceBlock["data"],
+      };
 
-    // serialize the order so that the connections can function bidirectionally
-    const { source, target } = serializeConnectionOrder(
-      sourceBlock,
-      targetBlock
-    );
+      // serialize the order so that the connections can function bidirectionally
+      const { source, target } = serializeConnectionOrder(
+        sourceBlock,
+        targetBlock
+      );
 
-    // generating the key from sourceBlock and targetBlock
-    const key = keyGen(source.type, target.type);
+      // generating the key from sourceBlock and targetBlock
+      const key = keyGen(source.type, target.type);
 
-    // connection logic to generate the connection block
-    await connectionLogic(
-      key,
-      { id: source.id, type: source.type, data: source.data },
-      { id: target.id, type: target.type, data: target.data }
-    );
+      // connection logic to generate the connection block
+      await connectionLogic(
+        key,
+        { id: source.id, type: source.type, data: source.data },
+        { id: target.id, type: target.type, data: target.data }
+      );
 
-    if (!canConnect(source.type!, target.type!)) {
-      alert(`❌ Cannot connect ${source.type} to ${target.type}`);
-      return;
-    }
+      if (!canConnect(source.type!, target.type!)) {
+        alert(`❌ Cannot connect ${source.type} to ${target.type}`);
+        return;
+      }
 
-    addEdge(params);
-  };
+      addEdge(params);
+    },
+    [nodes, addEdge]
+  );
 
   // when node is clicked select it
-  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    console.log("Node clicked:", node.id);
-    selectedNode(node.id); // to select the node for opening settings and
-  }, []);
+  const onNodeClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      console.log("Node clicked:", node.id);
+      selectedNode(node.id); // to select the node for opening settings
+    },
+    [selectedNode]
+  );
 
   // apply any changes happened to node to useDiagramStore
   const onNodesChangeHandler = useCallback(
@@ -283,7 +289,7 @@ function FlowContent() {
 
     console.log("Clicked canvas with tool:", selectedTool);
     console.log("Adding node:", nodes);
-  }, [selectedTool]);
+  }, [selectedTool, nodes]);
 
   // useless functions
   const onNodeDragStart = useCallback(() => {

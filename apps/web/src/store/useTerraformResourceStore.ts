@@ -6,6 +6,8 @@ import { s3Data } from "@/config/awsNodes/s3.config";
 import { iamData } from "@/config/resources/iam.config";
 import { keyPairData } from "@/config/resources/keypair.config";
 import { SecurityGroupData } from "@/config/resources/sg.config";
+import { instanceProfileData } from "@/config/resources/instanceprofile.config";
+import { ebsAttachData } from "@/config/resources/ebs_attach";
 
 // Map ResourceType to the actual data type
 export type ResourceDataMap = {
@@ -16,10 +18,8 @@ export type ResourceDataMap = {
   iam: iamData;
   keypair: keyPairData;
   securitygroup: SecurityGroupData;
-  instanceprofile: {
-    Name: string;
-    [key: string]: any;
-  };
+  instanceprofile: instanceProfileData;
+  ebsAttachData: ebsAttachData;
 };
 
 export type ResourceType = keyof ResourceDataMap; // now T must be a key

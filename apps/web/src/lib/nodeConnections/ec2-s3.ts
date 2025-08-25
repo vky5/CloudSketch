@@ -3,7 +3,7 @@ import { handleNewResource } from "../customSaveLogics/rdsSaveHandle";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 
-const handleChange = (key: string, value: any, id: string) => {
+const handleChange = (key: string, value: unknown, id: string) => {
   useTerraformResourceStore.getState().updateResource(id, { [key]: value });
 };
 
@@ -20,9 +20,8 @@ export default async function EC2S3(
     iamID
   );
 
-  console.log("source : ", sourceNode)
-  console.log("destination : ", destinationNode)
-
+  console.log("source : ", sourceNode);
+  console.log("destination : ", destinationNode);
 
   await syncNodeWithBackend({
     id: iamID,
@@ -50,7 +49,7 @@ export default async function EC2S3(
     type: "ec2",
     data: {
       ...sourceNode.data,
-      InstanceProfile: instanceProfileName,
+      InstanceProfileName: instanceProfileName,
     },
   });
 }
