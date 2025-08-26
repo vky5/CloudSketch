@@ -12,10 +12,15 @@ func main() {
 
 	// setting up cors
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"}, // frontend URL
+		AllowOriginFunc: func(origin string) bool {
+			return origin == "http://localhost:3000" ||
+				origin == "https://cloud-sketch-web.vercel.app" ||
+				origin == "https://staging.cloudsketch.com"
+			// or even strings.HasSuffix(origin, ".cloudsketch.com")
+		},
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type"},
-		AllowCredentials: true, // if you're using cookies/auth
+		AllowCredentials: true,
 	}))
 
 	r.GET("/ping", func(ctx *gin.Context) { // gin passes a context object which can be used to read request data (json, query params), write response objects and set headers and manage cookies
