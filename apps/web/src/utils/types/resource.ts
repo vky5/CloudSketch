@@ -32,3 +32,9 @@ export type AnyNodeProps<T> = Omit<NodeProps, "data"> & {
   // & is for intersection of types
   data: T;
 };
+
+export interface ResourceBlockSpecific<TDATA> {
+  id: string
+  type: string
+  data: TDATA;
+}

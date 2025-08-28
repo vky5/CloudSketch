@@ -69,5 +69,5 @@ export type ec2Data = {
   KeyName?: string; // optional dropdown
   SubnetID?: string; // optional
   TagName?: string; // optional
-  InstanceProfileName?: string;
+  InstanceProfile?: string;
 };
