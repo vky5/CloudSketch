@@ -1,0 +1,5 @@
+- [ ] connection setup mongodb
+- [ ] create schema for users
+- [ ] add a basic login page
+- [ ] add the github sso callback thingiy (no need for google)
+- [ ] connect the signup and also use useContext for the user info
