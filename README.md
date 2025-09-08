@@ -7,6 +7,21 @@ pnpm install
 pnpm run start
 ```
 
+.env file
+```
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
+
+
+# Clerk Credentials
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+
+
+#Database
+MONGODB_PASSWD=
+MONGODB_URI=
+```
+
 ## To run backend
 ```bash
 cd apps/sketchCore
