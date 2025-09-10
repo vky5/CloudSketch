@@ -52,4 +52,5 @@ export type ebsData = {
   Encrypted?: boolean; // toggle (optional)
   DeleteOnTermination?: boolean; // toggle (optional)
   TagName?: string; // optional string
+  connectedTo: string | null;
 };

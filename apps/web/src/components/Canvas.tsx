@@ -224,7 +224,12 @@ function FlowContent() {
         return;
       }
 
-      // explicitly type as ResourceBlock
+      // Validate connection first
+      if (!canConnect(sourceNode.type, targetNode.type)) {
+        alert(`❌ Cannot connect ${sourceNode.type} to ${targetNode.type}`);
+        return;
+      }
+
       const sourceBlock: ResourceBlock = {
         id: sourceNode.id,
         type: sourceNode.type,
@@ -237,28 +242,25 @@ function FlowContent() {
         data: targetNode.data as ResourceBlock["data"],
       };
 
-      // serialize the order so that the connections can function bidirectionally
       const { source, target } = serializeConnectionOrder(
         sourceBlock,
         targetBlock
       );
 
-      // generating the key from sourceBlock and targetBlock
       const key = keyGen(source.type, target.type);
 
-      // connection logic to generate the connection block
-      await connectionLogic(
-        key,
-        { id: source.id, type: source.type, data: source.data },
-        { id: target.id, type: target.type, data: target.data }
-      );
+      try {
+        await connectionLogic(
+          key,
+          { id: source.id, type: source.type, data: source.data },
+          { id: target.id, type: target.type, data: target.data }
+        );
 
-      if (!canConnect(source.type!, target.type!)) {
-        alert(`❌ Cannot connect ${source.type} to ${target.type}`);
-        return;
+        addEdge(params); // only add edge if no error
+      } catch (err: any) {
+        // Show alert with error message and red cross
+        alert(`❌ ${err.message}`);
       }
-
-      addEdge(params);
     },
     [nodes, addEdge]
   );
