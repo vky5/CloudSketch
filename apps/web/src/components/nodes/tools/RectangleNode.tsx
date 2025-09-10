@@ -32,7 +32,14 @@ function RectangleNode({ data, selected, width, height }: NodeProps) {
       {/* Node visual — flush with resizer border */}
       <div
         className="w-full h-full flex items-center justify-center border rounded-md bg-[#020817]/75 shadow text-sm font-semibold text-white"
-        style={{ width, height, minWidth: 120, minHeight: 60 }}
+        
+        style={{
+          width: width! - 10,
+          height: height! - 10,
+          minWidth: 120,
+          minHeight: 60,
+          margin: "4px",
+        }}
       >
         {/* {data.label || "Rectangle"} */}
       </div>

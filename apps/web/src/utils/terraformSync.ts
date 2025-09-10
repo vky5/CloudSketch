@@ -9,16 +9,19 @@ export async function syncNodeWithBackend(node: ResourceBlock) {
     Type: node.type,
     Data: {
       ...node.data, // Spread operator to include all data properties
-    }
-  }
+    },
+  };
 
-  const store = useTerraformStore.getState(); 
+  if (reqObj.Type === "rectangle") {
+    return Promise.resolve();
+  }
+  const store = useTerraformStore.getState();
   const { terraformBlocks, updateBlock, appendBlocks } = store;
 
   try {
     const res = await axios.post(
       process.env.NEXT_PUBLIC_BACKEND_URL + "/generate",
-      reqObj,
+      reqObj
     );
 
     const block = res.data.terraform;
