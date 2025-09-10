@@ -89,5 +89,13 @@ var generators = []GeneratorRegistration{
 		Generator: TemplateGenerator[*models.AttachEBSConfig]{
 			TemplatePath: "templates/attach_ebs.tmpl",
 		},
+	}, {
+		NodeType:       "vpc",
+		DisplayName:    "VPC",
+		Category:       "VPC",
+		RequiredFields: []string{"NodeID", "Name"},
+		Generator: TemplateGenerator[*models.VPCConfig]{
+			TemplatePath: "templates/vpc.tmpl",
+		},
 	},
 }
