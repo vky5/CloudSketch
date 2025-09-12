@@ -1,19 +1,70 @@
 "use client";
 
 import { memo, useState } from "react";
-import { Handle, Position, NodeProps, NodeResizer } from "@xyflow/react";
+import { NodeResizer } from "@xyflow/react";
 import { FaPlus, FaGear } from "react-icons/fa6";
 import openSettings from "@/utils/openSettings";
 import { AnyNodeProps } from "@/utils/types/resource";
 import { vpcData } from "@/config/awsNodes/vpc.config";
 import { useDiagramStore } from "@/store/useDiagramStore";
+import { subnetData } from "@/config/awsNodes/subnet.config";
+import { getNextSubnetPosition } from "@/utils/getNextSubnetPosition";
 
-function VPCNode({ data, selected, id, width, height }: AnyNodeProps<vpcData>) {
+function VPCNode({
+  data,
+  selected,
+  id,
+  width,
+  height,
+  position,
+}: AnyNodeProps<vpcData>) {
   const [hovered, setHovered] = useState(false);
+  const { nodes, addNode } = useDiagramStore();
 
-  //   const onAddSubnet = () => {
-  //     openSettings(data.id, "addSubnet"); // Or trigger your subnet form modal
-  //   };
+  const handleAddSubnet = () => {
+    const subnetId = crypto.randomUUID();
+
+    const parentVpcNode = nodes.find((n) => n.id === id);
+    if (!parentVpcNode) return;
+
+    const existingSubnets = nodes.filter(
+      (n) => n.type === "subnet" && (n.data as subnetData).parentVpcId === id
+    ) as AnyNodeProps<subnetData>[];
+
+    // ✅ Correct position calculation inside VPC
+    const pos = getNextSubnetPosition(
+      parentVpcNode,
+      existingSubnets,
+      160, // subnet width
+      100, // subnet height
+      { x: 0, y: 0, width: 5000, height: 5000 } // canvas bounds
+    );
+
+    const newSubnet: AnyNodeProps<subnetData> = {
+      id: subnetId,
+      type: "subnet",
+      position: pos, // use the calculated position
+      data: {
+        uuid: subnetId,
+        parentVpcId: id,
+        Name: "New Subnet",
+        CIDR: "10.0.1.0/24",
+      },
+      width: 160,
+      height: 100,
+      dragging: false,
+      zIndex: 0,
+      selectable: true,
+      deletable: true,
+      selected: false,
+      draggable: true,
+      isConnectable: true,
+      positionAbsoluteX: pos.x,
+      positionAbsoluteY: pos.y,
+    };
+
+    addNode(newSubnet);
+  };
 
   return (
     <>
@@ -28,20 +79,19 @@ function VPCNode({ data, selected, id, width, height }: AnyNodeProps<vpcData>) {
         }}
       />
 
-      {/* VPC rectangle with padding for resizer */}
+      {/* VPC rectangle */}
       <div
         className="relative border rounded-lg bg-[#020817]/75 shadow text-sm font-semibold text-white"
         style={{
-          width: width! - 10,
-          height: height! - 10,
+          width: (width ?? 200) - 10,
+          height: (height ?? 120) - 10,
           minWidth: 192,
           minHeight: 112,
-          margin: "4px",
+          margin: 4,
         }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        {/* VPC heading at top center */}
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
           {data.Name || "VPC"}
         </div>
@@ -49,6 +99,7 @@ function VPCNode({ data, selected, id, width, height }: AnyNodeProps<vpcData>) {
 
       {(hovered || selected) && (
         <div className="absolute top-1 right-1 flex gap-1">
+          {/* Settings */}
           <button
             className="bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow"
             onClick={() => openSettings(id, "node")}
@@ -57,13 +108,14 @@ function VPCNode({ data, selected, id, width, height }: AnyNodeProps<vpcData>) {
             <FaGear className="w-3.5 h-3.5 text-white hover:text-[#3B82F6]" />
           </button>
 
-          {/* <button
-              className="bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow"
-              onClick={onAddSubnet}
-              title="Add Subnet"
-            >
-              <FaPlus className="w-3.5 h-3.5 text-white hover:text-green-500" />
-            </button> */}
+          {/* Add Subnet */}
+          <button
+            className="bg-green-800 hover:bg-green-700 border border-green-600 rounded-full p-1 shadow"
+            onClick={handleAddSubnet}
+            title="Add Subnet"
+          >
+            <FaPlus className="w-3.5 h-3.5 text-white hover:text-green-400" />
+          </button>
         </div>
       )}
     </>

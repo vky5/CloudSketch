@@ -2,6 +2,8 @@ import { ebsData } from "@/config/awsNodes/ebs.config";
 import { ec2Data } from "@/config/awsNodes/ec2.config";
 import { rdsData } from "@/config/awsNodes/rds.config";
 import { s3Data } from "@/config/awsNodes/s3.config";
+import { subnetData } from "@/config/awsNodes/subnet.config";
+import { vpcData } from "@/config/awsNodes/vpc.config";
 import { ebsAttachData } from "@/config/resources/ebs_attach";
 import { iamData } from "@/config/resources/iam.config";
 import { instanceProfileData } from "@/config/resources/instanceprofile.config";
@@ -22,7 +24,9 @@ export interface ResourceBlock {
     | SecurityGroupData
     | instanceProfileData
     | ebsData
-    | ebsAttachData;
+    | ebsAttachData
+    | vpcData
+    | subnetData;
 }
 
 export type AnyNode = Node<ResourceBlock["data"]>;
@@ -31,10 +35,11 @@ export type AnyNode = Node<ResourceBlock["data"]>;
 export type AnyNodeProps<T> = Omit<NodeProps, "data"> & {
   // & is for intersection of types
   data: T;
+  position?: { x: number; y: number };
 };
 
 export interface ResourceBlockSpecific<TDATA> {
-  id: string
-  type: string
+  id: string;
+  type: string;
   data: TDATA;
 }
