@@ -2,7 +2,7 @@ import { AnyNodeProps } from "@/utils/types/resource";
 import { vpcData } from "@/config/awsNodes/vpc.config";
 
 interface ClampOptions {
-  parentNode: AnyNodeProps<vpcData>; // VPC Node or any other use union if to add other
+  parentNode: AnyNodeProps<vpcData>; // Parent VPC node
   nodeWidth: number;
   nodeHeight: number;
 }
