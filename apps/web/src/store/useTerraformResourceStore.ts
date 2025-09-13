@@ -8,6 +8,7 @@ import { keyPairData } from "@/config/resources/keypair.config";
 import { SecurityGroupData } from "@/config/resources/sg.config";
 import { instanceProfileData } from "@/config/resources/instanceprofile.config";
 import { ebsAttachData } from "@/config/resources/ebs_attach";
+import { vpcData } from "@/config/awsNodes/vpc.config";
 
 // Map ResourceType to the actual data type
 export type ResourceDataMap = {
@@ -17,6 +18,7 @@ export type ResourceDataMap = {
   s3: s3Data;
   iam: iamData;
   keypair: keyPairData;
+  vpc: vpcData,
   securitygroup: SecurityGroupData;
   instanceprofile: instanceProfileData;
   ebsAttachData: ebsAttachData;

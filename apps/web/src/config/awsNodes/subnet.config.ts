@@ -41,7 +41,6 @@ export const subnetFormSchema: NodeField[] = [
 export type subnetData = {
   uuid: string; // fixed internal ID, used as Terraform block label
   parentVpcId: string; // reference back to parent VPC node
-
   Name: string; // e.g., "PublicSubnet1"
   CIDR: string; // e.g., "10.0.1.0/24"
   AvailabilityZone?: string; // e.g., "us-east-1a"

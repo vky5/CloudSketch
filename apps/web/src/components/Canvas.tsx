@@ -23,7 +23,6 @@ import connectionLogic, {
   serializeConnectionOrder,
 } from "@/lib/nodeConnections/connectionLogicRegistry";
 import { ResourceBlock } from "@/utils/types/resource";
-import SubnetNode from "./nodes/awsNodes/SubnetNode";
 import { subnetData } from "@/config/awsNodes/subnet.config";
 
 function FlowContent() {

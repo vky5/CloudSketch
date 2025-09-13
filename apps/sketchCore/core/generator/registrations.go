@@ -92,10 +92,18 @@ var generators = []GeneratorRegistration{
 	}, {
 		NodeType:       "vpc",
 		DisplayName:    "VPC",
-		Category:       "VPC",
+		Category:       "Networking",
 		RequiredFields: []string{"NodeID", "Name"},
 		Generator: TemplateGenerator[*models.VPCConfig]{
 			TemplatePath: "templates/vpc.tmpl",
+		},
+	}, {
+		NodeType:       "subnet",
+		DisplayName:    "Subnet of VPC",
+		Category:       "Networking",
+		RequiredFields: []string{"NodeID", "Name"},
+		Generator: TemplateGenerator[*models.SubnetConfig]{
+			TemplatePath: "templates/subnet.tmpl",
 		},
 	},
 }

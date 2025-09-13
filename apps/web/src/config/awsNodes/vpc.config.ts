@@ -31,8 +31,7 @@ export const vpcFormSchema: NodeField[] = [
   },
 ];
 
-export type vpcData = {
-    
+export type vpcData = {    
   Name: string; // e.g., "MyVPC"
   CIDR: string; // e.g., "10.0.0.0/16"
   EnableDNS?: "yes" | "no"; // optional toggle

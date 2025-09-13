@@ -9,6 +9,7 @@ import { vpcData } from "@/config/awsNodes/vpc.config";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { subnetData } from "@/config/awsNodes/subnet.config";
 import { getNextSubnetPosition } from "@/utils/getNextSubnetPosition";
+import { syncNodeWithBackend } from "@/utils/terraformSync";
 
 function VPCNode({
   data,
@@ -21,7 +22,7 @@ function VPCNode({
   const [hovered, setHovered] = useState(false);
   const { nodes, addNode } = useDiagramStore();
 
-  const handleAddSubnet = () => {
+  const handleAddSubnet = async () => {
     const subnetId = crypto.randomUUID();
 
     const parentVpcNode = nodes.find((n) => n.id === id);
@@ -63,7 +64,16 @@ function VPCNode({
       positionAbsoluteY: pos.y,
     };
 
-    addNode(newSubnet);
+    try {
+      await syncNodeWithBackend({
+        id: subnetId,
+        type: "subnet",
+        data: newSubnet.data,
+      });
+      addNode(newSubnet);
+    } catch (error) {
+      console.warn(error);
+    }
   };
 
   return (
