@@ -38,6 +38,7 @@ function FlowContent() {
     selectedNodeId,
     selectedNode,
     selectNodes,
+    updateNodePosition,
   } = useDiagramStore();
 
   // using hook to reference to canvas
@@ -437,7 +438,7 @@ function FlowContent() {
     return movingNode.position || testPosition;
   };
 
-  // Replace your onNodesChangeHandler with this enhanced version:
+  // OnNodeChangeHandler
   const onNodesChangeHandler = useCallback(
     (changes: NodeChange[]) => {
       // Process position changes with overlap prevention
@@ -501,6 +502,7 @@ function FlowContent() {
     },
     [setNodes, nodes]
   );
+
   // for logging purpose remove if no need
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -517,9 +519,66 @@ function FlowContent() {
     console.log("Node drag started");
   }, []);
 
-  const onNodeDragStop = useCallback(() => {
-    console.log("Node drag stopped");
-  }, []);
+  // FIXME Fix this section to update the subnetid 
+  const onNodeDragStop = useCallback(
+    async (event: React.MouseEvent, node: Node) => {
+      if (node.type !== "subnet") return;
+
+      const subnetData = node.data as subnetData;
+      const parentVpc = nodes.find(
+        (n) => n.type === "vpc" && n.id === subnetData.parentVpcId
+      );
+      if (!parentVpc?.position) return;
+
+      const padding = 10;
+      const nodeWidth = node.width ?? 160;
+      const nodeHeight = node.height ?? 100;
+      const vpcBounds = {
+        minX: parentVpc.position.x + padding,
+        minY: parentVpc.position.y + padding,
+        maxX:
+          parentVpc.position.x + (parentVpc.width ?? 200) - nodeWidth - padding,
+        maxY:
+          parentVpc.position.y +
+          (parentVpc.height ?? 120) -
+          nodeHeight -
+          padding,
+      };
+
+      const otherSubnets = nodes.filter(
+        (n) =>
+          n.type === "subnet" &&
+          n.id !== node.id &&
+          (n.data as subnetData).parentVpcId === subnetData.parentVpcId
+      );
+
+      const newPos = findNonOverlappingPosition(
+        node,
+        node.position!,
+        otherSubnets,
+        vpcBounds
+      );
+
+      if (newPos.x !== node.position!.x || newPos.y !== node.position!.y) {
+        // 1. Update local store
+        updateNodePosition(node.id, newPos.x, newPos.y);
+
+        // 2. Sync with backend
+        try {
+          await syncNodeWithBackend({
+            id: node.id,
+            type: node.type!,
+            data: {
+              ...(node.data as ResourceBlock["data"]),
+            },
+          });
+        } catch (err) {
+          console.error("Failed to sync subnet position with backend:", err);
+        }
+      }
+    },
+    [nodes, updateNodePosition]
+  );
 
   return (
     <div className="w-full h-full overflow-hidden" ref={canvasRef}>

@@ -1,3 +1,4 @@
+import { useDiagramStore } from "@/store/useDiagramStore";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { NodeField } from "@/utils/types/NodeField";
 
@@ -49,7 +50,12 @@ export const ec2FormSchema: NodeField[] = [
     key: "SubnetID",
     label: "Subnet",
     type: "dropdown",
-    placeholder: "Optional subnet ID",
+    get options() {
+      return useDiagramStore
+        .getState()
+        .nodes.filter((r) => r.type === "subnet" && r.data?.Name)
+        .map((r) => r.data.Name);
+    },
     required: false,
   },
   {
