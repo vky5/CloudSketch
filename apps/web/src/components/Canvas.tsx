@@ -24,6 +24,7 @@ import connectionLogic, {
 } from "@/lib/nodeConnections/connectionLogicRegistry";
 import { ResourceBlock } from "@/utils/types/resource";
 import { subnetData } from "@/config/awsNodes/subnet.config";
+import { findNonOverlappingPosition } from "@/utils/findNonOverlappingPosition";
 
 function FlowContent() {
   const {
@@ -38,6 +39,7 @@ function FlowContent() {
     selectedNodeId,
     selectedNode,
     selectNodes,
+    updateNodeData,
     updateNodePosition,
   } = useDiagramStore();
 
@@ -290,9 +292,13 @@ function FlowContent() {
         );
 
         addEdge(params); // only add edge if no error
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Show alert with error message and red cross
-        alert(`❌ ${err.message}`);
+        if (err instanceof Error) {
+          alert(`❌ ${err.message}`);
+        } else {
+          alert(`❌ ${err}`);
+        }
       }
     },
     [nodes, addEdge]
@@ -306,137 +312,6 @@ function FlowContent() {
     },
     [selectedNode]
   );
-
-  // Helper function to check if two rectangles overlap
-  const doRectanglesOverlap = (rect1: any, rect2: any) => {
-    return !(
-      (
-        rect1.x + rect1.width <= rect2.x || // rect1 is left of rect2
-        rect2.x + rect2.width <= rect1.x || // rect2 is left of rect1
-        rect1.y + rect1.height <= rect2.y || // rect1 is above rect2
-        rect2.y + rect2.height <= rect1.y
-      ) // rect2 is above rect1
-    );
-  };
-
-  // Helper function to find a non-overlapping position
-  const findNonOverlappingPosition = (
-    movingNode: Node,
-    newPosition: { x: number; y: number },
-    otherSubnets: Node[],
-    vpcBounds: { minX: number; minY: number; maxX: number; maxY: number }
-  ) => {
-    const nodeWidth = movingNode.width ?? 160;
-    const nodeHeight = movingNode.height ?? 100;
-    const padding = 5; // Small gap between nodes
-
-    let testPosition = { ...newPosition };
-
-    // Check if the new position would cause overlap
-    const wouldOverlap = otherSubnets.some((subnet) => {
-      if (!subnet.position) return false;
-
-      const subnetWidth = subnet.width ?? 160;
-      const subnetHeight = subnet.height ?? 100;
-
-      return doRectanglesOverlap(
-        {
-          x: testPosition.x,
-          y: testPosition.y,
-          width: nodeWidth,
-          height: nodeHeight,
-        },
-        {
-          x: subnet.position.x,
-          y: subnet.position.y,
-          width: subnetWidth,
-          height: subnetHeight,
-        }
-      );
-    });
-
-    if (!wouldOverlap) {
-      return testPosition; // No overlap, position is fine
-    }
-
-    // If overlap detected, try to find alternative positions
-    const step = 20; // Move in 20px increments
-
-    // Try moving right first
-    for (
-      let offsetX = step;
-      offsetX <= vpcBounds.maxX - testPosition.x;
-      offsetX += step
-    ) {
-      const candidatePos = { x: testPosition.x + offsetX, y: testPosition.y };
-
-      if (candidatePos.x + nodeWidth > vpcBounds.maxX) break;
-
-      const hasOverlap = otherSubnets.some((subnet) => {
-        if (!subnet.position) return false;
-        const subnetWidth = subnet.width ?? 160;
-        const subnetHeight = subnet.height ?? 100;
-
-        return doRectanglesOverlap(
-          {
-            x: candidatePos.x,
-            y: candidatePos.y,
-            width: nodeWidth,
-            height: nodeHeight,
-          },
-          {
-            x: subnet.position.x,
-            y: subnet.position.y,
-            width: subnetWidth,
-            height: subnetHeight,
-          }
-        );
-      });
-
-      if (!hasOverlap) {
-        return candidatePos;
-      }
-    }
-
-    // Try moving down
-    for (
-      let offsetY = step;
-      offsetY <= vpcBounds.maxY - testPosition.y;
-      offsetY += step
-    ) {
-      const candidatePos = { x: testPosition.x, y: testPosition.y + offsetY };
-
-      if (candidatePos.y + nodeHeight > vpcBounds.maxY) break;
-
-      const hasOverlap = otherSubnets.some((subnet) => {
-        if (!subnet.position) return false;
-        const subnetWidth = subnet.width ?? 160;
-        const subnetHeight = subnet.height ?? 100;
-
-        return doRectanglesOverlap(
-          {
-            x: candidatePos.x,
-            y: candidatePos.y,
-            width: nodeWidth,
-            height: nodeHeight,
-          },
-          {
-            x: subnet.position.x,
-            y: subnet.position.y,
-            width: subnetWidth,
-            height: subnetHeight,
-          }
-        );
-      });
-
-      if (!hasOverlap) {
-        return candidatePos;
-      }
-    }
-
-    // If no good position found, return the original node position
-    return movingNode.position || testPosition;
-  };
 
   // OnNodeChangeHandler
   const onNodesChangeHandler = useCallback(
@@ -519,65 +394,166 @@ function FlowContent() {
     console.log("Node drag started");
   }, []);
 
-  // FIXME Fix this section to update the subnetid 
+  // FIXME Fix this section to update the subnetid
+  // Enhanced onNodeDragStop handler that handles both subnet positioning and EC2/RDS subnet assignment
   const onNodeDragStop = useCallback(
     async (event: React.MouseEvent, node: Node) => {
-      if (node.type !== "subnet") return;
+      // Handle subnet nodes (existing logic)
+      if (node.type === "subnet") {
+        const subnetData = node.data as subnetData;
+        const parentVpc = nodes.find(
+          (n) => n.type === "vpc" && n.id === subnetData.parentVpcId
+        );
+        if (!parentVpc?.position) return;
 
-      const subnetData = node.data as subnetData;
-      const parentVpc = nodes.find(
-        (n) => n.type === "vpc" && n.id === subnetData.parentVpcId
-      );
-      if (!parentVpc?.position) return;
+        const padding = 10;
+        const nodeWidth = node.width ?? 160;
+        const nodeHeight = node.height ?? 100;
+        const vpcBounds = {
+          minX: parentVpc.position.x + padding,
+          minY: parentVpc.position.y + padding,
+          maxX:
+            parentVpc.position.x +
+            (parentVpc.width ?? 200) -
+            nodeWidth -
+            padding,
+          maxY:
+            parentVpc.position.y +
+            (parentVpc.height ?? 120) -
+            nodeHeight -
+            padding,
+        };
 
-      const padding = 10;
-      const nodeWidth = node.width ?? 160;
-      const nodeHeight = node.height ?? 100;
-      const vpcBounds = {
-        minX: parentVpc.position.x + padding,
-        minY: parentVpc.position.y + padding,
-        maxX:
-          parentVpc.position.x + (parentVpc.width ?? 200) - nodeWidth - padding,
-        maxY:
-          parentVpc.position.y +
-          (parentVpc.height ?? 120) -
-          nodeHeight -
-          padding,
-      };
+        const otherSubnets = nodes.filter(
+          (n) =>
+            n.type === "subnet" &&
+            n.id !== node.id &&
+            (n.data as subnetData).parentVpcId === subnetData.parentVpcId
+        );
 
-      const otherSubnets = nodes.filter(
-        (n) =>
-          n.type === "subnet" &&
-          n.id !== node.id &&
-          (n.data as subnetData).parentVpcId === subnetData.parentVpcId
-      );
+        const newPos = findNonOverlappingPosition(
+          node,
+          node.position!,
+          otherSubnets,
+          vpcBounds
+        );
 
-      const newPos = findNonOverlappingPosition(
-        node,
-        node.position!,
-        otherSubnets,
-        vpcBounds
-      );
+        if (newPos.x !== node.position!.x || newPos.y !== node.position!.y) {
+          // 1. Update local store
+          updateNodePosition(node.id, newPos.x, newPos.y);
 
-      if (newPos.x !== node.position!.x || newPos.y !== node.position!.y) {
-        // 1. Update local store
-        updateNodePosition(node.id, newPos.x, newPos.y);
+          // 2. Sync with backend
+          try {
+            await syncNodeWithBackend({
+              id: node.id,
+              type: node.type!,
+              data: {
+                ...(node.data as ResourceBlock["data"]),
+              },
+            });
+          } catch (err) {
+            console.error("Failed to sync subnet position with backend:", err);
+          }
+        }
+      }
 
-        // 2. Sync with backend
-        try {
-          await syncNodeWithBackend({
-            id: node.id,
-            type: node.type!,
-            data: {
-              ...(node.data as ResourceBlock["data"]),
-            },
-          });
-        } catch (err) {
-          console.error("Failed to sync subnet position with backend:", err);
+      // Handle EC2/RDS nodes being dropped into subnets
+      else if (node.type === "ec2" || node.type === "rds") {
+        if (!node.position) return;
+
+        // Find all subnet nodes
+        const subnetNodes = nodes.filter((n) => n.type === "subnet");
+
+        // Check which subnet (if any) contains the dropped node
+        const containingSubnet = subnetNodes.find((subnet) => {
+          if (!subnet.position) return false;
+
+          const subnetWidth = subnet.width ?? 160;
+          const subnetHeight = subnet.height ?? 100;
+          const nodeWidth = node.width ?? 100;
+          const nodeHeight = node.height ?? 80;
+
+          // Check if the node is completely within the subnet bounds
+          const nodeLeft = node.position!.x;
+          const nodeRight = node.position!.x + nodeWidth;
+          const nodeTop = node.position!.y;
+          const nodeBottom = node.position!.y + nodeHeight;
+
+          const subnetLeft = subnet.position.x;
+          const subnetRight = subnet.position.x + subnetWidth;
+          const subnetTop = subnet.position.y;
+          const subnetBottom = subnet.position.y + subnetHeight;
+
+          return (
+            nodeLeft >= subnetLeft &&
+            nodeRight <= subnetRight &&
+            nodeTop >= subnetTop &&
+            nodeBottom <= subnetBottom
+          );
+        });
+
+        if (containingSubnet) {
+          // Update the node data with the subnet ID
+          const updatedData = {
+            ...node.data,
+            SubnetID: containingSubnet.id,
+          };
+
+          // Update the node in the store
+          updateNodeData(
+            node.id,
+            updatedData as Partial<ResourceBlock["data"]>
+          );
+
+          // Sync with backend
+          try {
+            await syncNodeWithBackend({
+              id: node.id,
+              type: node.type!,
+              data: updatedData as unknown as ResourceBlock["data"],
+            });
+
+            console.log(
+              `${node.type} node ${node.id} assigned to subnet ${containingSubnet.id}`
+            );
+          } catch (err) {
+            console.error(
+              `Failed to sync ${node.type} node with backend:`,
+              err
+            );
+          }
+        } else {
+          // If the node is not in any subnet, clear the subnet ID
+          if (node.data?.subnetId) {
+            const updatedData = {
+              ...node.data,
+              subnetId: undefined, // or null, depending on your data structure
+            };
+
+            updateNodeData(
+              node.id,
+              updatedData as Partial<ResourceBlock["data"]>
+            );
+
+            try {
+              await syncNodeWithBackend({
+                id: node.id,
+                type: node.type!,
+                data: updatedData as unknown as ResourceBlock["data"],
+              });
+
+              console.log(`${node.type} node ${node.id} removed from subnet`);
+            } catch (err) {
+              console.error(
+                `Failed to sync ${node.type} node with backend:`,
+                err
+              );
+            }
+          }
         }
       }
     },
-    [nodes, updateNodePosition]
+    [nodes, updateNodePosition, updateNodeData]
   );
 
   return (

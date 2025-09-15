@@ -13,7 +13,7 @@ function SubnetNode({
   id,
   width,
   height,
-  position,
+  // position,
 }: AnyNodeProps<subnetData>) {
   const [hovered, setHovered] = useState(false);
 

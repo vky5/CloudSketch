@@ -1,4 +1,4 @@
-import { ResourceBlock, ResourceBlockSpecific } from "@/utils/types/resource";
+import { ResourceBlockSpecific } from "@/utils/types/resource";
 import { handleNewResource } from "../customSaveLogics/rdsSaveHandle";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
@@ -10,8 +10,8 @@ const handleChange = (key: string, value: unknown, id: string) => {
 };
 
 export default async function EC2S3(
-  sourceNode: ResourceBlockSpecific<ec2Data>,
-  destinationNode: ResourceBlock
+  sourceNode: ResourceBlockSpecific<ec2Data>
+  // destinationNode: ResourceBlock
 ) {
   // first step: check if the sourceNode already has instance profile
 

@@ -8,7 +8,6 @@ resource "aws_db_instance" "{{.NodeID}}" {
   username             = "{{or .Username "TODO: set master username"}}"
   password             = "{{or .Password "TODO: set master password"}}"
   skip_final_snapshot  = true
-
   {{- if .SecurityGroups }}
   vpc_security_group_ids = [
       {{- range $i, $sg := .SecurityGroups }}
@@ -18,15 +17,27 @@ resource "aws_db_instance" "{{.NodeID}}" {
   {{- else }}
   # TODO: add security group IDs
   {{- end }}
-
-  {{- if .SubnetGroupName }}
+  {{- if .SubnetID }}
+  db_subnet_group_name = aws_db_subnet_group.{{.NodeID}}_subnet_group.name
+  {{- else if .SubnetGroupName }}
   db_subnet_group_name = "{{.SubnetGroupName}}"
   {{- else }}
   # TODO: add subnet group name if required
   {{- end }}
-
   tags = {
     Name   = "{{or .TagName "TODO: set Name tag"}}"
     NodeID = "{{.NodeID}}"
   }
 }
+
+{{- if .SubnetID }}
+# Create a subnet group for the single subnet
+resource "aws_db_subnet_group" "{{.NodeID}}_subnet_group" {
+  name       = "{{.NodeID}}-subnet-group"
+  subnet_ids = [aws_subnet.{{.SubnetID}}.id]
+  
+  tags = {
+    Name = "{{.NodeID}} DB Subnet Group"
+  }
+}
+{{- end }}

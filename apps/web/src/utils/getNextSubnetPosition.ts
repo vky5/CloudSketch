@@ -12,7 +12,7 @@ interface Bounds {
  * Get the next valid position for a subnet inside a VPC
  */
 export function getNextSubnetPosition(
-  parentVpc: AnyNodeProps<any>, // vpc node itself
+  parentVpc: AnyNodeProps<unknown>, // vpc node itself
   existingSubnets: AnyNodeProps<subnetData>[],
   subnetWidth: number,
   subnetHeight: number,

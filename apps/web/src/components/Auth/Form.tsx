@@ -117,16 +117,17 @@ export function LoginForm({
                 id="remember"
                 name="remember"
                 checked={formData.remember}
-                onCheckedChange={(v) =>
-                  handleChange({
+                onCheckedChange={(v) => {
+                  const event = {
                     target: {
                       name: "remember",
                       value: String(Boolean(v)),
                       type: "checkbox",
                       checked: Boolean(v),
                     },
-                  } as any)
-                }
+                  } as React.ChangeEvent<HTMLInputElement>;
+                  handleChange(event);
+                }}
               />
               <Label htmlFor="remember" className="text-sm font-normal">
                 Remember me

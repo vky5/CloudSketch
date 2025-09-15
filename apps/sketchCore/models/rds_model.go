@@ -13,6 +13,7 @@ type RDSConfig struct {
 	Password         string   `json:"Password,omitempty"`         // DB password
 	SecurityGroups   []string `json:"SecurityGroups,omitempty"`   // Security group *names* (expanded in template)
 	SubnetGroupName  string   `json:"SubnetGroupName,omitempty"`  // Optional subnet group
+	SubnetID         string   `json:"SubnetID,omitempty"`   
 	TagName          string   `json:"TagName"`                    // AWS tag: Name
 	NodeID           string   `json:"NodeID"`                     // Injected for tracking
 }

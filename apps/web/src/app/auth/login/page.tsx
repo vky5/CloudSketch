@@ -6,7 +6,7 @@ import { useSignIn } from "@clerk/nextjs";
 import { BackgroundNetwork } from "@/components/Auth/network";
 import { LoginForm } from "@/components/Auth/Form";
 import axios from "axios";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 function Login() {
   const { handleOAuthSignIn } = useOAuthSignIn();
@@ -85,8 +85,12 @@ function Login() {
       }
 
       await new Promise((r) => setTimeout(r, 1000));
-    } catch (err: any) {
-      setErrors({ root: err?.message || "Login failed" });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrors({ root: err?.message || "Login failed" });
+      } else {
+        setErrors({ root: undefined });
+      }
     }
   };
 

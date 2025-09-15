@@ -17,7 +17,6 @@ function VPCNode({
   id,
   width,
   height,
-  position,
 }: AnyNodeProps<vpcData>) {
   const [hovered, setHovered] = useState(false);
   const { nodes, addNode } = useDiagramStore();
@@ -33,18 +32,25 @@ function VPCNode({
     ) as AnyNodeProps<subnetData>[];
 
     // ✅ Correct position calculation inside VPC
+    const parentVpcNodeProps: AnyNodeProps<vpcData> = {
+      ...parentVpcNode,
+      isConnectable: true,
+      positionAbsoluteX: parentVpcNode.position.x,
+      positionAbsoluteY: parentVpcNode.position.y,
+    } as AnyNodeProps<vpcData>;
+
     const pos = getNextSubnetPosition(
-      parentVpcNode,
+      parentVpcNodeProps,
       existingSubnets,
       160, // subnet width
       100, // subnet height
       { x: 0, y: 0, width: 5000, height: 5000 } // canvas bounds
     );
 
-    const newSubnet: AnyNodeProps<subnetData> = {
+    const newSubnet = {
       id: subnetId,
       type: "subnet",
-      position: pos, // use the calculated position
+      position: pos,
       data: {
         uuid: subnetId,
         parentVpcId: id,
@@ -59,9 +65,6 @@ function VPCNode({
       deletable: true,
       selected: false,
       draggable: true,
-      isConnectable: true,
-      positionAbsoluteX: pos.x,
-      positionAbsoluteY: pos.y,
     };
 
     try {
