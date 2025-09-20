@@ -19,6 +19,7 @@ CLERK_SECRET_KEY=
 
 #Database
 MONGODB_PASSWD=
+
 MONGODB_URI=
 ```
 
