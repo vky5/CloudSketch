@@ -1,4 +1,4 @@
-# CloudSketch
+0# CloudSketch
 
 ## To Run Frontend
 ```bash
@@ -19,6 +19,7 @@ CLERK_SECRET_KEY=
 
 #Database
 MONGODB_PASSWD=
+
 MONGODB_URI=
 ```
 
@@ -41,3 +42,8 @@ go run ./cmd
 | Security Group  | `name`, `inbound_rules`, `outbound_rules`                     |
 | IAM Role        | `role_name`, `policies`, `assume_role_policy`                 |
 
+# Tech stack
+- xyflow 
+- terraform
+- nextjs
+- s3
