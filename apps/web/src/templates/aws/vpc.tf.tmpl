@@ -1,0 +1,10 @@
+resource "aws_vpc" "{{.NodeID}}" {
+  cidr_block           = "{{.CIDR}}"
+  enable_dns_support   = true
+  enable_dns_hostnames = {{if eq .EnableDNS "yes"}}true{{else}}false{{end}}
+
+  tags = {
+    Name   = "{{or .Name "TODO: set Name"}}"
+    NodeID = "{{.NodeID}}"
+  }
+}

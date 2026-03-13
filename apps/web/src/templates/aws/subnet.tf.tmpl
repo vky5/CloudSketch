@@ -1,0 +1,24 @@
+resource "aws_subnet" "{{.NodeID}}" {
+  vpc_id     = "{{.ParentVpcId}}"
+  cidr_block = "{{or .CIDR "TODO: provide CIDR block"}}"
+
+  {{- if .AvailabilityZone }}
+  availability_zone = "{{.AvailabilityZone}}"
+  {{- else }}
+  # availability_zone = "TODO: set availability zone if required"
+  {{- end }}
+
+  {{- if .MapPublicIpOnLaunch }}
+  map_public_ip_on_launch = {{if eq .MapPublicIpOnLaunch "yes"}}true{{else}}false{{end}}
+  {{- else }}
+  # map_public_ip_on_launch = false
+  {{- end }}
+
+  tags = {
+    Name   = "{{or .Name "TODO: set Subnet Name"}}"
+    NodeID = "{{.NodeID}}"
+    {{- if .Tags }}
+    Extra  = "{{.Tags}}"
+    {{- end }}
+  }
+}

@@ -1,0 +1,7 @@
+resource "aws_volume_attachment" "{{.NodeID}}" {
+  instance_id = aws_instance.{{.EC2NodeID}}.id
+  volume_id   = "{{.VolumeID}}"
+  device_name = "{{or .DeviceName "/dev/sdf"}}"
+
+  # force_detach = {{or .ForceDetach false}}
+}

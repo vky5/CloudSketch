@@ -20,7 +20,7 @@ export async function syncNodeWithBackend(node: ResourceBlock) {
 
   try {
     const res = await axios.post(
-      process.env.NEXT_PUBLIC_BACKEND_URL + "/generate",
+      "/api/generate",
       reqObj
     );
 

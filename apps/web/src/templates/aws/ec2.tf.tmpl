@@ -1,0 +1,35 @@
+resource "aws_instance" "{{.NodeID}}" {
+  ami           = "{{or .AMI "TODO: Provide AMI ID"}}"
+  instance_type = "{{or .InstanceType "TODO: provide instance type"}}"
+
+  {{- if .InstanceProfile }}
+  iam_instance_profile = aws_iam_instance_profile.{{.InstanceProfile}}.name
+  {{- end }}
+
+  vpc_security_group_ids = [
+    {{- if .SecurityGroups }}
+      {{- range $i, $sg := .SecurityGroups }}
+        {{- if $i}},{{end}}"{{$sg}}"
+      {{- end }}
+    {{- else }}
+      "TODO: add security group IDs"
+    {{- end }}
+  ]
+
+  {{- if .KeyName }}
+  key_name = "{{.KeyName}}"
+  {{- else }}
+  # key_name = "TODO: add key pair name if needed"
+  {{- end }}
+
+  {{- if .SubnetID }}
+  subnet_id = "{{.SubnetID}}"
+  {{- else }}
+  # subnet_id = "TODO: add subnet ID if required"
+  {{- end }}
+
+  tags = {
+    Name   = "{{or .TagName "TODO: set Name tag"}}"
+    NodeID = "{{.NodeID}}"
+  }
+}

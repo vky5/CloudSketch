@@ -1,0 +1,16 @@
+resource "aws_ebs_volume" "{{.NodeID}}" {
+  availability_zone = "{{or .AvailabilityZone "TODO: provide AZ matching instance"}}"
+  size              = {{or .Size "TODO: provide size in GB"}}
+  type              = "{{or .VolumeType "gp3"}}"
+
+  {{- if .Encrypted }}
+  encrypted = true
+  {{- else }}
+  # encrypted = true   # TODO: enable encryption if required
+  {{- end }}
+
+  tags = {
+    Name   = "{{or .TagName "TODO: set Name tag"}}"
+    NodeID = "{{.NodeID}}"
+  }
+}

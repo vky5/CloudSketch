@@ -1,0 +1,40 @@
+# Security Group Resource
+resource "aws_security_group" "{{.Name}}" {
+  name        = "{{.Name}}"
+  description = "{{or .Description "TODO: Provide description"}}"
+
+  {{if .VpcID}}
+    vpc_id = "{{.VpcID}}"
+  {{else}}
+    # vpc_id = "TODO: Provide VPC ID (will use default VPC if omitted)"
+  {{end}}
+
+  tags = {
+    Name   = "{{.Name}}"
+    NodeID   = "{{.NodeID}}"
+  }
+}
+
+{{/* Ingress Rules */}}
+{{range $i, $rule := .IngressRules}}
+resource "aws_vpc_security_group_ingress_rule" "{{$.Name}}_ingress_{{$i}}" {
+  security_group_id = aws_security_group.{{$.Name}}.id
+  {{if $rule.CidrIPv4}}cidr_ipv4 = "{{$rule.CidrIPv4}}"{{end}}
+  {{if $rule.CidrIPv6}}cidr_ipv6 = "{{$rule.CidrIPv6}}"{{end}}
+  from_port         = {{$rule.FromPort}}
+  to_port           = {{$rule.ToPort}}
+  ip_protocol       = "{{$rule.Protocol}}"
+}
+{{end}}
+
+{{/* Egress Rules */}}
+{{range $i, $rule := .EgressRules}}
+resource "aws_vpc_security_group_egress_rule" "{{$.Name}}_egress_{{$i}}" {
+  security_group_id = aws_security_group.{{$.Name}}.id
+  {{if $rule.CidrIPv4}}cidr_ipv4 = "{{$rule.CidrIPv4}}"{{end}}
+  {{if $rule.CidrIPv6}}cidr_ipv6 = "{{$rule.CidrIPv6}}"{{end}}
+  from_port         = {{$rule.FromPort}}
+  to_port           = {{$rule.ToPort}}
+  ip_protocol       = "{{$rule.Protocol}}"
+}
+{{end}}
