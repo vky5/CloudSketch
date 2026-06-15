@@ -12,7 +12,7 @@
     *   **Auto-Binding Subnets**: Dragging and dropping compute/database nodes (e.g., EC2, RDS) directly inside a Subnet node automatically detects the drop and binds the resource's `SubnetID` config in the state. Dragging them out clears it.
 *   **Dynamic Connection Validation**: Restricts connection lines based on cloud architecture rules (e.g., attaching EBS volume to an EC2 instance) with custom connection logic.
 *   **Real-time Terraform Compilation**:
-    *   **Template Evaluator**: A Next.js API route `/api/generate` retrieves local templates (`src/templates/aws/*.tf.tmpl`) and executes a custom template parser (`templateEvaluator.ts`) to render clean HCL on the fly.
+    *   **Template Evaluator**: Executes a custom template parser (`templateEvaluator.ts`) on the client side using static template strings (`awsTemplates.ts`) to render clean, valid HCL on the fly with zero latency.
 *   **Interactive Code Editor**: Side-panel visualizer showing live-generated Terraform code synced with the canvas diagram state.
 
 ---

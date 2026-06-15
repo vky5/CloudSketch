@@ -1,30 +1,38 @@
-import axios from "axios";
 import { useTerraformStore } from "@/store/useTerraformStore";
 import { ResourceBlock } from "./types/resource";
+import { evaluateTemplate } from "@/lib/templateEvaluator";
+import { awsTemplates } from "@/registry/awsTemplates";
 
-// Fixed version using getState() — no hooks outside components
+// Perform instant client-side compilation of the node configuration
 export async function syncNodeWithBackend(node: ResourceBlock) {
   const reqObj = {
-    NodeID: node.id, // so we are passing the normal id as NodeId
+    NodeID: node.id,
     Type: node.type,
     Data: {
-      ...node.data, // Spread operator to include all data properties
+      ...node.data,
     },
   };
 
   if (reqObj.Type === "rectangle") {
     return Promise.resolve();
   }
-  const store = useTerraformStore.getState();
-  const { terraformBlocks, updateBlock, appendBlocks } = store;
+
+  const template = awsTemplates[reqObj.Type];
+  if (!template) {
+    console.warn(`No template found for type: ${reqObj.Type}`);
+    return Promise.resolve();
+  }
 
   try {
-    const res = await axios.post(
-      "/api/generate",
-      reqObj
-    );
+    // Evaluate the template directly in-memory (0ms latency, zero HTTP calls)
+    const block = evaluateTemplate(template, {
+      ...reqObj.Data,
+      NodeID: reqObj.NodeID,
+    });
 
-    const block = res.data.terraform;
+    const store = useTerraformStore.getState();
+    const { terraformBlocks, updateBlock, appendBlocks } = store;
+
     const blockMap = { [node.id]: block };
 
     const existingBlock = terraformBlocks[node.id];
@@ -34,9 +42,9 @@ export async function syncNodeWithBackend(node: ResourceBlock) {
       appendBlocks(blockMap);
     }
 
-    console.log("terraformBlocks", terraformBlocks);
+    console.log("Client-side compiled blocks:", terraformBlocks);
   } catch (error) {
-    console.error("Failed to sync node with backend", error);
-    throw error; // Let caller handle failure (optional)
+    console.error("Failed to compile node template on client:", error);
+    throw error;
   }
 }
