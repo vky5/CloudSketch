@@ -9,6 +9,8 @@ import NodeSettingsPanel from "@/components/SettingsPannel/NodeSettingsPanel";
 import { useUIPanelStore } from "@/store/useUIPanelStore";
 import SideMenuConfig from "@/components/ConfigPanel";
 import ResourceSettingsPanel from "@/components/SettingsPannel/ResourceSettingsPanel";
+import { useProjectStore } from "@/store/useProjectStore";
+import { useEffect } from "react";
 
 export default function HomePage() {
   const [editorWidth, setEditorWidth] = useState(500);
@@ -20,6 +22,12 @@ export default function HomePage() {
     openConfig,
     settingsVersion,
   } = useUIPanelStore();
+
+  const { init: initProjects } = useProjectStore();
+
+  useEffect(() => {
+    initProjects();
+  }, [initProjects]);
 
   return (
     <div className="w-full h-screen overflow-hidden bg-[#0b0c0e]">

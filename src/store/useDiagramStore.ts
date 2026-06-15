@@ -35,6 +35,8 @@ interface DiagramState {
   updateNodeData: (id: string, newData: Partial<ResourceBlock["data"]>) => void;
   updateNodeDimensions: (id: string, width: number, height: number) => void;
   updateNodePosition: (id: string, x: number, y: number) => void;
+  setNodesAndEdges: (nodes: AnyNode[], edges: Edge[]) => void;
+  clearAll: () => void;
 }
 
 export const useDiagramStore = create<DiagramState>((set) => ({
@@ -104,6 +106,10 @@ export const useDiagramStore = create<DiagramState>((set) => ({
           : node
       ),
     })),
+
+  setNodesAndEdges: (nodes, edges) => set({ nodes, edges }),
+
+  clearAll: () => set({ nodes: [], edges: [], selectedNodeId: null, selectedNodeIds: [], settingOpenNodeId: null }),
 }));
 
 // a global storage for all noodes/edges

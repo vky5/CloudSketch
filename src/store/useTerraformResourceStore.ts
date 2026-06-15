@@ -57,6 +57,7 @@ interface TerraformResourceStore {
     type: T
   ) => GenericResource<T>[];
 
+  setResources: (resources: GenericResource[]) => void;
   resetAll: () => void;
 }
 
@@ -102,6 +103,7 @@ export const useTerraformResourceStore = create<TerraformResourceStore>(
       );
     },
 
-    resetAll: () => ({ resources: [] }),
+    setResources: (resources) => set({ resources }),
+    resetAll: () => set({ resources: [], settingOpenResourceId: null }),
   })
 );
