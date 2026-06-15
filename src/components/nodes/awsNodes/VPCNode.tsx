@@ -3,6 +3,7 @@
 import { memo, useState } from "react";
 import { NodeResizer } from "@xyflow/react";
 import { FaPlus, FaGear } from "react-icons/fa6";
+import { Cloud } from "lucide-react";
 import openSettings from "@/utils/openSettings";
 import { AnyNodeProps } from "@/utils/types/resource";
 import { vpcData } from "@/config/awsNodes/vpc.config";
@@ -20,6 +21,7 @@ function VPCNode({
 }: AnyNodeProps<vpcData>) {
   const [hovered, setHovered] = useState(false);
   const { nodes, addNode } = useDiagramStore();
+  const vpcCidr = data.CIDR?.toString() || "10.0.0.0/16";
 
   const handleAddSubnet = async () => {
     const subnetId = crypto.randomUUID();
@@ -31,7 +33,6 @@ function VPCNode({
       (n) => n.type === "subnet" && (n.data as subnetData).parentVpcId === id
     ) as AnyNodeProps<subnetData>[];
 
-    // ✅ Correct position calculation inside VPC
     const parentVpcNodeProps: AnyNodeProps<vpcData> = {
       ...parentVpcNode,
       isConnectable: true,
@@ -42,9 +43,9 @@ function VPCNode({
     const pos = getNextSubnetPosition(
       parentVpcNodeProps,
       existingSubnets,
-      160, // subnet width
-      100, // subnet height
-      { x: 0, y: 0, width: 5000, height: 5000 } // canvas bounds
+      160,
+      100,
+      { x: 0, y: 0, width: 5000, height: 5000 }
     );
 
     const newSubnet = {
@@ -57,8 +58,8 @@ function VPCNode({
         Name: "New Subnet",
         CIDR: "10.0.1.0/24",
       },
-      width: 160,
-      height: 100,
+      width: 260,
+      height: 180,
       dragging: false,
       zIndex: 0,
       selectable: true,
@@ -83,54 +84,65 @@ function VPCNode({
     <>
       <NodeResizer
         isVisible={selected}
-        minWidth={200}
-        minHeight={120}
-        lineClassName="border-blue-500"
-        handleClassName="bg-blue-500 border border-white"
+        minWidth={240}
+        minHeight={150}
+        lineClassName="border-[#6366F1] !border-2"
+        handleClassName="bg-[#6366F1] border border-white rounded"
         onResizeEnd={(e, { width, height }) => {
           useDiagramStore.getState().updateNodeDimensions(id, width, height);
         }}
       />
 
-      {/* VPC rectangle */}
       <div
-        className="relative border rounded-lg bg-[#020817]/75 shadow text-sm font-semibold text-white"
+        className={`relative border-2 rounded-2xl transition-all duration-300 bg-[#04060c]/40 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:32px_32px]
+          ${
+            selected
+              ? "border-[#6366F1] shadow-[0_0_20px_rgba(99,102,241,0.15)]"
+              : "border-slate-800/80 hover:border-slate-700/80 shadow-xl"
+          }`}
         style={{
-          width: (width ?? 200) - 10,
-          height: (height ?? 120) - 10,
-          minWidth: 192,
-          minHeight: 112,
-          margin: 4,
+          width: width ?? 600,
+          height: height ?? 400,
+          minWidth: 240,
+          minHeight: 150,
         }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
-          {data.Name || "VPC"}
+        {/* Floating Top-Left Tag Badge */}
+        <div className="absolute -top-3.5 left-4 bg-[#090b14] border border-slate-800 rounded-lg px-2.5 py-1 text-[11px] text-slate-200 flex items-center gap-1.5 shadow-lg select-none pointer-events-auto z-10">
+          <Cloud className="w-3.5 h-3.5 text-blue-400" />
+          <span className="font-bold text-white max-w-[120px] truncate">{data.Name || "VPC"}</span>
+          <span className="text-slate-400 font-mono text-[10px]">{vpcCidr}</span>
+
+          {/* Action Tools */}
+          {(hovered || selected) && (
+            <div className="flex items-center gap-1 border-l border-slate-800 pl-1.5 ml-1.5">
+              <button
+                className="bg-slate-900 hover:bg-slate-850 border border-slate-700/80 rounded p-0.5 text-slate-400 hover:text-white transition-all cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openSettings(id, "node");
+                }}
+                title="VPC Settings"
+              >
+                <FaGear className="w-2.5 h-2.5" />
+              </button>
+
+              <button
+                className="bg-emerald-950/50 hover:bg-emerald-900/80 border border-emerald-800/80 rounded p-0.5 text-emerald-400 hover:text-white transition-all cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddSubnet();
+                }}
+                title="Add Subnet"
+              >
+                <FaPlus className="w-2.5 h-2.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {(hovered || selected) && (
-        <div className="absolute top-1 right-1 flex gap-1">
-          {/* Settings */}
-          <button
-            className="bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow"
-            onClick={() => openSettings(id, "node")}
-            title="VPC Settings"
-          >
-            <FaGear className="w-3.5 h-3.5 text-white hover:text-[#3B82F6]" />
-          </button>
-
-          {/* Add Subnet */}
-          <button
-            className="bg-green-800 hover:bg-green-700 border border-green-600 rounded-full p-1 shadow"
-            onClick={handleAddSubnet}
-            title="Add Subnet"
-          >
-            <FaPlus className="w-3.5 h-3.5 text-white hover:text-green-400" />
-          </button>
-        </div>
-      )}
     </>
   );
 }

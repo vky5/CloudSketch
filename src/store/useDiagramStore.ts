@@ -59,17 +59,25 @@ export const useDiagramStore = create<DiagramState>((set) => ({
     })),
 
   addNode: (node: AnyNode) =>
-    set((state) => ({
-      nodes: [...state.nodes, node],
-    })),
+    set((state) => {
+      if (state.nodes.some((n) => n.id === node.id)) {
+        return {};
+      }
+      return {
+        nodes: [...state.nodes, node],
+      };
+    }),
 
   addEdge: (edge: Edge | Connection) =>
-    set((state) => ({
-      edges: [
-        ...state.edges,
-        { ...edge, id: "id" in edge ? edge.id : crypto.randomUUID() } as Edge, // sometimes the connection doesnt include
-      ],
-    })),
+    set((state) => {
+      const newEdge = { ...edge, id: "id" in edge ? edge.id : crypto.randomUUID() } as Edge;
+      if (state.edges.some((e) => e.id === newEdge.id)) {
+        return {};
+      }
+      return {
+        edges: [...state.edges, newEdge],
+      };
+    }),
 
   setSelectedTool: (tool) => set({ selectedTool: tool }),
 
@@ -123,7 +131,12 @@ export const useDiagramStore = create<DiagramState>((set) => ({
       ),
     })),
 
-  setNodesAndEdges: (nodes, edges) => set({ nodes, edges }),
+  setNodesAndEdges: (nodes, edges) =>
+    set(() => {
+      const uniqueNodes = nodes.filter((n, idx, self) => self.findIndex((x) => x.id === n.id) === idx);
+      const uniqueEdges = edges.filter((e, idx, self) => self.findIndex((x) => x.id === e.id) === idx);
+      return { nodes: uniqueNodes, edges: uniqueEdges };
+    }),
 
   clearAll: () => set({ nodes: [], edges: [], selectedNodeId: null, selectedNodeIds: [], settingOpenNodeId: null }),
 }));

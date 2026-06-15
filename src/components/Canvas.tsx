@@ -11,6 +11,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
   EdgeChange,
+  BackgroundVariant,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useDiagramStore } from "@/store/useDiagramStore";
@@ -191,6 +192,10 @@ function FlowContent() {
         panOnDrag={selectedTool === "hand"}
         zoomOnScroll={true}
         panOnScroll={true}
+        defaultEdgeOptions={{
+          style: { stroke: "#6366F1", strokeWidth: 2, opacity: 0.75 },
+          animated: true,
+        }}
         style={{
           cursor: (() => {
             switch (selectedTool) {
@@ -211,7 +216,7 @@ function FlowContent() {
         }}
       >
         <Controls />
-        <Background gap={11} size={1} bgColor="#020817" color="#1E293B" />
+        <Background gap={20} size={1.5} bgColor="#070913" color="#1E293B" variant={BackgroundVariant.Dots} />
       </ReactFlow>
 
       {renderGhostShape(selectedTool)}

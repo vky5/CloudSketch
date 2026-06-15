@@ -10,19 +10,15 @@ export default function EBSNode({ data, selected, id }: AnyNodeProps<ebsData>) {
   const [hovered, setHovered] = useState(false);
   const [isValid, setIsValid] = useState(true);
 
-  const volumeType = data.VolumeType?.toString() || "None";
-  const size = data.Size?.toString() || "None";
+  const volumeType = data.VolumeType?.toString() || "gp3";
+  const size = data.Size?.toString() || "30";
 
   useEffect(() => {
     const checkNode = () => {
-      // find all required fields in schema
       const requiredFields = ebsFormSchema.filter((f) => f.required);
-
-      // check if each required field exists and has a non-empty value
       const missing = requiredFields.filter((field) => {
-        const key = field.key as keyof ebsData; // key is "VolumeType" | "Size"
-        const value = data[key]; // get the actual value from data
-
+        const key = field.key as keyof ebsData; 
+        const value = data[key];
         return (
           value === undefined ||
           value === null ||
@@ -30,73 +26,71 @@ export default function EBSNode({ data, selected, id }: AnyNodeProps<ebsData>) {
           (Array.isArray(value) && value.length === 0)
         );
       });
-
       setIsValid(missing.length === 0);
     };
-
     checkNode();
   }, [data]);
 
   return (
     <div
-      className={`w-[180px] relative border rounded-lg shadow bg-[#020817]/75 text-white px-3 py-1.5 
+      className={`w-52 relative rounded-xl bg-[#090b14]/90 backdrop-blur-md text-white border transition-all duration-300
         ${
           selected
-            ? "border-blue-500"
+            ? "border-[#6366F1] shadow-[0_0_15px_rgba(99,102,241,0.3)] scale-[1.01]"
             : isValid
-            ? "border-white"
-            : "border-red-500"
+            ? "border-slate-800/80 shadow-lg hover:border-slate-700/80"
+            : "border-[#EF4444] shadow-[0_0_15px_rgba(239,68,68,0.3)]"
         }`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Connection Handles */}
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
-      <Handle type="source" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
+      {/* Top accent line */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 to-purple-400 rounded-t-xl" />
 
-      {/* Floating Gear Button - Hover/Selected */}
+      {/* Connection Handles */}
+      <Handle type="target" position={Position.Top} className="!bg-slate-700 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!bg-slate-700 !w-2 !h-2" />
+      <Handle type="source" position={Position.Left} className="!bg-slate-700 !w-2 !h-2" />
+      <Handle type="source" position={Position.Right} className="!bg-slate-700 !w-2 !h-2" />
+
+      {/* Floating Gear Button */}
       {(hovered || selected) && (
         <button
           onClick={() => openSettings(id, "node")}
-          className={`absolute -top-3 -right-3 bg-[#111827] hover:bg-[#1f2937] border border-gray-600 rounded-full p-1 shadow transition-opacity duration-200 ${
-            hovered || selected ? "opacity-100 scale-100" : "opacity-0 scale-90"
-          }`}
+          className="absolute -top-3.5 right-2 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-md p-1 shadow-md hover:scale-105 transition-all text-slate-300 hover:text-white z-50 cursor-pointer"
           title="Edit EBS Settings"
         >
-          <FaGear className="w-3.5 h-3.5 hover:text-[#3B82F6] text-white" />
+          <FaGear className="w-3 h-3" />
         </button>
       )}
 
       {/* Node Content */}
-      <div className="flex items-center gap-3 mt-1">
-        {/* Fixed icon container */}
-        <div className="flex-shrink-0">
-          <HardDrive className="w-6 h-6 text-[#6A5ACD]" />
+      <div className="px-3.5 py-3 flex flex-col gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-indigo-500/10 text-indigo-400 p-1.5 rounded-lg border border-indigo-500/15">
+            <HardDrive className="w-4 h-4" />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="font-semibold text-xs tracking-wider text-slate-400 uppercase">Block Storage</span>
+            <span className="font-bold text-[13px] text-white truncate max-w-[120px]" title={data.Name || "EBS Volume"}>
+              {data.Name || "EBS Volume"}
+            </span>
+          </div>
         </div>
 
-        {/* Text container with fixed width + truncation */}
-        <div className="flex flex-col space-y-0.5 text-xs min-w-0 max-w-[110px]">
-          <span className="font-medium text-sm leading-tight truncate">
-            EBS Volume
-          </span>
-          <span className="text-muted-foreground text-[11px] truncate leading-tight mt-1">
-            Type: {volumeType}
-          </span>
-          <span className="text-muted-foreground text-[11px] truncate leading-tight">
-            Size: {size} GiB
-          </span>
+        <div className="border-b border-slate-800/60 my-1" />
+
+        <div className="flex flex-col gap-1 text-[10px]">
+          <div className="flex justify-between items-center text-slate-400">
+            <span>Volume Type</span>
+            <span className="font-mono text-slate-200 font-semibold truncate max-w-[90px]">{volumeType}</span>
+          </div>
+          <div className="flex justify-between items-center text-slate-400">
+            <span>Volume Size</span>
+            <span className="font-mono text-slate-200 truncate max-w-[90px]">{size} GiB</span>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-/*
-This EBSNode mirrors EC2Node:
-- Pulls schema from ebsFormSchema
-- Red border if required fields missing
-- Shows VolumeType + Size
-- Hover/selected gear button opens settings
-*/
