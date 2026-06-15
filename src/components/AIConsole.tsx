@@ -67,8 +67,11 @@ export default function AIConsole() {
         const edgeNames: string[] = [];
 
         // 1. Gather all nodes and calculate default dimensions & absolute positions
+        const idMap: Record<string, string> = {};
         const processedNodes = aiNodes.map((n: any, idx: number) => {
-          const id = n.id || crypto.randomUUID();
+          const oldId = n.id || `node-${idx}`;
+          const id = crypto.randomUUID();
+          idMap[oldId] = id;
           const type = (n.type || "rectangle").toLowerCase();
           
           let width = 120;
@@ -210,8 +213,10 @@ export default function AIConsole() {
         // 5. Connect and register handshakes
         for (const e of aiEdges) {
           try {
-            const edgeId = e.id || crypto.randomUUID();
-            const edgeObj = { id: edgeId, source: e.from, target: e.to, label: e.label };
+            const edgeId = crypto.randomUUID();
+            const sourceId = idMap[e.from] || e.from;
+            const targetId = idMap[e.to] || e.to;
+            const edgeObj = { id: edgeId, source: sourceId, target: targetId, label: e.label };
 
             const sourceNode = finalNodes.find((x: any) => x.id === edgeObj.source);
             const targetNode = finalNodes.find((x: any) => x.id === edgeObj.target);
