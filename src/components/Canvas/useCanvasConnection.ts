@@ -1,10 +1,7 @@
 import { useCallback } from "react";
 import { Connection, Edge, Node } from "@xyflow/react";
-import canConnect, { keyGen } from "@/config/connectionsConfig";
-import connectionLogic, {
-  serializeConnectionOrder,
-} from "@/lib/nodeConnections/connectionLogicRegistry";
-import { ResourceBlock } from "@/utils/types/resource";
+import canConnect from "@/config/connectionsConfig";
+import { handleConnection } from "@/lib/graphProtocol/ugcp";
 
 export function useCanvasConnection(
   nodes: Node[],
@@ -27,33 +24,20 @@ export function useCanvasConnection(
         return;
       }
 
-      const sourceBlock: ResourceBlock = {
-        id: sourceNode.id,
-        type: sourceNode.type,
-        data: sourceNode.data as ResourceBlock["data"],
-      };
-
-      const targetBlock: ResourceBlock = {
-        id: targetNode.id,
-        type: targetNode.type,
-        data: targetNode.data as ResourceBlock["data"],
-      };
-
-      const { source, target } = serializeConnectionOrder(
-        sourceBlock,
-        targetBlock
-      );
-
-      const key = keyGen(source.type, target.type);
+      const edgeId = "id" in params ? params.id : crypto.randomUUID();
+      const edgeObj: Edge = {
+        ...params,
+        id: edgeId,
+      } as Edge;
 
       try {
-        await connectionLogic(
-          key,
-          { id: source.id, type: source.type, data: source.data },
-          { id: target.id, type: target.type, data: target.data }
-        );
+        const ugcpRes = handleConnection(edgeObj, sourceNode, targetNode);
+        if (!ugcpRes.success) {
+          alert(`❌ Connection failed: ${ugcpRes.error}`);
+          return;
+        }
 
-        addEdge(params); // only add edge if no error
+        addEdge(edgeObj); // only add edge if no error
       } catch (err: unknown) {
         if (err instanceof Error) {
           alert(`❌ ${err.message}`);

@@ -4,6 +4,7 @@ import { subnetData } from "@/config/awsNodes/subnet.config";
 import { findNonOverlappingPosition } from "@/utils/findNonOverlappingPosition";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import { ResourceBlock } from "@/utils/types/resource";
+import { handleContainment } from "@/lib/graphProtocol/ugcp";
 
 export function useCanvasDragAndDrop(
   nodes: Node[],
@@ -82,159 +83,99 @@ export function useCanvasDragAndDrop(
 
   const onNodeDragStop = useCallback(
     async (event: React.MouseEvent, node: Node) => {
-      // Handle subnet nodes (existing logic)
+      // Handle subnet nodes constraint checks
       if (node.type === "subnet") {
         const subnetVal = node.data as subnetData;
         const parentVpc = nodes.find(
           (n) => n.type === "vpc" && n.id === subnetVal.parentVpcId
         );
-        if (!parentVpc?.position) return;
-
-        const padding = 10;
-        const nodeWidth = node.width ?? 160;
-        const nodeHeight = node.height ?? 100;
-        const vpcBounds = {
-          minX: parentVpc.position.x + padding,
-          minY: parentVpc.position.y + padding,
-          maxX:
-            parentVpc.position.x +
-            (parentVpc.width ?? 200) -
-            nodeWidth -
-            padding,
-          maxY:
-            parentVpc.position.y +
-            (parentVpc.height ?? 120) -
-            nodeHeight -
-            padding,
-        };
-
-        const otherSubnets = nodes.filter(
-          (n) =>
-            n.type === "subnet" &&
-            n.id !== node.id &&
-            (n.data as subnetData).parentVpcId === subnetVal.parentVpcId
-        );
-
-        const newPos = findNonOverlappingPosition(
-          node,
-          node.position!,
-          otherSubnets,
-          vpcBounds
-        );
-
-        if (newPos.x !== node.position!.x || newPos.y !== node.position!.y) {
-          // 1. Update local store
-          updateNodePosition(node.id, newPos.x, newPos.y);
-
-          // 2. Sync with backend
-          try {
-            await syncNodeWithBackend({
-              id: node.id,
-              type: node.type!,
-              data: {
-                ...(node.data as ResourceBlock["data"]),
-              },
-            });
-          } catch (err) {
-            console.error("Failed to sync subnet position with backend:", err);
-          }
-        }
-      }
-
-      // Handle EC2/RDS nodes being dropped into subnets
-      else if (node.type === "ec2" || node.type === "rds") {
-        if (!node.position) return;
-
-        // Find all subnet nodes
-        const subnetNodes = nodes.filter((n) => n.type === "subnet");
-
-        // Check which subnet (if any) contains the dropped node
-        const containingSubnet = subnetNodes.find((subnet) => {
-          if (!subnet.position) return false;
-
-          const subnetWidth = subnet.width ?? 160;
-          const subnetHeight = subnet.height ?? 100;
-          const nodeWidth = node.width ?? 100;
-          const nodeHeight = node.height ?? 80;
-
-          // Check if the node is completely within the subnet bounds
-          const nodeLeft = node.position!.x;
-          const nodeRight = node.position!.x + nodeWidth;
-          const nodeTop = node.position!.y;
-          const nodeBottom = node.position!.y + nodeHeight;
-
-          const subnetLeft = subnet.position.x;
-          const subnetRight = subnet.position.x + subnetWidth;
-          const subnetTop = subnet.position.y;
-          const subnetBottom = subnet.position.y + subnetHeight;
-
-          return (
-            nodeLeft >= subnetLeft &&
-            nodeRight <= subnetRight &&
-            nodeTop >= subnetTop &&
-            nodeBottom <= subnetBottom
-          );
-        });
-
-        if (containingSubnet) {
-          // Update the node data with the subnet ID
-          const updatedData = {
-            ...node.data,
-            SubnetID: containingSubnet.id,
+        if (parentVpc?.position) {
+          const padding = 10;
+          const nodeWidth = node.width ?? 160;
+          const nodeHeight = node.height ?? 100;
+          const vpcBounds = {
+            minX: parentVpc.position.x + padding,
+            minY: parentVpc.position.y + padding,
+            maxX:
+              parentVpc.position.x +
+              (parentVpc.width ?? 200) -
+              nodeWidth -
+              padding,
+            maxY:
+              parentVpc.position.y +
+              (parentVpc.height ?? 120) -
+              nodeHeight -
+              padding,
           };
 
-          // Update the node in the store
-          updateNodeData(
-            node.id,
-            updatedData as Partial<ResourceBlock["data"]>
+          const otherSubnets = nodes.filter(
+            (n) =>
+              n.type === "subnet" &&
+              n.id !== node.id &&
+              (n.data as subnetData).parentVpcId === subnetVal.parentVpcId
           );
 
-          // Sync with backend
-          try {
-            await syncNodeWithBackend({
-              id: node.id,
-              type: node.type!,
-              data: updatedData as unknown as ResourceBlock["data"],
-            });
+          const newPos = findNonOverlappingPosition(
+            node,
+            node.position!,
+            otherSubnets,
+            vpcBounds
+          );
 
-            console.log(
-              `${node.type} node ${node.id} assigned to subnet ${containingSubnet.id}`
-            );
-          } catch (err) {
-            console.error(
-              `Failed to sync ${node.type} node with backend:`,
-              err
-            );
-          }
-        } else {
-          // If the node is not in any subnet, clear the subnet ID
-          if (node.data?.subnetId) {
-            const updatedData = {
-              ...node.data,
-              subnetId: undefined,
-            };
-
-            updateNodeData(
-              node.id,
-              updatedData as Partial<ResourceBlock["data"]>
-            );
+          if (newPos.x !== node.position!.x || newPos.y !== node.position!.y) {
+            updateNodePosition(node.id, newPos.x, newPos.y);
 
             try {
               await syncNodeWithBackend({
                 id: node.id,
                 type: node.type!,
-                data: updatedData as unknown as ResourceBlock["data"],
+                data: {
+                  ...(node.data as ResourceBlock["data"]),
+                },
               });
-
-              console.log(`${node.type} node ${node.id} removed from subnet`);
             } catch (err) {
-              console.error(
-                `Failed to sync ${node.type} node with backend:`,
-                err
-              );
+              console.error("Failed to sync subnet position with backend:", err);
             }
           }
         }
+      }
+
+      // Handle UGCP Nesting containment
+      if (node.type === "subnet" || node.type === "ec2" || node.type === "rds") {
+        if (!node.position) return;
+
+        const containers = nodes.filter((n) => {
+          if (node.type === "subnet") return n.type === "vpc";
+          return n.type === "subnet";
+        });
+
+        const containingNode = containers.find((container) => {
+          if (!container.position) return false;
+
+          const cWidth = container.width ?? 200;
+          const cHeight = container.height ?? 120;
+          const nWidth = node.width ?? 120;
+          const nHeight = node.height ?? 80;
+
+          const nLeft = node.position!.x;
+          const nRight = node.position!.x + nWidth;
+          const nTop = node.position!.y;
+          const nBottom = node.position!.y + nHeight;
+
+          const cLeft = container.position.x;
+          const cRight = container.position.x + cWidth;
+          const cTop = container.position.y;
+          const cBottom = container.position.y + cHeight;
+
+          return (
+            nLeft >= cLeft &&
+            nRight <= cRight &&
+            nTop >= cTop &&
+            nBottom <= cBottom
+          );
+        });
+
+        await handleContainment(node, containingNode || null);
       }
     },
     [nodes, updateNodePosition, updateNodeData]

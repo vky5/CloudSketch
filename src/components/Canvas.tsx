@@ -10,6 +10,7 @@ import {
   Node,
   ReactFlowProvider,
   useReactFlow,
+  EdgeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useDiagramStore } from "@/store/useDiagramStore";
@@ -20,6 +21,7 @@ import GhostCircle from "./nodes/ghosts/GhostCircle";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import { ResourceBlock } from "@/utils/types/resource";
 import { subnetData } from "@/config/awsNodes/subnet.config";
+import { handleDisconnection } from "@/lib/graphProtocol/ugcp";
 
 // Imported Hooks
 import { useCanvasSelection } from "./Canvas/useCanvasSelection";
@@ -169,6 +171,25 @@ function FlowContent() {
     [selectedNode]
   );
 
+  const onEdgesChangeHandler = useCallback(
+    (changes: EdgeChange[]) => {
+      changes.forEach((change) => {
+        if (change.type === "remove") {
+          const edge = edges.find((e) => e.id === change.id);
+          if (edge) {
+            const sourceNode = nodes.find((n) => n.id === edge.source);
+            const targetNode = nodes.find((n) => n.id === edge.target);
+            if (sourceNode && targetNode) {
+              handleDisconnection(edge, sourceNode, targetNode);
+            }
+          }
+        }
+      });
+      setEdges(changes);
+    },
+    [edges, nodes, setEdges]
+  );
+
   return (
     <div className="w-full h-full overflow-hidden" ref={canvasRef}>
       <ReactFlow
@@ -177,7 +198,7 @@ function FlowContent() {
         edges={edges}
         onNodeClick={onNodeClick}
         onNodesChange={onNodesChangeHandler}
-        onEdgesChange={setEdges}
+        onEdgesChange={onEdgesChangeHandler}
         onConnect={onConnect}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
