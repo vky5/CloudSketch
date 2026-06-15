@@ -15,6 +15,7 @@ import VPCNode from "../nodes/awsNodes/VPCNode";
 import { vpcData } from "@/config/awsNodes/vpc.config";
 import SubnetNode from "../nodes/awsNodes/SubnetNode";
 import { subnetData } from "@/config/awsNodes/subnet.config";
+import CircleNode from "../nodes/tools/CircleNode";
 
 export const nodeTypes = {
   ec2: EC2Node,
@@ -27,18 +28,21 @@ export const nodeTypes = {
   ebs: EBSNode,
   vpc: VPCNode,
   subnet: SubnetNode,
+  circle: CircleNode,
 };
 
 export function getDefaultDataForNode(
-  type: string
-): ebsData | ec2Data | rdsData | s3Data | vpcData | subnetData {
+  type: string,
+  id: string
+): any {
   switch (type.toLowerCase()) {
     case "ebs":
-      return { Name: "", VolumeType: "gp2", Size: 0 };
+      return { id, Name: "", VolumeType: "gp2", Size: 0 };
     case "ec2":
-      return { Name: "", AMI: "", InstanceType: "" };
+      return { id, Name: "", AMI: "", InstanceType: "" };
     case "rds":
       return {
+        id,
         Name: "",
         Engine: "mysql",
         InstanceClass: "db.t3.micro",
@@ -48,14 +52,38 @@ export function getDefaultDataForNode(
         MasterPassword: "",
       };
     case "s3":
-      return { Name: "" };
+      return { id, Name: "" };
     case "vpc":
       return {
+        id,
         Name: "",
         CIDR: "",
         EnableDNS: "yes",
         Tags: "",
       };
+    case "subnet":
+      return {
+        id,
+        uuid: crypto.randomUUID(),
+        parentVpcId: "",
+        Name: "",
+        CIDR: "",
+        AvailabilityZone: "",
+        MapPublicIpOnLaunch: "no",
+        Tags: "",
+      };
+    case "lambda":
+      return {
+        id,
+        Name: "",
+        runtime: "nodejs18.x",
+        memory: "128MB",
+      };
+    case "rectangle":
+    case "rhombus":
+    case "text":
+    case "circle":
+      return { id };
     default:
       throw new Error(`Unknown node type: ${type}`);
   }

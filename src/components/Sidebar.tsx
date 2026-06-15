@@ -16,6 +16,7 @@ import {
   Palette,
   ChevronRight,
   Server,
+  Circle,
 } from "lucide-react";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { awsComponents } from "@/data/aws.data";
@@ -26,6 +27,7 @@ const primaryTools = [
   { id: "text", name: "Text", icon: Type, shortcut: "T" },
   { id: "rectangle", name: "Rectangle", icon: Square, shortcut: "R" },
   { id: "rhombus", name: "Rhombus", icon: Diamond, shortcut: "D" },
+  { id: "circle", name: "Circle", icon: Circle, shortcut: "O" },
   { id: "arrow", name: "Arrow", icon: ArrowRight, shortcut: "A" },
   { id: "line", name: "Line", icon: Minus, shortcut: "L" },
   { id: "eraser", name: "Eraser", icon: Eraser, shortcut: "E" },

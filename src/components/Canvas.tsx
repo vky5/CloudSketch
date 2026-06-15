@@ -16,6 +16,7 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { nodeTypes, getDefaultDataForNode } from "./Canvas/nodeTypes";
 import GhostRectangle from "./nodes/ghosts/GhostRectangle";
 import GhostRhombus from "./nodes/ghosts/GhostRhombus";
+import GhostCircle from "./nodes/ghosts/GhostCircle";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import { ResourceBlock } from "@/utils/types/resource";
 import { subnetData } from "@/config/awsNodes/subnet.config";
@@ -73,6 +74,8 @@ function FlowContent() {
         return <GhostRectangle ref={ghostRef} />;
       case "rhombus":
         return <GhostRhombus ref={ghostRef} />;
+      case "circle":
+        return <GhostCircle ref={ghostRef} />;
       case "select":
         return (
           <div
@@ -94,12 +97,13 @@ function FlowContent() {
       const { clientX, clientY } = event;
       const position = screenToFlowPosition({ x: clientX, y: clientY });
 
+      const newNodeId = crypto.randomUUID();
       const newNode: Node<ResourceBlock["data"]> = {
-        id: crypto.randomUUID(),
+        id: newNodeId,
         type: selectedTool || "unknown",
         position,
         draggable: false,
-        data: getDefaultDataForNode(selectedTool),
+        data: getDefaultDataForNode(selectedTool, newNodeId),
       };
 
       try {
@@ -193,6 +197,7 @@ function FlowContent() {
                 return "grab";
               case "rectangle":
               case "rhombus":
+              case "circle":
               case "arrow":
               case "line":
                 return "crosshair";
