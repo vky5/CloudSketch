@@ -17,9 +17,12 @@ import {
   ChevronRight,
   Server,
   Circle,
+  Sparkles,
+  X,
 } from "lucide-react";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { awsComponents } from "@/data/aws.data";
+import AIConsole from "@/components/AIConsole";
 
 const primaryTools = [
   { id: "select", name: "Select", icon: MousePointer2, shortcut: "V" },
@@ -37,6 +40,7 @@ const primaryTools = [
 export default function Sidebar() {
   const { selectedTool, setSelectedTool } = useDiagramStore();
   const [showAWSComponents, setShowAWSComponents] = useState(false);
+  const [showAIConsole, setShowAIConsole] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   const toggleSection = (title: string) => {
@@ -91,6 +95,25 @@ export default function Sidebar() {
             />
             <div className="absolute left-12 top-1/2 -translate-y-1/2 bg-popover text-popover-foreground px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
               AWS Components
+            </div>
+          </Button>
+          {/* AI Prompt Toggle */}
+          <Button
+            size="sm"
+            className={`w-10 h-10 p-0 relative group rounded-md bg-transparent ${
+              showAIConsole ? "bg-[#10B981] hover:bg-[#10B981]" : "hover:bg-[#1E293B]"
+            } text-white transition-colors hover:cursor-pointer mt-2`}
+            onClick={() => setShowAIConsole(!showAIConsole)}
+            title="AI Prompt"
+          >
+            <Type className="w-4 h-4" />
+            <ChevronRight
+              className={`w-3 h-3 absolute -right-1 -top-1 transition-transform ${
+                showAIConsole ? "rotate-90" : ""
+              }`}
+            />
+            <div className="absolute left-12 top-1/2 -translate-y-1/2 bg-popover text-popover-foreground px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              AI Prompt
             </div>
           </Button>
         </div>
@@ -153,6 +176,33 @@ export default function Sidebar() {
               </div>
             ))}
           </div>
+        </Card>
+      )}
+      {/* AI Panel: premium glassmorphic prompt UI */}
+      {showAIConsole && (
+        <Card className="fixed left-22 top-1/2 -translate-y-1/2 z-40 w-85 max-h-[85vh] overflow-y-auto bg-[#0c0d12]/95 backdrop-blur-md border border-[#232530] rounded-2xl py-4 px-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] scrollbar-none flex flex-col gap-3">
+          {/* Top glowing accent line */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 rounded-t-2xl" />
+          
+          <div className="flex justify-between items-start border-b border-[#1b1c24] pb-3">
+            <div className="flex flex-col gap-0.5">
+              <div className="text-white font-bold text-sm flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-400 fill-emerald-400/15" />
+                <span>AI Architecture Copilot</span>
+              </div>
+              <p className="text-[10px] text-gray-400 leading-normal">
+                Describe your topology to generate live Terraform models.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowAIConsole(false)}
+              className="text-gray-400 hover:text-white p-1 hover:bg-[#1b1c24] rounded-md transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <AIConsole />
         </Card>
       )}
     </>

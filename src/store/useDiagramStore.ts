@@ -35,6 +35,7 @@ interface DiagramState {
   updateNodeData: (id: string, newData: Partial<ResourceBlock["data"]>) => void;
   updateNodeDimensions: (id: string, width: number, height: number) => void;
   updateNodePosition: (id: string, x: number, y: number) => void;
+  updateNodeParentAndPosition: (id: string, parentId: string | undefined, x: number, y: number) => void;
   setNodesAndEdges: (nodes: AnyNode[], edges: Edge[]) => void;
   clearAll: () => void;
 }
@@ -100,6 +101,21 @@ export const useDiagramStore = create<DiagramState>((set) => ({
           ? {
               ...node,
               position: { ...node.position, x, y },
+              positionAbsoluteX: x,
+              positionAbsoluteY: y,
+            }
+          : node
+      ),
+    })),
+
+  updateNodeParentAndPosition: (id: string, parentId: string | undefined, x: number, y: number) =>
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              parentId,
+              position: { x, y },
               positionAbsoluteX: x,
               positionAbsoluteY: y,
             }

@@ -44,6 +44,7 @@ function FlowContent() {
     selectNodes,
     updateNodeData,
     updateNodePosition,
+    updateNodeParentAndPosition,
   } = useDiagramStore();
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -68,7 +69,13 @@ function FlowContent() {
 
   // 4. Node dragging, subnet boundary calculations & auto-assignment hook
   const { onNodesChangeHandler, onNodeDragStart, onNodeDragStop } =
-    useCanvasDragAndDrop(nodes, setNodes, updateNodePosition, updateNodeData);
+    useCanvasDragAndDrop(
+      nodes,
+      setNodes,
+      updateNodePosition,
+      updateNodeData,
+      updateNodeParentAndPosition
+    );
 
   function renderGhostShape(tool: string) {
     switch (tool) {
@@ -128,37 +135,10 @@ function FlowContent() {
 
   const memoizedNodes = useMemo(() => {
     return nodes.map((node) => {
-      let extent: [[number, number], [number, number]] | undefined;
-
-      if (node.type === "subnet") {
-        const subnetVal = node.data as subnetData;
-        const parentVpc = nodes.find(
-          (n) => n.type === "vpc" && n.id === subnetVal.parentVpcId
-        );
-
-        if (parentVpc?.position) {
-          const padding = 10;
-          const vpcWidth = parentVpc.width ?? 200;
-          const vpcHeight = parentVpc.height ?? 120;
-          const vpcX = parentVpc.position.x;
-          const vpcY = parentVpc.position.y;
-
-          const minX = vpcX + padding;
-          const minY = vpcY + padding;
-          const maxX = vpcX + vpcWidth - padding;
-          const maxY = vpcY + vpcHeight - padding;
-
-          extent = [
-            [minX, minY],
-            [maxX, maxY],
-          ];
-        }
-      }
-
       return {
         ...node,
         draggable: node.id === selectedNodeId,
-        extent,
+        extent: node.parentId ? ("parent" as const) : undefined,
       };
     });
   }, [nodes, selectedNodeId]);
