@@ -9,28 +9,26 @@ interface Bounds {
 }
 
 /**
- * Get the next valid position for a subnet inside a VPC
+ * Get the next valid position for a subnet inside a VPC (parent-relative)
  */
 export function getNextSubnetPosition(
   parentVpc: AnyNodeProps<unknown>, // vpc node itself
   existingSubnets: AnyNodeProps<subnetData>[],
   subnetWidth: number,
   subnetHeight: number,
-  canvasBounds: Bounds // whole canvas (0,0,w,h)
+  canvasBounds: Bounds // whole canvas
 ): { x: number; y: number } {
-  const padding = 20; // padding inside vpc
-  const cols = Math.floor(
-    (parentVpc.width! - padding * 2) / subnetWidth
-  );
+  const padding = 24;
+  const gap = 16;
+  const topPadding = 36; // Leave space for VPC header
 
-  const rows = Math.floor(
-    (parentVpc.height! - padding * 2) / subnetHeight
-  );
+  const cols = Math.max(1, Math.floor((parentVpc.width! - padding * 2) / (subnetWidth + gap)));
+  const rows = Math.max(1, Math.floor((parentVpc.height! - topPadding - padding) / (subnetHeight + gap)));
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const x = parentVpc.position!.x + padding + c * subnetWidth;
-      const y = parentVpc.position!.y + padding + r * subnetHeight;
+      const x = padding + c * (subnetWidth + gap);
+      const y = topPadding + r * (subnetHeight + gap);
 
       const overlaps = existingSubnets.some(
         (s) =>
@@ -38,19 +36,15 @@ export function getNextSubnetPosition(
           Math.abs(s.position!.y - y) < subnetHeight
       );
 
-      const insideCanvas =
-        x + subnetWidth < canvasBounds.x + canvasBounds.width &&
-        y + subnetHeight < canvasBounds.y + canvasBounds.height;
-
-      if (!overlaps && insideCanvas) {
+      if (!overlaps) {
         return { x, y };
       }
     }
   }
 
-  // fallback → put it at top-left inside VPC if grid is "full"
+  // fallback
   return {
-    x: parentVpc.position!.x + padding,
-    y: parentVpc.position!.y + padding,
+    x: padding,
+    y: topPadding,
   };
 }

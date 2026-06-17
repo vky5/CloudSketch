@@ -193,8 +193,8 @@ function FlowContent() {
         zoomOnScroll={true}
         panOnScroll={true}
         defaultEdgeOptions={{
-          style: { stroke: "#6366F1", strokeWidth: 2, opacity: 0.75 },
-          animated: true,
+          style: { stroke: "#475569", strokeWidth: 1.5 },
+          animated: false,
         }}
         style={{
           cursor: (() => {

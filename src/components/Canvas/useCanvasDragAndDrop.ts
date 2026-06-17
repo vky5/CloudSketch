@@ -62,15 +62,13 @@ export function useCanvasDragAndDrop(
 
         const containingNode = containers.find((container) => {
           const containerGlobalPos = getGlobalPosition(container, nodes);
-          const cWidth = container.width ?? 200;
-          const cHeight = container.height ?? 120;
-          const nWidth = node.width ?? 120;
-          const nHeight = node.height ?? 80;
+          const cWidth = container.width ?? (container.type === "vpc" ? 600 : 260);
+          const cHeight = container.height ?? (container.type === "vpc" ? 400 : 180);
+          const nWidth = node.width ?? (node.type === "subnet" ? 260 : 176);
+          const nHeight = node.height ?? (node.type === "subnet" ? 180 : 52);
 
-          const nLeft = nodeGlobalPos.x;
-          const nRight = nodeGlobalPos.x + nWidth;
-          const nTop = nodeGlobalPos.y;
-          const nBottom = nodeGlobalPos.y + nHeight;
+          const nodeCenterX = nodeGlobalPos.x + nWidth / 2;
+          const nodeCenterY = nodeGlobalPos.y + nHeight / 2;
 
           const cLeft = containerGlobalPos.x;
           const cRight = containerGlobalPos.x + cWidth;
@@ -78,10 +76,10 @@ export function useCanvasDragAndDrop(
           const cBottom = containerGlobalPos.y + cHeight;
 
           return (
-            nLeft >= cLeft &&
-            nRight <= cRight &&
-            nTop >= cTop &&
-            nBottom <= cBottom
+            nodeCenterX >= cLeft &&
+            nodeCenterX <= cRight &&
+            nodeCenterY >= cTop &&
+            nodeCenterY <= cBottom
           );
         });
 

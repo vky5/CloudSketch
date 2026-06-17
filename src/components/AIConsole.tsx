@@ -126,10 +126,8 @@ export default function AIConsole() {
           if (node.type === "subnet") {
             const containingVpc = processedNodes.find((other: any) => {
               if (other.type !== "vpc") return false;
-              const nLeft = node.absX;
-              const nRight = node.absX + node.width;
-              const nTop = node.absY;
-              const nBottom = node.absY + node.height;
+              const nodeCenterX = node.absX + node.width / 2;
+              const nodeCenterY = node.absY + node.height / 2;
 
               const cLeft = other.absX;
               const cRight = other.absX + other.width;
@@ -137,10 +135,10 @@ export default function AIConsole() {
               const cBottom = other.absY + other.height;
 
               return (
-                nLeft >= cLeft &&
-                nRight <= cRight &&
-                nTop >= cTop &&
-                nBottom <= cBottom
+                nodeCenterX >= cLeft &&
+                nodeCenterX <= cRight &&
+                nodeCenterY >= cTop &&
+                nodeCenterY <= cBottom
               );
             });
 
@@ -156,10 +154,8 @@ export default function AIConsole() {
           if (node.type === "ec2" || node.type === "rds") {
             const containingSubnet = processedNodes.find((other: any) => {
               if (other.type !== "subnet") return false;
-              const nLeft = node.absX;
-              const nRight = node.absX + node.width;
-              const nTop = node.absY;
-              const nBottom = node.absY + node.height;
+              const nodeCenterX = node.absX + node.width / 2;
+              const nodeCenterY = node.absY + node.height / 2;
 
               const cLeft = other.absX;
               const cRight = other.absX + other.width;
@@ -167,10 +163,10 @@ export default function AIConsole() {
               const cBottom = other.absY + other.height;
 
               return (
-                nLeft >= cLeft &&
-                nRight <= cRight &&
-                nTop >= cTop &&
-                nBottom <= cBottom
+                nodeCenterX >= cLeft &&
+                nodeCenterX <= cRight &&
+                nodeCenterY >= cTop &&
+                nodeCenterY <= cBottom
               );
             });
 
