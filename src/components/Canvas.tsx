@@ -12,6 +12,8 @@ import {
   useReactFlow,
   EdgeChange,
   BackgroundVariant,
+  SelectionMode,
+  OnSelectionChangeFunc,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useDiagramStore } from "@/store/useDiagramStore";
@@ -25,10 +27,10 @@ import { subnetData } from "@/config/awsNodes/subnet.config";
 import { handleDisconnection } from "@/lib/graphProtocol/ugcp";
 
 // Imported Hooks
-import { useCanvasSelection } from "./Canvas/useCanvasSelection";
 import { useGhostMovement } from "./Canvas/useGhostMovement";
 import { useCanvasConnection } from "./Canvas/useCanvasConnection";
 import { useCanvasDragAndDrop } from "./Canvas/useCanvasDragAndDrop";
+import SelectionToolbar from "./Canvas/SelectionToolbar";
 
 function FlowContent() {
   const {
@@ -40,9 +42,9 @@ function FlowContent() {
     addEdge,
     selectedTool,
     setSelectedTool,
-    selectedNodeId,
     selectedNode,
     selectNodes,
+    deleteNodes,
     updateNodeData,
     updateNodePosition,
     updateNodeParentAndPosition,
@@ -51,21 +53,10 @@ function FlowContent() {
     closeDeleteModal,
   } = useDiagramStore();
 
-  const canvasRef = useRef<HTMLDivElement>(null);
   const ghostRef = useRef<HTMLDivElement>(null);
-  const selectionBoxRef = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
 
-  // 1. Selection logic hook
-  useCanvasSelection(
-    selectedTool,
-    nodes,
-    selectNodes,
-    canvasRef,
-    selectionBoxRef
-  );
-
-  // 2. Ghost shape drawing & movement hook
+  // 1. Ghost shape drawing & movement hook
   useGhostMovement(selectedTool, ghostRef);
 
   // 3. Node connections hook
@@ -89,14 +80,6 @@ function FlowContent() {
         return <GhostRhombus ref={ghostRef} />;
       case "circle":
         return <GhostCircle ref={ghostRef} />;
-      case "select":
-        return (
-          <div
-            ref={selectionBoxRef}
-            className="absolute border border-emerald-400 bg-emerald-500/10 pointer-events-none z-[1001]"
-            style={{ display: "none" }}
-          />
-        );
       default:
         return null;
     }
@@ -138,21 +121,25 @@ function FlowContent() {
   useEffect(() => console.log("Rendered"), []);
 
   const memoizedNodes = useMemo(() => {
-    return nodes.map((node) => {
-      return {
-        ...node,
-        draggable: node.id === selectedNodeId,
-        extent: node.parentId ? ("parent" as const) : undefined,
-      };
-    });
-  }, [nodes, selectedNodeId]);
+    return nodes.map((node) => ({
+      ...node,
+      draggable: selectedTool === "select" && !!node.selected,
+      extent: node.parentId ? ("parent" as const) : undefined,
+    }));
+  }, [nodes, selectedTool]);
 
-  const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      console.log("Node clicked:", node.id);
-      selectedNode(node.id);
+  const onSelectionChange: OnSelectionChangeFunc = useCallback(
+    ({ nodes: selectedNodes }) => {
+      selectNodes(selectedNodes.map((node) => node.id));
     },
-    [selectedNode]
+    [selectNodes]
+  );
+
+  const onNodesDelete = useCallback(
+    (nodesToDelete: Node[]) => {
+      deleteNodes(nodesToDelete.map((node) => node.id));
+    },
+    [deleteNodes]
   );
 
   const onEdgesChangeHandler = useCallback(
@@ -175,19 +162,24 @@ function FlowContent() {
   );
 
   return (
-    <div className="w-full h-full overflow-hidden relative" ref={canvasRef}>
+    <div className="w-full h-full overflow-hidden relative">
       <ReactFlow
         fitView={false}
         nodes={memoizedNodes}
         edges={edges}
-        onNodeClick={onNodeClick}
         onNodesChange={onNodesChangeHandler}
         onEdgesChange={onEdgesChangeHandler}
         onConnect={onConnect}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
         onPaneClick={handlePaneClick}
+        onSelectionChange={onSelectionChange}
+        onNodesDelete={onNodesDelete}
         nodeTypes={nodeTypes}
+        elementsSelectable={selectedTool === "select"}
+        selectionOnDrag={selectedTool === "select"}
+        selectionMode={SelectionMode.Partial}
+        deleteKeyCode={selectedTool === "select" ? ["Delete", "Backspace"] : null}
         onInit={(instance) => {
           instance.setViewport({ x: 0, y: 0, zoom: 1 });
         }}
@@ -212,6 +204,8 @@ function FlowContent() {
                 return "crosshair";
               case "text":
                 return "text";
+              case "select":
+                return "default";
               default:
                 return "default";
             }
@@ -220,6 +214,7 @@ function FlowContent() {
       >
         <Controls />
         <Background gap={20} size={1.5} bgColor="#070913" color="#1E293B" variant={BackgroundVariant.Dots} />
+        <SelectionToolbar />
       </ReactFlow>
 
       {renderGhostShape(selectedTool)}

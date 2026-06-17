@@ -4,9 +4,11 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { memo, useState } from "react";
 import { Handle, Position, NodeProps, NodeResizer } from "@xyflow/react";
 import { FaTrash } from "react-icons/fa6";
+import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
 function RhombusNode({ id, data, selected, width, height }: NodeProps) {
   const [hovered, setHovered] = useState(false);
+  const showActions = useShowNodeActions(selected, hovered);
   const w = width || 100;
   const h = height || 100;
   const size = Math.max(w, h);
@@ -68,7 +70,7 @@ function RhombusNode({ id, data, selected, width, height }: NodeProps) {
           height: size,
         }}
       >
-        {(hovered || selected) && (
+        {showActions && (
           <div className="absolute -top-3 -right-3 flex items-center gap-1 z-50 pointer-events-auto">
             <button
               onClick={(e) => {

@@ -3,6 +3,7 @@ import { FaGear } from "react-icons/fa6";
 import { Trash2 } from "lucide-react";
 import openSettings from "@/utils/openSettings";
 import { useDiagramStore } from "@/store/useDiagramStore";
+import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
 interface NodeMenuProps {
   id: string;
@@ -12,10 +13,11 @@ interface NodeMenuProps {
 
 export default function NodeMenu({ id, selected, children }: NodeMenuProps) {
   const deleteNode = useDiagramStore((state) => state.deleteNode);
+  const showActions = useShowNodeActions(selected, false);
 
   return (
     <NodeToolbar
-      isVisible={selected}
+      isVisible={showActions}
       position={Position.Top}
       align="center"
       className="flex items-center gap-1.5 bg-[#18181b] border border-[#27272a] rounded-md p-1 shadow-2xl z-50 pointer-events-auto"

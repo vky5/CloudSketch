@@ -4,9 +4,11 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { memo, useState, useEffect, useRef } from "react";
 import { NodeProps, NodeResizer } from "@xyflow/react";
 import { FaTrash } from "react-icons/fa6";
+import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
 function TextNode({ id, data, selected, width }: NodeProps) {
   const [hovered, setHovered] = useState(false);
+  const showActions = useShowNodeActions(selected, hovered);
   const [text, setText] = useState<string>(
     typeof data.label === "string" ? data.label : "Click to edit text"
   );
@@ -81,7 +83,7 @@ function TextNode({ id, data, selected, width }: NodeProps) {
         }}
       />
 
-      {(hovered || selected) && (
+      {showActions && (
         <div className="absolute -top-6 right-0 flex items-center gap-1 z-50 pointer-events-auto">
           <button
             onClick={(e) => {

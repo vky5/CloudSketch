@@ -5,9 +5,11 @@ import { FaGear, FaTrash } from "react-icons/fa6";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { useState } from "react";
 import { AnyNodeProps } from "@/utils/types/resource";
+import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
 export default function LambdaNode({ data, selected, id }: AnyNodeProps<any>) {
   const [hovered, setHovered] = useState(false);
+  const showActions = useShowNodeActions(selected, hovered);
 
   const runtime = data.runtime?.toString() || "nodejs18.x";
 
@@ -27,7 +29,7 @@ export default function LambdaNode({ data, selected, id }: AnyNodeProps<any>) {
       <Handle type="source" position={Position.Left} className="!bg-slate-700 !w-1.5 !h-1.5" />
       <Handle type="source" position={Position.Right} className="!bg-slate-700 !w-1.5 !h-1.5" />
 
-      {(hovered || selected) && (
+      {showActions && (
         <div className="absolute -top-2.5 right-1.5 flex items-center gap-1 z-50 pointer-events-auto">
           <button
             onClick={(e) => {

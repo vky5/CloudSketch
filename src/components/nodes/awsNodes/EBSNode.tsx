@@ -6,9 +6,11 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { useEffect, useState } from "react";
 import { ebsData, ebsFormSchema } from "@/config/awsNodes/ebs.config";
 import { AnyNodeProps } from "@/utils/types/resource";
+import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
 export default function EBSNode({ data, selected, id }: AnyNodeProps<ebsData>) {
   const [hovered, setHovered] = useState(false);
+  const showActions = useShowNodeActions(selected, hovered);
   const [isValid, setIsValid] = useState(true);
 
   const volumeType = data.VolumeType?.toString() || "gp3";
@@ -50,7 +52,7 @@ export default function EBSNode({ data, selected, id }: AnyNodeProps<ebsData>) {
       <Handle type="source" position={Position.Left} className="!bg-slate-700 !w-1.5 !h-1.5" />
       <Handle type="source" position={Position.Right} className="!bg-slate-700 !w-1.5 !h-1.5" />
 
-      {(hovered || selected) && (
+      {showActions && (
         <div className="absolute -top-2.5 right-1.5 flex items-center gap-1 z-50 pointer-events-auto">
           <button
             onClick={(e) => {

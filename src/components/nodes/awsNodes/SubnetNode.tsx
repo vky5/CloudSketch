@@ -7,6 +7,7 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import openSettings from "@/utils/openSettings";
 import { AnyNodeProps } from "@/utils/types/resource";
 import { subnetData } from "@/config/awsNodes/subnet.config";
+import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
 function SubnetNode({
   data,
@@ -16,6 +17,7 @@ function SubnetNode({
   height,
 }: AnyNodeProps<subnetData>) {
   const [hovered, setHovered] = useState(false);
+  const showActions = useShowNodeActions(selected, hovered);
   const subnetCidr = data.CIDR?.toString() || "10.0.1.0/24";
 
   const isPublic = data.MapPublicIpOnLaunch === "yes";
@@ -52,7 +54,7 @@ function SubnetNode({
           <span className="text-slate-200">{data.Name || "Subnet"}</span>
           <span className="font-mono text-[10px] opacity-75">({subnetCidr})</span>
 
-          {(hovered || selected) && (
+          {showActions && (
             <div className="flex items-center gap-1 ml-1.5">
               <button
                 className="bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-full w-5 h-5 flex items-center justify-center text-slate-400 hover:text-white cursor-pointer"

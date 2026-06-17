@@ -120,3 +120,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+.react-flow__selection,
+.react-flow__nodesselection-rect {
+  border: 1px solid rgb(52 211 153);
+  background: rgb(16 185 129 / 0.1);
+}

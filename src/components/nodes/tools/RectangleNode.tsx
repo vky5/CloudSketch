@@ -4,9 +4,11 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { memo, useState } from "react";
 import { Handle, Position, NodeProps, NodeResizer } from "@xyflow/react";
 import { FaTrash } from "react-icons/fa6";
+import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
 function RectangleNode({ id, data, selected, width, height }: NodeProps) {
   const [hovered, setHovered] = useState(false);
+  const showActions = useShowNodeActions(selected, hovered);
   const w = width || 120;
   const h = height || 60;
 
@@ -43,7 +45,7 @@ function RectangleNode({ id, data, selected, width, height }: NodeProps) {
           height: h,
         }}
       >
-        {(hovered || selected) && (
+        {showActions && (
           <div className="absolute -top-3 -right-3 flex items-center gap-1 z-50 pointer-events-auto">
             <button
               onClick={(e) => {

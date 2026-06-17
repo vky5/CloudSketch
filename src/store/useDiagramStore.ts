@@ -28,10 +28,11 @@ interface DiagramState {
 
   setSelectedTool: (tool: string) => void;
   openSettings: (id: string) => void; // this will be used to open settings for a selected node only (earlier was using it for settings as well)
-  selectedNode: (id: string) => void; // this will be used to select a node
+  selectedNode: (id: string | null) => void; // this will be used to select a node
   closeSettings: () => void;
   selectNodes: (ids: string[]) => void; // set a large number of nodes in selected in selectedNodeIds
   clearSelectedNodes: () => void;
+  deleteNodes: (ids: string[]) => void;
   updateNodeData: (id: string, newData: Partial<ResourceBlock["data"]>) => void;
   updateNodeDimensions: (id: string, width: number, height: number) => void;
   updateNodePosition: (id: string, x: number, y: number) => void;
@@ -50,7 +51,7 @@ interface DiagramState {
   closeDeleteModal: () => void;
 }
 
-export const useDiagramStore = create<DiagramState>((set) => ({
+export const useDiagramStore = create<DiagramState>((set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
@@ -96,11 +97,59 @@ export const useDiagramStore = create<DiagramState>((set) => ({
   setSelectedTool: (tool) => set({ selectedTool: tool }),
 
   openSettings: (id) => set({ settingOpenNodeId: id }),
-  selectedNode: (id) => set({ selectedNodeId: id }),
+  selectedNode: (id) =>
+    set((state) => ({
+      selectedNodeId: id,
+      selectedNodeIds: id ? [id] : [],
+      nodes: state.nodes.map((node) => ({
+        ...node,
+        selected: id ? node.id === id : false,
+      })),
+    })),
   closeSettings: () => set({ settingOpenNodeId: null }),
 
-  selectNodes: (ids) => set({ selectedNodeIds: ids }),
-  clearSelectedNodes: () => set({ selectedNodeIds: [] }),
+  selectNodes: (ids) =>
+    set({
+      selectedNodeIds: ids,
+      selectedNodeId: ids.length === 1 ? ids[0] : ids.length > 0 ? ids[0] : null,
+    }),
+  clearSelectedNodes: () =>
+    set((state) => ({
+      selectedNodeIds: [],
+      selectedNodeId: null,
+      nodes: state.nodes.map((node) => ({ ...node, selected: false })),
+    })),
+
+  deleteNodes: (ids: string[]) =>
+    set((state) => {
+      if (ids.length === 0) return {};
+
+      const idsToDelete = new Set<string>(ids);
+      let foundNew = true;
+      while (foundNew) {
+        foundNew = false;
+        state.nodes.forEach((node) => {
+          if (node.parentId && idsToDelete.has(node.parentId) && !idsToDelete.has(node.id)) {
+            idsToDelete.add(node.id);
+            foundNew = true;
+          }
+        });
+      }
+
+      const nextNodes = state.nodes.filter((node) => !idsToDelete.has(node.id));
+      const nextEdges = state.edges.filter(
+        (edge) => !idsToDelete.has(edge.source) && !idsToDelete.has(edge.target)
+      );
+      const expanded = autoExpandContainers(nextNodes);
+
+      return {
+        nodes: expanded,
+        edges: nextEdges,
+        selectedNodeId: idsToDelete.has(state.selectedNodeId || "") ? null : state.selectedNodeId,
+        selectedNodeIds: state.selectedNodeIds.filter((nId) => !idsToDelete.has(nId)),
+        settingOpenNodeId: idsToDelete.has(state.settingOpenNodeId || "") ? null : state.settingOpenNodeId,
+      };
+    }),
 
   updateNodeData: (id: string, newData: Partial<ResourceBlock["data"]>) =>
     set((state) => {
@@ -164,34 +213,7 @@ export const useDiagramStore = create<DiagramState>((set) => ({
       return { nodes: expanded, edges: uniqueEdges };
     }),
 
-  deleteNode: (id: string) =>
-    set((state) => {
-      const idsToDelete = new Set<string>([id]);
-      let foundNew = true;
-      while (foundNew) {
-        foundNew = false;
-        state.nodes.forEach((node) => {
-          if (node.parentId && idsToDelete.has(node.parentId) && !idsToDelete.has(node.id)) {
-            idsToDelete.add(node.id);
-            foundNew = true;
-          }
-        });
-      }
-
-      const nextNodes = state.nodes.filter((node) => !idsToDelete.has(node.id));
-      const nextEdges = state.edges.filter(
-        (edge) => !idsToDelete.has(edge.source) && !idsToDelete.has(edge.target)
-      );
-      const expanded = autoExpandContainers(nextNodes);
-
-      return {
-        nodes: expanded,
-        edges: nextEdges,
-        selectedNodeId: idsToDelete.has(state.selectedNodeId || "") ? null : state.selectedNodeId,
-        selectedNodeIds: state.selectedNodeIds.filter((nId) => !idsToDelete.has(nId)),
-        settingOpenNodeId: idsToDelete.has(state.settingOpenNodeId || "") ? null : state.settingOpenNodeId,
-      };
-    }),
+  deleteNode: (id: string) => get().deleteNodes([id]),
 
   clearAll: () => set({ nodes: [], edges: [], selectedNodeId: null, selectedNodeIds: [], settingOpenNodeId: null }),
 
@@ -210,42 +232,17 @@ export const useDiagramStore = create<DiagramState>((set) => ({
       },
     }),
 
-  confirmDelete: () =>
-    set((state) => {
-      const id = state.deleteModal.nodeId;
-      if (!id) return {};
-
-      const idsToDelete = new Set<string>([id]);
-      let foundNew = true;
-      while (foundNew) {
-        foundNew = false;
-        state.nodes.forEach((node) => {
-          if (node.parentId && idsToDelete.has(node.parentId) && !idsToDelete.has(node.id)) {
-            idsToDelete.add(node.id);
-            foundNew = true;
-          }
-        });
-      }
-
-      const nextNodes = state.nodes.filter((node) => !idsToDelete.has(node.id));
-      const nextEdges = state.edges.filter(
-        (edge) => !idsToDelete.has(edge.source) && !idsToDelete.has(edge.target)
-      );
-      const expanded = autoExpandContainers(nextNodes);
-
-      return {
-        nodes: expanded,
-        edges: nextEdges,
-        selectedNodeId: idsToDelete.has(state.selectedNodeId || "") ? null : state.selectedNodeId,
-        selectedNodeIds: state.selectedNodeIds.filter((nId) => !idsToDelete.has(nId)),
-        settingOpenNodeId: idsToDelete.has(state.settingOpenNodeId || "") ? null : state.settingOpenNodeId,
-        deleteModal: {
-          isOpen: false,
-          nodeId: null,
-          message: "",
-        },
-      };
-    }),
+  confirmDelete: () => {
+    const id = get().deleteModal.nodeId;
+    if (id) get().deleteNodes([id]);
+    set({
+      deleteModal: {
+        isOpen: false,
+        nodeId: null,
+        message: "",
+      },
+    });
+  },
 
   closeDeleteModal: () =>
     set({

@@ -10,6 +10,7 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { subnetData } from "@/config/awsNodes/subnet.config";
 import { getNextSubnetPosition } from "@/utils/getNextSubnetPosition";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
+import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
 function VPCNode({
   data,
@@ -19,6 +20,7 @@ function VPCNode({
   height,
 }: AnyNodeProps<vpcData>) {
   const [hovered, setHovered] = useState(false);
+  const showActions = useShowNodeActions(selected, hovered);
   const { nodes, addNode } = useDiagramStore();
   const vpcCidr = data.CIDR?.toString() || "10.0.0.0/16";
 
@@ -115,7 +117,7 @@ function VPCNode({
           <span className="text-slate-200">{data.Name || "Production"}</span>
           <span className="font-mono text-[10px] opacity-75">({vpcCidr})</span>
 
-          {(hovered || selected) && (
+          {showActions && (
             <div className="flex items-center gap-1 ml-1.5">
               <button
                 className="bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-full w-5 h-5 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
