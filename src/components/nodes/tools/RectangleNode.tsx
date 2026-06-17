@@ -1,10 +1,15 @@
 "use client";
 
 import { useDiagramStore } from "@/store/useDiagramStore";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Handle, Position, NodeProps, NodeResizer } from "@xyflow/react";
+import { FaTrash } from "react-icons/fa6";
 
-function RectangleNode({ data, selected, width, height }: NodeProps) {
+function RectangleNode({ id, data, selected, width, height }: NodeProps) {
+  const [hovered, setHovered] = useState(false);
+  const w = width || 120;
+  const h = height || 60;
+
   return (
     <>
       <NodeResizer
@@ -16,7 +21,7 @@ function RectangleNode({ data, selected, width, height }: NodeProps) {
         onResizeEnd={(e, { width, height }) => {
           useDiagramStore
             .getState()
-            .updateNodeDimensions(data.id as string, width, height);
+            .updateNodeDimensions(id, width, height);
         }}
       />
 
@@ -29,19 +34,31 @@ function RectangleNode({ data, selected, width, height }: NodeProps) {
       <Handle type="source" position={Position.Left} className="bg-blue-500" />
       <Handle type="source" position={Position.Right} className="bg-blue-500" />
 
-      {/* Node visual — flush with resizer border */}
       <div
-        className="w-full h-full flex items-center justify-center border rounded-md bg-[#020817]/75 shadow text-sm font-semibold text-white"
-        
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className="relative border rounded-md bg-[#020817]/75 border-slate-700 shadow text-sm font-semibold text-white flex items-center justify-center"
         style={{
-          width: width! - 10,
-          height: height! - 10,
-          minWidth: 120,
-          minHeight: 60,
-          margin: "4px",
+          width: w,
+          height: h,
         }}
       >
-        {/* {data.label || "Rectangle"} */}
+        {(hovered || selected) && (
+          <div className="absolute -top-3 -right-3 flex items-center gap-1 z-50 pointer-events-auto">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm("Are you sure you want to delete this shape?")) {
+                  useDiagramStore.getState().deleteNode(id);
+                }
+              }}
+              className="bg-slate-900 hover:bg-red-950/80 border border-slate-700 hover:border-red-900/50 rounded-full w-5 h-5 flex items-center justify-center text-slate-400 hover:text-red-400 cursor-pointer"
+              title="Delete Shape"
+            >
+              <FaTrash className="w-2.5 h-2.5" />
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
