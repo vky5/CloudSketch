@@ -2,7 +2,8 @@
 
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { memo, useState } from "react";
-import { Handle, Position, NodeProps, NodeResizer } from "@xyflow/react";
+import { NodeProps, NodeResizer } from "@xyflow/react";
+import MultiDirectionHandles from "@/components/nodes/shared/MultiDirectionHandles";
 import { FaTrash } from "react-icons/fa6";
 import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
@@ -35,31 +36,7 @@ function RhombusNode({ id, data, selected, width, height }: NodeProps) {
         }}
       />
       
-      {/* Handles positioned at the edges of the container */}
-      <Handle 
-        type="target" 
-        position={Position.Top} 
-        className="bg-blue-500"
-        style={{ top: -4, left: '50%', transform: 'translateX(-50%)' }}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="bg-blue-500"
-        style={{ bottom: -4, left: '50%', transform: 'translateX(-50%)' }}
-      />
-      <Handle 
-        type="source" 
-        position={Position.Left} 
-        className="bg-blue-500"
-        style={{ left: -4, top: '50%', transform: 'translateY(-50%)' }}
-      />
-      <Handle 
-        type="source" 
-        position={Position.Right} 
-        className="bg-blue-500"
-        style={{ right: -4, top: '50%', transform: 'translateY(-50%)' }}
-      />
+      <MultiDirectionHandles className="!bg-blue-500 !w-2 !h-2" />
 
       <div
         onMouseEnter={() => setHovered(true)}

@@ -2,7 +2,8 @@
 
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { memo, useState } from "react";
-import { Handle, Position, NodeProps, NodeResizer } from "@xyflow/react";
+import { NodeProps, NodeResizer } from "@xyflow/react";
+import MultiDirectionHandles from "@/components/nodes/shared/MultiDirectionHandles";
 import { FaTrash } from "react-icons/fa6";
 import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
@@ -28,14 +29,7 @@ function CircleNode({ id, data, selected, width, height }: NodeProps) {
         }}
       />
 
-      <Handle type="target" position={Position.Top} className="bg-blue-500" />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="bg-blue-500"
-      />
-      <Handle type="source" position={Position.Left} className="bg-blue-500" />
-      <Handle type="source" position={Position.Right} className="bg-blue-500" />
+      <MultiDirectionHandles className="!bg-blue-500 !w-2 !h-2" />
 
       <div
         onMouseEnter={() => setHovered(true)}

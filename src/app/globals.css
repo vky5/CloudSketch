@@ -126,3 +126,13 @@
   border: 1px solid rgb(52 211 153);
   background: rgb(16 185 129 / 0.1);
 }
+
+.react-flow__edge.selectable:hover .react-flow__edge-path {
+  stroke: #94a3b8 !important;
+  stroke-width: 1.75 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #818cf8 !important;
+  stroke-width: 2 !important;
+}

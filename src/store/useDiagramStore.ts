@@ -20,6 +20,7 @@ interface DiagramState {
   selectedTool: string;
   settingOpenNodeId: string | null; // for opening settings of a selected node
   selectedNodeIds: string[]; // for tracking multiple selected nodes
+  selectedEdgeIds: string[];
 
   setNodes: (changes: NodeChange[]) => void;
   setEdges: (changes: EdgeChange[]) => void;
@@ -31,6 +32,8 @@ interface DiagramState {
   selectedNode: (id: string | null) => void; // this will be used to select a node
   closeSettings: () => void;
   selectNodes: (ids: string[]) => void; // set a large number of nodes in selected in selectedNodeIds
+  selectEdges: (ids: string[]) => void;
+  clearSelection: () => void;
   clearSelectedNodes: () => void;
   deleteNodes: (ids: string[]) => void;
   updateNodeData: (id: string, newData: Partial<ResourceBlock["data"]>) => void;
@@ -57,6 +60,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
   selectedNodeId: null,
   selectedTool: "select", // Default tool
   selectedNodeIds: [],
+  selectedEdgeIds: [],
   settingOpenNodeId: null,
 
   setNodes: (changes: NodeChange[]) =>
@@ -109,15 +113,30 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
   closeSettings: () => set({ settingOpenNodeId: null }),
 
   selectNodes: (ids) =>
-    set({
+    set((state) => ({
       selectedNodeIds: ids,
       selectedNodeId: ids.length === 1 ? ids[0] : ids.length > 0 ? ids[0] : null,
-    }),
+      nodes: state.nodes.map((node) => ({
+        ...node,
+        selected: ids.includes(node.id),
+      })),
+    })),
+  selectEdges: (ids) => set({ selectedEdgeIds: ids }),
+  clearSelection: () =>
+    set((state) => ({
+      selectedNodeIds: [],
+      selectedNodeId: null,
+      selectedEdgeIds: [],
+      nodes: state.nodes.map((node) => ({ ...node, selected: false })),
+      edges: state.edges.map((edge) => ({ ...edge, selected: false })),
+    })),
   clearSelectedNodes: () =>
     set((state) => ({
       selectedNodeIds: [],
       selectedNodeId: null,
+      selectedEdgeIds: [],
       nodes: state.nodes.map((node) => ({ ...node, selected: false })),
+      edges: state.edges.map((edge) => ({ ...edge, selected: false })),
     })),
 
   deleteNodes: (ids: string[]) =>
@@ -215,7 +234,15 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
 
   deleteNode: (id: string) => get().deleteNodes([id]),
 
-  clearAll: () => set({ nodes: [], edges: [], selectedNodeId: null, selectedNodeIds: [], settingOpenNodeId: null }),
+  clearAll: () =>
+    set({
+      nodes: [],
+      edges: [],
+      selectedNodeId: null,
+      selectedNodeIds: [],
+      selectedEdgeIds: [],
+      settingOpenNodeId: null,
+    }),
 
   deleteModal: {
     isOpen: false,

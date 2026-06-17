@@ -12,7 +12,9 @@ import {
   EdgeChange,
   BackgroundVariant,
   SelectionMode,
+  ConnectionMode,
   OnSelectionChangeFunc,
+  applyEdgeChanges,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useDiagramStore } from "@/store/useDiagramStore";
@@ -24,12 +26,16 @@ import { syncNodeWithBackend } from "@/utils/terraformSync";
 import { ResourceBlock } from "@/utils/types/resource";
 import { subnetData } from "@/config/awsNodes/subnet.config";
 import { handleDisconnection } from "@/lib/graphProtocol/ugcp";
+import { useUpdateNodeInternals } from "@xyflow/react";
+import canConnect from "@/config/connectionsConfig";
+import { areNodesAlreadyConnected } from "@/utils/connectionUtils";
 
 // Imported Hooks
 import { useGhostMovement } from "./Canvas/useGhostMovement";
 import { useCanvasConnection } from "./Canvas/useCanvasConnection";
 import { useCanvasDragAndDrop } from "./Canvas/useCanvasDragAndDrop";
 import SelectionToolbar from "./Canvas/SelectionToolbar";
+import EdgeDeleteToolbar from "./Canvas/EdgeDeleteToolbar";
 import CanvasControls from "./Canvas/CanvasControls";
 
 function FlowContent() {
@@ -44,6 +50,8 @@ function FlowContent() {
     setSelectedTool,
     selectedNode,
     selectNodes,
+    selectEdges,
+    clearSelection,
     deleteNodes,
     updateNodeData,
     updateNodePosition,
@@ -55,12 +63,37 @@ function FlowContent() {
 
   const ghostRef = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      nodes.forEach((node) => updateNodeInternals(node.id));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [nodes, updateNodeInternals]);
 
   // 1. Ghost shape drawing & movement hook
   useGhostMovement(selectedTool, ghostRef);
 
   // 3. Node connections hook
-  const { onConnect } = useCanvasConnection(nodes, addEdge);
+  const { onConnect } = useCanvasConnection(nodes, edges, addEdge);
+
+  const isValidConnection = useCallback(
+    (connection: Connection | Edge) => {
+      if (!connection.source || !connection.target) return false;
+      if (connection.source === connection.target) return false;
+      if (areNodesAlreadyConnected(edges, connection.source, connection.target)) {
+        return false;
+      }
+
+      const sourceNode = nodes.find((node) => node.id === connection.source);
+      const targetNode = nodes.find((node) => node.id === connection.target);
+      if (!sourceNode?.type || !targetNode?.type) return false;
+
+      return canConnect(sourceNode.type, targetNode.type);
+    },
+    [edges, nodes]
+  );
 
   // 4. Node dragging, subnet boundary calculations & auto-assignment hook
   const { onNodesChangeHandler, onNodeDragStart, onNodeDragStop } =
@@ -87,6 +120,11 @@ function FlowContent() {
 
   const handlePaneClick = useCallback(
     async (event: React.MouseEvent) => {
+      if (selectedTool === "select") {
+        clearSelection();
+        return;
+      }
+
       const validNodeTypes = Object.keys(nodeTypes);
       if (!validNodeTypes.includes(selectedTool)) return;
 
@@ -115,7 +153,7 @@ function FlowContent() {
         console.error("Failed to sync with backend:", err);
       }
     },
-    [selectedTool, screenToFlowPosition, addNode, selectedNode, setSelectedTool]
+    [selectedTool, screenToFlowPosition, addNode, selectedNode, setSelectedTool, clearSelection]
   );
 
   useEffect(() => console.log("Rendered"), []);
@@ -128,11 +166,51 @@ function FlowContent() {
     }));
   }, [nodes, selectedTool]);
 
+  const memoizedEdges = useMemo(() => {
+    const isSelectTool = selectedTool === "select";
+
+    return edges.map((edge) => {
+      const isSelected = !!edge.selected;
+
+      return {
+        ...edge,
+        selectable: isSelectTool,
+        deletable: isSelectTool,
+        interactionWidth: 16,
+        style: {
+          ...edge.style,
+          stroke: isSelected ? "#818cf8" : "#475569",
+          strokeWidth: isSelected ? 2 : 1.5,
+        },
+      };
+    });
+  }, [edges, selectedTool]);
+
   const onSelectionChange: OnSelectionChangeFunc = useCallback(
-    ({ nodes: selectedNodes }) => {
+    ({ nodes: selectedNodes, edges: selectedEdges }) => {
       selectNodes(selectedNodes.map((node) => node.id));
+      selectEdges(selectedEdges.map((edge) => edge.id));
     },
-    [selectNodes]
+    [selectNodes, selectEdges]
+  );
+
+  const onEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: Edge) => {
+      if (selectedTool !== "select") return;
+
+      const changes: EdgeChange[] = edges.flatMap((e) => {
+        const shouldSelect = e.id === edge.id;
+        if (e.selected === shouldSelect) return [];
+        return [{ type: "select" as const, id: e.id, selected: shouldSelect }];
+      });
+
+      if (changes.length > 0) {
+        setEdges(changes);
+      }
+
+      selectNodes([]);
+    },
+    [selectedTool, edges, setEdges, selectNodes]
   );
 
   const onNodesDelete = useCallback(
@@ -157,8 +235,11 @@ function FlowContent() {
         }
       });
       setEdges(changes);
+
+      const nextEdges = applyEdgeChanges(changes, edges);
+      selectEdges(nextEdges.filter((edge) => edge.selected).map((edge) => edge.id));
     },
-    [edges, nodes, setEdges]
+    [edges, nodes, setEdges, selectEdges]
   );
 
   return (
@@ -166,19 +247,23 @@ function FlowContent() {
       <ReactFlow
         fitView={false}
         nodes={memoizedNodes}
-        edges={edges}
+        edges={memoizedEdges}
         onNodesChange={onNodesChangeHandler}
         onEdgesChange={onEdgesChangeHandler}
         onConnect={onConnect}
+        isValidConnection={isValidConnection}
         onNodeDragStart={onNodeDragStart}
         onNodeDragStop={onNodeDragStop}
         onPaneClick={handlePaneClick}
+        onEdgeClick={onEdgeClick}
         onSelectionChange={onSelectionChange}
         onNodesDelete={onNodesDelete}
         nodeTypes={nodeTypes}
         elementsSelectable={selectedTool === "select"}
+        edgesFocusable={selectedTool === "select"}
         selectionOnDrag={selectedTool === "select"}
         selectionMode={SelectionMode.Partial}
+        connectionMode={ConnectionMode.Loose}
         deleteKeyCode={selectedTool === "select" ? ["Delete", "Backspace"] : null}
         onInit={(instance) => {
           instance.setViewport({ x: 0, y: 0, zoom: 1 });
@@ -188,8 +273,10 @@ function FlowContent() {
         zoomOnScroll={true}
         panOnScroll={true}
         defaultEdgeOptions={{
-          style: { stroke: "#475569", strokeWidth: 1.5 },
           animated: false,
+          selectable: true,
+          deletable: true,
+          interactionWidth: 16,
         }}
         style={{
           cursor: (() => {
@@ -214,6 +301,7 @@ function FlowContent() {
       >
         <Background gap={20} size={1.5} bgColor="#070913" color="#1E293B" variant={BackgroundVariant.Dots} />
         <SelectionToolbar />
+        <EdgeDeleteToolbar />
       </ReactFlow>
 
       <CanvasControls />

@@ -1,4 +1,4 @@
-import { Handle, Position } from "@xyflow/react";
+import MultiDirectionHandles from "@/components/nodes/shared/MultiDirectionHandles";
 import { Archive } from "lucide-react";
 import openSettings from "@/utils/openSettings";
 import { FaGear, FaTrash } from "react-icons/fa6";
@@ -37,10 +37,7 @@ export default function S3Node({ data, selected, id }: AnyNodeProps<s3Data>) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <Handle type="target" position={Position.Top} className="!bg-slate-700 !w-1.5 !h-1.5" />
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-700 !w-1.5 !h-1.5" />
-      <Handle type="source" position={Position.Left} className="!bg-slate-700 !w-1.5 !h-1.5" />
-      <Handle type="source" position={Position.Right} className="!bg-slate-700 !w-1.5 !h-1.5" />
+      <MultiDirectionHandles />
 
       {showActions && (
         <div className="absolute -top-2.5 right-1.5 flex items-center gap-1 z-50 pointer-events-auto">

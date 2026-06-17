@@ -221,6 +221,17 @@ export default function AIConsole() {
               continue;
             }
 
+            const { edges: currentEdges } = useDiagramStore.getState();
+            if (
+              currentEdges.some(
+                (edge) =>
+                  (edge.source === edgeObj.source && edge.target === edgeObj.target) ||
+                  (edge.source === edgeObj.target && edge.target === edgeObj.source)
+              )
+            ) {
+              continue;
+            }
+
             const ugcpRes = handleConnection(edgeObj as any, sourceNode as any, targetNode as any);
             if (!ugcpRes.success) {
               console.warn("UGCP rejected AI connection", ugcpRes.error);
