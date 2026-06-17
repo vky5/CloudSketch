@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
-import { X, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import { formSchemaRegistry } from "@/config/formSchemaRegistry";
 import { useUIPanelStore } from "@/store/useUIPanelStore";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import RenderForm from "./RenderForm";
 import { ResourceBlock } from "@/utils/types/resource";
+import SettingsPanelShell from "./SettingsPanelShell";
 
 function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const { settingOpenResourceId, resources, updateResource } =
@@ -37,7 +38,6 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
     <K extends keyof ResourceBlock["data"]>(key: K, value: unknown) => {
       if (!settingOpenResourceId || !resource) return;
 
-      // Narrow the data to the current resource type
       const currentData = resource.data as Record<string, unknown>;
 
       updateResource(settingOpenResourceId, {
@@ -85,43 +85,43 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
   if (!settingOpenResourceId || !resource) return null;
 
+  const resourceName =
+    typeof resource.data.Name === "string" ? resource.data.Name : undefined;
+
   return (
-    <div
-      className="fixed top-17 h-[calc(97vh-48px)] bg-[#232329] text-white shadow-lg z-[1001] rounded-l-md flex flex-col"
-      style={{ right: `${editorWidth}px`, width: "350px" }}
-    >
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#2e2e32]">
+    <SettingsPanelShell
+      editorWidth={editorWidth}
+      title="Resource settings"
+      subtitle={resourceName || resourceType || undefined}
+      meta={settingOpenResourceId}
+      onClose={closeSettingsorConfig}
+      headerLeft={
         <button
           onClick={openConfig}
-          title="Go Back"
-          className="text-gray-300 hover:text-white transition flex items-center gap-1"
+          title="Go back"
+          className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-300"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm">Back</span>
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to resources
         </button>
-        <h2 className="text-lg font-semibold">Resource Settings</h2>
+      }
+      footer={
         <button
-          onClick={closeSettingsorConfig}
-          title="Close Resource Settings"
-          className="text-red-400 hover:text-red-600 transition"
+          onClick={handleSaveAndClose}
+          disabled={!isValid}
+          className="h-9 w-full rounded-lg bg-indigo-600 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <X className="w-5 h-5" />
+          Save & close
         </button>
-      </div>
-
-      <div
-        className="p-4 overflow-y-auto flex-1 scrollbar-hide"
-        style={{ scrollbarWidth: "none" }}
-      >
-        <p className="text-xs mb-4 text-gray-400">
-          Resource ID: {settingOpenResourceId}
+      }
+    >
+      {formFields.length === 0 ? (
+        <p className="text-sm text-slate-500">
+          No settings available for this resource type.
         </p>
-        {formFields.length === 0 ? (
-          <p className="text-sm text-gray-400">
-            No settings available for this resource type.
-          </p>
-        ) : (
-          formFields.map((field) => (
+      ) : (
+        <div className="space-y-5">
+          {formFields.map((field) => (
             <RenderForm
               key={field.key}
               field={field}
@@ -132,24 +132,10 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
                 handleChange(field.key as keyof ResourceBlock["data"], value)
               }
             />
-          ))
-        )}
-      </div>
-
-      <div className="px-4 py-3 border-t border-[#2e2e32]">
-        <button
-          onClick={handleSaveAndClose}
-          disabled={!isValid}
-          className={`w-full px-4 py-2 rounded-md text-sm font-medium transition ${
-            isValid
-              ? "bg-blue-600 hover:bg-blue-700 text-white"
-              : "bg-gray-600 text-gray-300 cursor-not-allowed"
-          }`}
-        >
-          Save & Close
-        </button>
-      </div>
-    </div>
+          ))}
+        </div>
+      )}
+    </SettingsPanelShell>
   );
 }
 

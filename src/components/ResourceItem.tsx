@@ -12,23 +12,20 @@ export default function ResourceItem({
   return (
     <div
       onClick={onClick}
-      className="flex items-center justify-between px-4 py-2 rounded-lg w-full
-                 text-sm font-medium text-neutral-200
-                  hover:bg-[#3a3a3f]
-                 hover:text-neutral-100 
-                 cursor-pointer transition-all duration-150
-                 shadow-sm hover:shadow-md "
+      className="group flex cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-2 transition-colors hover:bg-slate-800/40"
     >
-      <span className="truncate max-w-[220px] font-mono">{name}</span>
+      <span className="truncate font-mono text-xs text-slate-400 transition-colors group-hover:text-slate-200">
+        {name}
+      </span>
       <button
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
         }}
         title="Delete"
-        className="text-red-400 hover:text-red-500 transition"
+        className="shrink-0 rounded-md p-1 text-slate-600 opacity-0 transition-all hover:bg-rose-500/10 hover:text-rose-400 group-hover:opacity-100"
       >
-        <Trash2 className="w-4 h-4" />
+        <Trash2 className="h-3.5 w-3.5" />
       </button>
     </div>
   );

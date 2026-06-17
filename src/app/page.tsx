@@ -30,16 +30,17 @@ export default function HomePage() {
   }, [initProjects]);
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-[#0b0c0e]">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#0b0c0e]">
       <Header
         onGenerateTerraform={() => setEditorState(true)}
         onToggleConfigPanel={openConfig}
       />
-      <Sidebar />
-      <main className="h-full w-full">
-        <Canvas />
-      </main>
-      
+      <div className="relative min-h-0 flex-1">
+        <Sidebar />
+        <main className="h-full w-full">
+          <Canvas />
+        </main>
+
       {isSettingsOpen &&
         (settingsVersion === "node" ? (
           <NodeSettingsPanel editorWidth={isEditorOpen ? editorWidth + 5 : 0} />
@@ -60,6 +61,7 @@ export default function HomePage() {
           setEditorWidth={setEditorWidth}
         />
       )}
+      </div>
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useMemo } from "react";
 import {
   ReactFlow,
   Background,
-  Controls,
   Connection,
   Edge,
   Node,
@@ -31,6 +30,7 @@ import { useGhostMovement } from "./Canvas/useGhostMovement";
 import { useCanvasConnection } from "./Canvas/useCanvasConnection";
 import { useCanvasDragAndDrop } from "./Canvas/useCanvasDragAndDrop";
 import SelectionToolbar from "./Canvas/SelectionToolbar";
+import CanvasControls from "./Canvas/CanvasControls";
 
 function FlowContent() {
   const {
@@ -212,11 +212,11 @@ function FlowContent() {
           })(),
         }}
       >
-        <Controls />
         <Background gap={20} size={1.5} bgColor="#070913" color="#1E293B" variant={BackgroundVariant.Dots} />
         <SelectionToolbar />
       </ReactFlow>
 
+      <CanvasControls />
       {renderGhostShape(selectedTool)}
 
       {/* Sleek Middle Delete Confirmation Modal */}

@@ -2,12 +2,13 @@
 
 import React, { useMemo, useCallback } from "react";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
-import { Shield, KeyRound, X } from "lucide-react";
+import { Shield, KeyRound, Fingerprint } from "lucide-react";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import ResourceFolder from "./ResourceFolder";
 import ResourceItem from "./ResourceItem";
 import openSettings from "@/utils/openSettings";
-import { ResourceType, ResourceDataMap } from "@/store/useTerraformResourceStore";
+import { ResourceType } from "@/store/useTerraformResourceStore";
+import SettingsPanelShell from "./SettingsPannel/SettingsPanelShell";
 
 interface TerraformSideMenuProps {
   editorWidth: number;
@@ -33,69 +34,65 @@ export default function TerraformSideMenu({ editorWidth }: TerraformSideMenuProp
   );
 
   const renderResourceList = useCallback(
-    <T extends ResourceType>(items: typeof resources, type: T, w: string) =>
-      items.map(({ id, data }, i) => {
-        const dataRecord = data as ResourceDataMap[T];
-        return (
-          <div key={id}>
-            <ResourceItem
-              name={dataRecord.Name ?? id}
-              onDelete={() => deleteResource(id)}
-              onClick={() => openSettings(id, "resource")}
-            />
-            {i !== items.length - 1 && (
-              <hr className={`my-1 border-t border-[#3f3f46] w-[${w}] mx-auto`} />
-            )}
-          </div>
-        );
-      }),
+    (items: typeof resources) =>
+      items.map(({ id, data }) => (
+        <ResourceItem
+          key={id}
+          name={(data as { Name?: string }).Name ?? id}
+          onDelete={() => deleteResource(id)}
+          onClick={() => openSettings(id, "resource")}
+        />
+      )),
     [deleteResource]
   );
 
   return (
-    <div
-      className="fixed top-17 h-[calc(97vh-48px)] bg-[#232329] text-white shadow-lg z-[1001] rounded-l-md flex flex-col"
-      style={{ right: `${editorWidth}px`, width: "350px" }}
+    <SettingsPanelShell
+      editorWidth={editorWidth}
+      title="Terraform resources"
+      subtitle="Manage shared infrastructure config"
+      onClose={closeSettingsorConfig}
     >
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#2e2e32]">
-        <h2 className="text-md font-semibold tracking-tight">Terraform Config</h2>
-        <button
-          onClick={closeSettingsorConfig}
-          title="Close"
-          className="text-red-400 hover:text-red-600 transition"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="p-4 overflow-y-auto flex-1 scrollbar-hide space-y-6">
-        {/* Security Groups */}
+      <div className="space-y-3">
         <ResourceFolder
           title="Security Groups"
-          icon={<Shield className="w-4 h-4 text-blue-400" />}
+          icon={<Shield className="h-3.5 w-3.5 text-sky-400" />}
+          count={securityGroups.length}
           onAdd={() => handleNewResource("securitygroup")}
         >
-          {renderResourceList(securityGroups, "securitygroup", "90%")}
+          {securityGroups.length === 0 ? (
+            <p className="px-3 py-2 text-xs text-slate-600">No security groups yet</p>
+          ) : (
+            renderResourceList(securityGroups)
+          )}
         </ResourceFolder>
 
-        {/* Key Pairs */}
         <ResourceFolder
           title="Key Pairs"
-          icon={<KeyRound className="w-4 h-4 text-yellow-400" />}
+          icon={<KeyRound className="h-3.5 w-3.5 text-amber-400" />}
+          count={keyPairs.length}
           onAdd={() => handleNewResource("keypair")}
         >
-          {renderResourceList(keyPairs, "keypair", "80%")}
+          {keyPairs.length === 0 ? (
+            <p className="px-3 py-2 text-xs text-slate-600">No key pairs yet</p>
+          ) : (
+            renderResourceList(keyPairs)
+          )}
         </ResourceFolder>
 
-        {/* IAM */}
         <ResourceFolder
           title="IAM"
-          icon={<KeyRound className="w-4 h-4 text-yellow-400" />}
+          icon={<Fingerprint className="h-3.5 w-3.5 text-violet-400" />}
+          count={IAM.length}
           onAdd={() => handleNewResource("iam")}
         >
-          {renderResourceList(IAM, "iam", "80%")}
+          {IAM.length === 0 ? (
+            <p className="px-3 py-2 text-xs text-slate-600">No IAM resources yet</p>
+          ) : (
+            renderResourceList(IAM)
+          )}
         </ResourceFolder>
       </div>
-    </div>
+    </SettingsPanelShell>
   );
 }

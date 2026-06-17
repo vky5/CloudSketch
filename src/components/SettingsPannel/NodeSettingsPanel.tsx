@@ -2,13 +2,13 @@
 
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { formSchemaRegistry } from "@/config/formSchemaRegistry";
-import { X } from "lucide-react";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import RenderForm from "./RenderForm";
 import saveLogic from "@/lib/customSaveLogics/saveLogicRegistry";
 import { ResourceBlock } from "@/utils/types/resource";
 import { NodeField } from "@/utils/types/NodeField";
+import SettingsPanelShell from "./SettingsPanelShell";
 
 function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const { settingOpenNodeId, nodes, updateNodeData } = useDiagramStore();
@@ -77,36 +77,33 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
 
   if (!settingOpenNodeId || !node) return null;
 
+  const nodeName =
+    typeof node.data.Name === "string" ? node.data.Name : undefined;
+
   return (
-    <div
-      className="fixed top-17 h-[calc(97vh-48px)] bg-[#232329] text-white shadow-lg z-[1001] rounded-l-md flex flex-col"
-      style={{ right: `${editorWidth}px`, width: "350px" }}
-    >
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#2e2e32]">
-        <h2 className="text-lg font-semibold">Settings</h2>
+    <SettingsPanelShell
+      editorWidth={editorWidth}
+      title="Node settings"
+      subtitle={nodeName || nodeType || undefined}
+      meta={settingOpenNodeId}
+      onClose={closeSettingsorConfig}
+      footer={
         <button
-          onClick={closeSettingsorConfig}
-          title="Close Settings"
-          className="text-red-400 hover:text-red-600 transition"
+          onClick={handleSaveAndClose}
+          disabled={!isValid}
+          className="h-9 w-full rounded-lg bg-indigo-600 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <X className="w-5 h-5" />
+          Save & close
         </button>
-      </div>
-
-      <div
-        className="p-4 overflow-y-auto flex-1 scrollbar-hide"
-        style={{ scrollbarWidth: "none" }}
-      >
-        <p className="text-xs mb-4 text-gray-400">
-          Node ID: {settingOpenNodeId}
+      }
+    >
+      {formFields.length === 0 ? (
+        <p className="text-sm text-slate-500">
+          No settings available for this node type.
         </p>
-
-        {formFields.length === 0 ? (
-          <p className="text-sm text-gray-400">
-            No settings available for this node type.
-          </p>
-        ) : (
-          formFields.map((field) => (
+      ) : (
+        <div className="space-y-5">
+          {formFields.map((field) => (
             <RenderForm
               key={field.key}
               field={field}
@@ -117,24 +114,10 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
                 handleChange(field.key as keyof typeof node.data, value)
               }
             />
-          ))
-        )}
-      </div>
-
-      <div className="px-4 py-3 border-t border-[#2e2e32]">
-        <button
-          onClick={handleSaveAndClose}
-          disabled={!isValid}
-          className={`w-full px-4 py-2 rounded-md text-sm font-medium transition ${
-            isValid
-              ? "bg-blue-600 hover:bg-blue-700 text-white"
-              : "bg-gray-600 text-gray-300 cursor-not-allowed"
-          }`}
-        >
-          Save & Close
-        </button>
-      </div>
-    </div>
+          ))}
+        </div>
+      )}
+    </SettingsPanelShell>
   );
 }
 
