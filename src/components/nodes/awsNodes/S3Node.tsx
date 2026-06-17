@@ -55,9 +55,9 @@ export default function S3Node({ data, selected, id }: AnyNodeProps<s3Data>) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (window.confirm("Are you sure you want to delete this resource?")) {
-                useDiagramStore.getState().deleteNode(id);
-              }
+              useDiagramStore
+                .getState()
+                .triggerDeleteConfirmation(id, "Are you sure you want to delete this S3 bucket?");
             }}
             className="bg-slate-900 hover:bg-red-950/80 border border-slate-700 hover:border-red-900/50 rounded-full w-5 h-5 flex items-center justify-center text-slate-400 hover:text-red-400 cursor-pointer"
             title="Delete S3"

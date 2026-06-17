@@ -39,6 +39,15 @@ interface DiagramState {
   setNodesAndEdges: (nodes: AnyNode[], edges: Edge[]) => void;
   deleteNode: (id: string) => void;
   clearAll: () => void;
+
+  deleteModal: {
+    isOpen: boolean;
+    nodeId: string | null;
+    message: string;
+  };
+  triggerDeleteConfirmation: (id: string, message: string) => void;
+  confirmDelete: () => void;
+  closeDeleteModal: () => void;
 }
 
 export const useDiagramStore = create<DiagramState>((set) => ({
@@ -185,6 +194,67 @@ export const useDiagramStore = create<DiagramState>((set) => ({
     }),
 
   clearAll: () => set({ nodes: [], edges: [], selectedNodeId: null, selectedNodeIds: [], settingOpenNodeId: null }),
+
+  deleteModal: {
+    isOpen: false,
+    nodeId: null,
+    message: "",
+  },
+
+  triggerDeleteConfirmation: (id: string, message: string) =>
+    set({
+      deleteModal: {
+        isOpen: true,
+        nodeId: id,
+        message,
+      },
+    }),
+
+  confirmDelete: () =>
+    set((state) => {
+      const id = state.deleteModal.nodeId;
+      if (!id) return {};
+
+      const idsToDelete = new Set<string>([id]);
+      let foundNew = true;
+      while (foundNew) {
+        foundNew = false;
+        state.nodes.forEach((node) => {
+          if (node.parentId && idsToDelete.has(node.parentId) && !idsToDelete.has(node.id)) {
+            idsToDelete.add(node.id);
+            foundNew = true;
+          }
+        });
+      }
+
+      const nextNodes = state.nodes.filter((node) => !idsToDelete.has(node.id));
+      const nextEdges = state.edges.filter(
+        (edge) => !idsToDelete.has(edge.source) && !idsToDelete.has(edge.target)
+      );
+      const expanded = autoExpandContainers(nextNodes);
+
+      return {
+        nodes: expanded,
+        edges: nextEdges,
+        selectedNodeId: idsToDelete.has(state.selectedNodeId || "") ? null : state.selectedNodeId,
+        selectedNodeIds: state.selectedNodeIds.filter((nId) => !idsToDelete.has(nId)),
+        settingOpenNodeId: idsToDelete.has(state.settingOpenNodeId || "") ? null : state.settingOpenNodeId,
+        deleteModal: {
+          isOpen: false,
+          nodeId: null,
+          message: "",
+        },
+      };
+    }),
+
+  closeDeleteModal: () =>
+    set({
+      deleteModal: {
+        isOpen: false,
+        nodeId: null,
+        message: "",
+      },
+    }),
 }));
 
 function resolveSubnetCollisions(nextNodes: AnyNode[], prevNodes: AnyNode[]): AnyNode[] {

@@ -46,6 +46,9 @@ function FlowContent() {
     updateNodeData,
     updateNodePosition,
     updateNodeParentAndPosition,
+    deleteModal,
+    confirmDelete,
+    closeDeleteModal,
   } = useDiagramStore();
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -172,7 +175,7 @@ function FlowContent() {
   );
 
   return (
-    <div className="w-full h-full overflow-hidden" ref={canvasRef}>
+    <div className="w-full h-full overflow-hidden relative" ref={canvasRef}>
       <ReactFlow
         fitView={false}
         nodes={memoizedNodes}
@@ -220,6 +223,32 @@ function FlowContent() {
       </ReactFlow>
 
       {renderGhostShape(selectedTool)}
+
+      {/* Sleek Middle Delete Confirmation Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-[#131316] border border-[#2D2E35] rounded-xl p-6 w-[400px] shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="text-white font-bold text-lg mb-2">Confirm Deletion</h3>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+              {deleteModal.message}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={closeDeleteModal}
+                className="px-4 py-2 rounded-lg bg-[#1E1F24] hover:bg-[#2D2E35] text-gray-300 hover:text-white text-sm font-medium transition-colors cursor-pointer border border-[#2D2E35]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-medium transition-colors cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
