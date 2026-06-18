@@ -354,6 +354,7 @@ function getFlowZIndex(type: string | undefined): number {
     case "ec2":
     case "rds":
     case "lambda":
+    case "elb":
       return 10;
     default:
       return 5;

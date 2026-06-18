@@ -5,6 +5,8 @@ import { s3Data } from "@/config/awsNodes/s3.config";
 import { subnetData } from "@/config/awsNodes/subnet.config";
 import { vpcData } from "@/config/awsNodes/vpc.config";
 import { ebsAttachData } from "@/config/resources/ebs_attach";
+import { ElbEc2AttachData } from "@/config/resources/elbec2_attach";
+import { elbData } from "@/config/awsNodes/elb.config";
 
 export type Ec2S3AttachData = {
   Name: string;
@@ -46,7 +48,9 @@ export interface ResourceBlock {
     | subnetData
     | LambdaData
     | ToolNodeData
-    | Ec2S3AttachData;
+    | Ec2S3AttachData
+    | elbData
+    | ElbEc2AttachData;
 }
 
 export type AnyNode = Node<ResourceBlock["data"]>;

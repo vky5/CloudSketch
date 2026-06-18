@@ -8,6 +8,7 @@ import { rdsFormSchema } from "./awsNodes/rds.config";
 import { ebsFormSchema } from "./awsNodes/ebs.config";
 import { vpcFormSchema } from "./awsNodes/vpc.config";
 import { subnetFormSchema } from "./awsNodes/subnet.config";
+import { elbFormSchema } from "./awsNodes/elb.config";
 
 export const formSchemaRegistry: Record<string, NodeField[]> = {
   ec2: ec2FormSchema,
@@ -18,5 +19,6 @@ export const formSchemaRegistry: Record<string, NodeField[]> = {
   rds: rdsFormSchema,
   ebs: ebsFormSchema,
   vpc: vpcFormSchema,
-  subnet: subnetFormSchema
+  subnet: subnetFormSchema,
+  elb: elbFormSchema,
 };

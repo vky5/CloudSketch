@@ -5,6 +5,7 @@ const connectionRules: Record<string, string[]> = {
   //   EC2: ["EBS", "SecurityGroup", "Subnet"],
   ebs: ["ec2"],
   s3: ["ec2"],
+  elb: ["ec2"],
   //   RDS: ["Subnet", "SecurityGroup"],
   //   SecurityGroup: ["EC2", "RDS"],
   //   Subnet: ["EC2", "RDS"],
@@ -31,6 +32,8 @@ export function keyGen(
     return "ec2ebs";
   } else if (sourceType === "ec2" && destinationType === "s3") {
     return "ec2s3";
+  } else if (sourceType === "elb" && destinationType === "ec2") {
+    return "elbec2";
   }
 
   return null;

@@ -10,6 +10,7 @@ import EBSNode from "../nodes/awsNodes/EBSNode";
 import VPCNode from "../nodes/awsNodes/VPCNode";
 import SubnetNode from "../nodes/awsNodes/SubnetNode";
 import CircleNode from "../nodes/tools/CircleNode";
+import ELBNode from "../nodes/awsNodes/ELBNode";
 import { ResourceBlock } from "@/utils/types/resource";
 
 export const nodeTypes = {
@@ -24,6 +25,7 @@ export const nodeTypes = {
   vpc: VPCNode,
   subnet: SubnetNode,
   circle: CircleNode,
+  elb: ELBNode,
 };
 
 export function getDefaultDataForNode(
@@ -73,6 +75,14 @@ export function getDefaultDataForNode(
         Name: "",
         runtime: "nodejs18.x",
         memory: "128MB",
+      };
+    case "elb":
+      return {
+        id,
+        Name: "",
+        Scheme: "internet-facing",
+        ListenerPort: "80",
+        TargetPort: "80",
       };
     case "rectangle":
     case "rhombus":

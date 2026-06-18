@@ -40,7 +40,7 @@ export default function connectionLogic(
   }
 }
 
-export type connectionKeys = "ec2ebs" | "ec2s3";
+export type connectionKeys = "ec2ebs" | "ec2s3" | "elbec2";
 
 export function serializeConnectionOrder(
   a: ResourceBlock,
@@ -48,6 +48,7 @@ export function serializeConnectionOrder(
 ): { source: ResourceBlock; target: ResourceBlock } {
   const canonical: Record<string, string[]> = {
     ec2: ["ebs", "s3"],
+    elb: ["ec2"],
   };
 
   if (canonical[a.type]?.includes(b.type)) {

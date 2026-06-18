@@ -12,6 +12,7 @@ import { syncNodeWithBackend } from "@/utils/terraformSync";
 import type { Edge, Node } from "@xyflow/react";
 import type { NormalizedUGCPNode, NormalizedUGCPEdge } from "@/lib/ai/parseUGCP";
 import type { AnyNode, ResourceBlock } from "@/utils/types/resource";
+import type { subnetData } from "@/config/awsNodes/subnet.config";
 
 const SUGGESTIONS = [
   {
@@ -60,6 +61,12 @@ function setSubnetId(data: ResourceBlock["data"], subnetId: string): void {
 function setParentVpcId(data: ResourceBlock["data"], vpcId: string): void {
   if ("parentVpcId" in data) {
     (data as { parentVpcId?: string }).parentVpcId = vpcId;
+  }
+}
+
+function setVpcId(data: ResourceBlock["data"], vpcId: string): void {
+  if ("VpcID" in data) {
+    (data as { VpcID?: string }).VpcID = vpcId;
   }
 }
 
@@ -121,6 +128,9 @@ export default function AIConsole() {
           } else if (type === "s3" || type === "ebs") {
             width = 100;
             height = 80;
+          } else if (type === "elb" || type === "ec2" || type === "rds" || type === "lambda") {
+            width = 176;
+            height = 52;
           }
 
           const absX = typeof n.x === "number" ? n.x : 100 + idx * 180;
@@ -191,7 +201,7 @@ export default function AIConsole() {
         });
 
         processedNodes.forEach((node) => {
-          if (node.type === "ec2" || node.type === "rds") {
+          if (node.type === "ec2" || node.type === "rds" || node.type === "elb") {
             const containingSubnet = processedNodes.find((other) => {
               if (other.type !== "subnet") return false;
               const nodeCenterX = node.absX + node.width / 2;
@@ -213,6 +223,10 @@ export default function AIConsole() {
             if (containingSubnet) {
               node.parentId = containingSubnet.id;
               setSubnetId(node.data, containingSubnet.id);
+              if (node.type === "elb") {
+                const vpcId = (containingSubnet.data as subnetData).parentVpcId;
+                if (vpcId) setVpcId(node.data, vpcId);
+              }
             }
           }
         });

@@ -84,4 +84,18 @@ export const nodeRegistry: Record<string, NodeMetadata> = {
     requiredFields: ["NodeID", "Name"],
     templatePath: "src/templates/aws/subnet.tf.tmpl",
   },
+  elb: {
+    type: "elb",
+    displayName: "Application Load Balancer",
+    category: "Networking",
+    requiredFields: ["Name", "Scheme", "ListenerPort", "TargetPort"],
+    templatePath: "src/templates/aws/elb.tf.tmpl",
+  },
+  elbec2: {
+    type: "elbec2",
+    displayName: "Attach EC2 Target to ALB",
+    category: "Connection",
+    requiredFields: ["NodeID", "ALBNodeID", "EC2NodeID"],
+    templatePath: "src/templates/aws/elbec2.tf.tmpl",
+  },
 };

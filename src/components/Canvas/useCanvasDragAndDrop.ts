@@ -43,7 +43,12 @@ export function useCanvasDragAndDrop(
 
   const onNodeDragStop = useCallback(
     async (event: React.MouseEvent, node: Node) => {
-      if (node.type === "subnet" || node.type === "ec2" || node.type === "rds") {
+      if (
+        node.type === "subnet" ||
+        node.type === "ec2" ||
+        node.type === "rds" ||
+        node.type === "elb"
+      ) {
         if (!node.position) return;
 
         // Calculate absolute position on canvas

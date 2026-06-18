@@ -232,6 +232,52 @@ resource "aws_db_subnet_group" "{{.NodeID}}_subnet_group" {
   }
 }`,
 
+  elb: `resource "aws_lb" "{{.NodeID}}" {
+  name               = "{{.Name}}"
+  load_balancer_type = "application"
+  internal           = {{if eq .Scheme "internal"}}true{{else}}false{{end}}
+
+  {{- if .SubnetID }}
+  subnets = [aws_subnet.{{.SubnetID}}.id]
+  {{- else }}
+  # subnets = [aws_subnet.TODO.id]  # place ALB in a subnet
+  {{- end }}
+
+  tags = {
+    Name   = "{{or .Name "ALB"}}"
+    NodeID = "{{.NodeID}}"
+  }
+}
+
+resource "aws_lb_target_group" "{{.NodeID}}_tg" {
+  name     = "{{.Name}}-tg"
+  port     = {{or .TargetPort "80"}}
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.{{or .VpcID "TODO_vpc_id"}}.id
+
+  health_check {
+    enabled = true
+    path    = "/"
+  }
+}
+
+resource "aws_lb_listener" "{{.NodeID}}_listener" {
+  load_balancer_arn = aws_lb.{{.NodeID}}.arn
+  port              = {{or .ListenerPort "80"}}
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.{{.NodeID}}_tg.arn
+  }
+}`,
+
+  elbec2: `resource "aws_lb_target_group_attachment" "{{.NodeID}}" {
+  target_group_arn = aws_lb_target_group.{{.ALBNodeID}}_tg.arn
+  target_id        = aws_instance.{{.EC2NodeID}}.id
+  port             = {{or .TargetPort "80"}}
+}`,
+
   subnet: `resource "aws_subnet" "{{.NodeID}}" {
   vpc_id     = "{{.ParentVpcId}}"
   cidr_block = "{{or .CIDR "TODO: provide CIDR block"}}"
