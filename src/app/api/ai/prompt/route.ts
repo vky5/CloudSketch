@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeUGCPGraph, type UGCPInput } from "@/lib/ai/parseUGCP";
 
 /**
  * AI Prompt route
@@ -45,10 +46,9 @@ export async function POST(request: Request) {
     // Build provider request: ask for UGCP-first structured output
     const providerPayload = {
       prompt: `Produce a JSON object in UGCP (internal graph language) describing nodes and edges for the following user requirement. Only return valid JSON.\n\nRequirement:\n${prompt}\n\nReturn schema: { graph: { nodes:[{id,type,label,x,y}], edges:[{from,to,label}] } }`,
-      // metadata to hint provider about desired format
       format: "json",
       output_schema: "ugcp_graph",
-    } as any;
+    };
 
     const resp = await fetch(GROQ_API_URL, {
       method: "POST",
@@ -68,10 +68,10 @@ export async function POST(request: Request) {
     const text = await resp.text();
 
     // Try parse as JSON; some providers return plain text with JSON inside
-    let parsed: any;
+    let parsed: unknown;
     try {
       parsed = JSON.parse(text);
-    } catch (e) {
+    } catch {
       // Attempt to extract JSON substring
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -84,10 +84,14 @@ export async function POST(request: Request) {
     }
 
     // If parsed contains a graph, normalize and return it. Otherwise include full parsed result.
-    if (parsed && parsed.graph) {
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "graph" in parsed
+    ) {
       try {
-        const { normalizeUGCPGraph } = await import("@/lib/ai/parseUGCP");
-        const normalized = normalizeUGCPGraph(parsed);
+        const normalized = normalizeUGCPGraph(parsed as UGCPInput);
         if (normalized) return NextResponse.json({ message: "OK", graph: normalized });
       } catch (e) {
         console.error("UGCP normalization failed", e);

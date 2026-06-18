@@ -1,6 +1,7 @@
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
 import { NodeField } from "@/utils/types/NodeField";
+import { getResourceName } from "@/utils/types/resource";
 
 export const ec2FormSchema: NodeField[] = [
   {
@@ -53,8 +54,8 @@ export const ec2FormSchema: NodeField[] = [
     get options() {
       return useDiagramStore
         .getState()
-        .nodes.filter((r) => r.type === "subnet" && r.data?.Name)
-        .map((r) => r.data.Name);
+        .nodes.filter((r) => r.type === "subnet" && getResourceName(r.data))
+        .map((r) => getResourceName(r.data)!);
     },
     required: false,
   },

@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Trash2, Play, CheckCircle2, Loader2, Info, RefreshCw } from "lucide-react";
+import { Sparkles, Trash2, CheckCircle2, Loader2, Info, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { callAI } from "@/lib/aiClient";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { getDefaultDataForNode } from "@/components/Canvas/nodeTypes";
 import { handleConnection } from "@/lib/graphProtocol/ugcp";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
+import type { Edge, Node } from "@xyflow/react";
+import type { NormalizedUGCPNode, NormalizedUGCPEdge } from "@/lib/ai/parseUGCP";
+import type { AnyNode, ResourceBlock } from "@/utils/types/resource";
 
 const SUGGESTIONS = [
   {
@@ -25,6 +28,41 @@ const SUGGESTIONS = [
   },
 ];
 
+type ProcessedAINode = {
+  id: string;
+  type: string;
+  data: ResourceBlock["data"];
+  width: number;
+  height: number;
+  absX: number;
+  absY: number;
+  parentId: string | undefined;
+};
+
+type AIResponse = {
+  graph?: {
+    nodes?: NormalizedUGCPNode[];
+    edges?: NormalizedUGCPEdge[];
+  };
+};
+
+function getNodeLabel(data: ResourceBlock["data"]): string {
+  if ("Name" in data && typeof data.Name === "string") return data.Name;
+  return "";
+}
+
+function setSubnetId(data: ResourceBlock["data"], subnetId: string): void {
+  if ("SubnetID" in data) {
+    (data as { SubnetID?: string }).SubnetID = subnetId;
+  }
+}
+
+function setParentVpcId(data: ResourceBlock["data"], vpcId: string): void {
+  if ("parentVpcId" in data) {
+    (data as { parentVpcId?: string }).parentVpcId = vpcId;
+  }
+}
+
 export default function AIConsole() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,8 +74,7 @@ export default function AIConsole() {
     setLoading(true);
     setError(null);
     setSummary(null);
-    
-    // Custom animated loader sequence
+
     const statusSteps = [
       "Analyzing architectural request...",
       "Resolving subnet and network containment topology...",
@@ -56,9 +93,9 @@ export default function AIConsole() {
     }, 1200);
 
     try {
-      const res = await callAI(prompt);
+      const res = (await callAI(prompt)) as AIResponse;
       clearInterval(loaderInterval);
-      
+
       if (res?.graph) {
         const { nodes: aiNodes = [], edges: aiEdges = [] } = res.graph;
         const { addNode, addEdge } = useDiagramStore.getState();
@@ -66,14 +103,13 @@ export default function AIConsole() {
         const nodeNames: string[] = [];
         const edgeNames: string[] = [];
 
-        // 1. Gather all nodes and calculate default dimensions & absolute positions
         const idMap: Record<string, string> = {};
-        const processedNodes = aiNodes.map((n: any, idx: number) => {
+        const processedNodes: ProcessedAINode[] = aiNodes.map((n, idx) => {
           const oldId = n.id || `node-${idx}`;
           const id = crypto.randomUUID();
           idMap[oldId] = id;
           const type = (n.type || "rectangle").toLowerCase();
-          
+
           let width = 120;
           let height = 80;
           if (type === "vpc") {
@@ -90,24 +126,30 @@ export default function AIConsole() {
           const absX = typeof n.x === "number" ? n.x : 100 + idx * 180;
           const absY = typeof n.y === "number" ? n.y : 100 + idx * 120;
 
-          let data: any = {};
+          let data: ResourceBlock["data"];
           try {
             data = getDefaultDataForNode(type, id);
-          } catch (e) {
+          } catch {
             data = { id };
           }
 
           if (n.label && data) {
             const lbl = n.label.toString();
-            if ("Name" in data) data.Name = lbl;
-            else if ("TagName" in data) data.TagName = lbl;
-            
+            if ("Name" in data) {
+              (data as { Name?: string }).Name = lbl;
+            } else if ("TagName" in data) {
+              (data as { TagName?: string }).TagName = lbl;
+            }
+
             if (type === "ec2" && lbl.match(/(t\d\.[a-z0-9]+)/i)) {
-              data.InstanceType = lbl.match(/(t\d\.[a-z0-9]+)/i)[1];
+              const match = lbl.match(/(t\d\.[a-z0-9]+)/i);
+              if (match && "InstanceType" in data) {
+                (data as { InstanceType?: string }).InstanceType = match[1];
+              }
             }
           }
 
-          nodeNames.push(`${type.toUpperCase()}: "${data.Name || id.substring(0, 6)}"`);
+          nodeNames.push(`${type.toUpperCase()}: "${getNodeLabel(data) || id.substring(0, 6)}"`);
 
           return {
             id,
@@ -121,10 +163,9 @@ export default function AIConsole() {
           };
         });
 
-        // 2. Resolve VPC -> Subnet containment
-        processedNodes.forEach((node: any) => {
+        processedNodes.forEach((node) => {
           if (node.type === "subnet") {
-            const containingVpc = processedNodes.find((other: any) => {
+            const containingVpc = processedNodes.find((other) => {
               if (other.type !== "vpc") return false;
               const nodeCenterX = node.absX + node.width / 2;
               const nodeCenterY = node.absY + node.height / 2;
@@ -144,15 +185,14 @@ export default function AIConsole() {
 
             if (containingVpc) {
               node.parentId = containingVpc.id;
-              node.data.parentVpcId = containingVpc.id;
+              setParentVpcId(node.data, containingVpc.id);
             }
           }
         });
 
-        // 3. Resolve Subnet -> Instance containment
-        processedNodes.forEach((node: any) => {
+        processedNodes.forEach((node) => {
           if (node.type === "ec2" || node.type === "rds") {
-            const containingSubnet = processedNodes.find((other: any) => {
+            const containingSubnet = processedNodes.find((other) => {
               if (other.type !== "subnet") return false;
               const nodeCenterX = node.absX + node.width / 2;
               const nodeCenterY = node.absY + node.height / 2;
@@ -172,25 +212,24 @@ export default function AIConsole() {
 
             if (containingSubnet) {
               node.parentId = containingSubnet.id;
-              node.data.SubnetID = containingSubnet.id;
+              setSubnetId(node.data, containingSubnet.id);
             }
           }
         });
 
-        // 4. Map final relative coordinates & sync each node
-        const finalNodes = processedNodes.map((node: any) => {
+        const finalNodes: Node<ResourceBlock["data"]>[] = processedNodes.map((node) => {
           let x = node.absX;
           let y = node.absY;
 
           if (node.parentId) {
-            const parent = processedNodes.find((p: any) => p.id === node.parentId);
+            const parent = processedNodes.find((p) => p.id === node.parentId);
             if (parent) {
               x = node.absX - parent.absX;
               y = node.absY - parent.absY;
             }
           }
 
-          const nodePayload = {
+          const nodePayload: AnyNode = {
             id: node.id,
             type: node.type,
             data: node.data,
@@ -202,20 +241,24 @@ export default function AIConsole() {
           };
 
           syncNodeWithBackend({ id: node.id, type: node.type, data: node.data }).catch(() => {});
-          addNode(nodePayload as any);
+          addNode(nodePayload);
           return nodePayload;
         });
 
-        // 5. Connect and register handshakes
         for (const e of aiEdges) {
           try {
             const edgeId = crypto.randomUUID();
             const sourceId = idMap[e.from] || e.from;
             const targetId = idMap[e.to] || e.to;
-            const edgeObj = { id: edgeId, source: sourceId, target: targetId, label: e.label };
+            const edgeObj: Edge = {
+              id: edgeId,
+              source: sourceId,
+              target: targetId,
+              label: e.label,
+            };
 
-            const sourceNode = finalNodes.find((x: any) => x.id === edgeObj.source);
-            const targetNode = finalNodes.find((x: any) => x.id === edgeObj.target);
+            const sourceNode = finalNodes.find((x) => x.id === edgeObj.source);
+            const targetNode = finalNodes.find((x) => x.id === edgeObj.target);
             if (!sourceNode || !targetNode) {
               console.warn("AI edge references missing node, skipping", edgeObj);
               continue;
@@ -232,14 +275,16 @@ export default function AIConsole() {
               continue;
             }
 
-            const ugcpRes = handleConnection(edgeObj as any, sourceNode as any, targetNode as any);
+            const ugcpRes = handleConnection(edgeObj, sourceNode, targetNode);
             if (!ugcpRes.success) {
               console.warn("UGCP rejected AI connection", ugcpRes.error);
               continue;
             }
 
-            addEdge(edgeObj as any);
-            edgeNames.push(`Connected ${sourceNode.type.toUpperCase()} ➔ ${targetNode.type.toUpperCase()}`);
+            addEdge(edgeObj);
+            edgeNames.push(
+              `Connected ${sourceNode.type?.toUpperCase() ?? "NODE"} ➔ ${targetNode.type?.toUpperCase() ?? "NODE"}`
+            );
           } catch (err) {
             console.error("Failed to add AI edge", err);
           }
@@ -247,9 +292,13 @@ export default function AIConsole() {
 
         setSummary({ nodes: nodeNames, edges: edgeNames });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearInterval(loaderInterval);
-      setError(err?.message || "AI failed to process architecture. Check endpoint.");
+      const message =
+        err instanceof Error
+          ? err.message
+          : "AI failed to process architecture. Check endpoint.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -257,7 +306,6 @@ export default function AIConsole() {
 
   return (
     <div className="flex flex-col gap-4 text-gray-200">
-      {/* Examples Header */}
       {!loading && !summary && (
         <div className="flex flex-col gap-2">
           <div className="text-[11px] font-bold tracking-wider text-gray-400 uppercase flex items-center gap-1">
@@ -278,7 +326,6 @@ export default function AIConsole() {
         </div>
       )}
 
-      {/* Main Textarea */}
       <div className="relative">
         <textarea
           value={prompt}
@@ -293,7 +340,6 @@ export default function AIConsole() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-2">
         <Button
           onClick={handleSubmit}
@@ -328,7 +374,6 @@ export default function AIConsole() {
         </Button>
       </div>
 
-      {/* Loading State Details */}
       <AnimatePresence>
         {loading && (
           <motion.div
@@ -346,7 +391,6 @@ export default function AIConsole() {
         )}
       </AnimatePresence>
 
-      {/* Error state */}
       {error && (
         <div className="p-3 rounded-lg bg-red-950/20 border border-red-900/30 text-red-400 text-xs flex gap-2">
           <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -357,7 +401,6 @@ export default function AIConsole() {
         </div>
       )}
 
-      {/* Summary Box */}
       <AnimatePresence>
         {summary && (
           <motion.div
@@ -370,11 +413,10 @@ export default function AIConsole() {
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               Generation Success
             </div>
-            
-            {/* Created Nodes list */}
+
             <div className="flex flex-col gap-1">
               <div className="text-[10px] text-gray-400 font-bold uppercase">Resources Instantiated</div>
-              <div className="flex flex-col gap-1 max-h-24 overflow-y-auto pr-1" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex flex-col gap-1 max-h-24 overflow-y-auto pr-1" style={{ scrollbarWidth: "none" }}>
                 {summary.nodes.map((name, i) => (
                   <div key={i} className="text-xs text-gray-300 flex items-center gap-1 font-mono">
                     <span className="text-emerald-400 font-bold">•</span> {name}
@@ -383,11 +425,10 @@ export default function AIConsole() {
               </div>
             </div>
 
-            {/* Created Connections list */}
             {summary.edges.length > 0 && (
               <div className="flex flex-col gap-1 mt-2">
                 <div className="text-[10px] text-gray-400 font-bold uppercase">Network Handshakes</div>
-                <div className="flex flex-col gap-1 max-h-20 overflow-y-auto pr-1" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex flex-col gap-1 max-h-20 overflow-y-auto pr-1" style={{ scrollbarWidth: "none" }}>
                   {summary.edges.map((name, i) => (
                     <div key={i} className="text-xs text-gray-300 flex items-center gap-1 font-mono">
                       <span className="text-blue-400 font-bold">➔</span> {name}

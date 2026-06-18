@@ -7,7 +7,13 @@ import { useState } from "react";
 import { AnyNodeProps } from "@/utils/types/resource";
 import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
-export default function LambdaNode({ data, selected, id }: AnyNodeProps<any>) {
+type LambdaNodeData = {
+  Name?: string;
+  runtime?: string;
+  memory?: string;
+};
+
+export default function LambdaNode({ data, selected, id }: AnyNodeProps<LambdaNodeData>) {
   const [hovered, setHovered] = useState(false);
   const showActions = useShowNodeActions(selected, hovered);
 

@@ -1,5 +1,6 @@
-import { Node, Edge } from "@xyflow/react";
 import { NodeCommunicationContract, SignalResponse } from "./types";
+import { ebsAttachData } from "@/config/resources/ebs_attach";
+import { Ec2S3AttachData } from "@/utils/types/resource";
 import { useTerraformStore } from "@/store/useTerraformStore";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 
@@ -74,7 +75,7 @@ export const contractRegistry: Record<string, NodeCommunicationContract> = {
             EC2NodeID: currentNode.id,
             VolumeID: otherNode.id,
             DeviceName: "/dev/sdf",
-          } as any,
+          } satisfies ebsAttachData,
         }).catch((err) => console.error("Failed to sync ec2ebs connection:", err));
 
         return {
@@ -95,7 +96,7 @@ export const contractRegistry: Record<string, NodeCommunicationContract> = {
             Name: edge.id,
             EC2NodeID: currentNode.id,
             BucketID: otherNode.id,
-          } as any,
+          } satisfies Ec2S3AttachData,
         }).catch((err) => console.error("Failed to sync ec2s3 connection:", err));
 
         return { success: true };

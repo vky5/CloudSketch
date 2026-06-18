@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { useTerraformResourceStore } from "@/store/useTerraformResourceStore";
+import {
+  useTerraformResourceStore,
+  type ResourceDataMap,
+  type ResourceType,
+} from "@/store/useTerraformResourceStore";
 import { ArrowLeft } from "lucide-react";
 import closeSettingsorConfig from "@/utils/closeSettingsorConfig";
 import { formSchemaRegistry } from "@/config/formSchemaRegistry";
@@ -20,7 +24,7 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
   const resource = useMemo(
     () => resources.find((r) => r.id === settingOpenResourceId),
     [resources, settingOpenResourceId]
-  ) as ResourceBlock | undefined;
+  );
 
   const resourceType = resource?.type ?? null;
 
@@ -29,21 +33,18 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
     [resourceType]
   );
 
-  const resourceData: Partial<ResourceBlock["data"]> = useMemo(
-    () => resource?.data ?? {},
+  const resourceData = useMemo(
+    () => (resource?.data ?? {}) as Record<string, unknown>,
     [resource]
   );
 
   const handleChange = useCallback(
-    <K extends keyof ResourceBlock["data"]>(key: K, value: unknown) => {
+    (key: string, value: unknown) => {
       if (!settingOpenResourceId || !resource) return;
 
-      const currentData = resource.data as Record<string, unknown>;
-
       updateResource(settingOpenResourceId, {
-        ...currentData,
         [key]: value,
-      } as ResourceBlock["data"]);
+      } as Partial<ResourceDataMap[ResourceType]>);
     },
     [settingOpenResourceId, resource, updateResource]
   );
@@ -52,7 +53,7 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
     if (!isValid || !resource) return;
     await syncNodeWithBackend({
       id: resource.id,
-      data: resource.data,
+      data: resource.data as ResourceBlock["data"],
       type: resource.type,
     });
     openConfig();
@@ -65,12 +66,10 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
     }
 
     const requiredFields = formFields.filter((f) => f.required);
-    const missing = requiredFields.filter(
-      (field) =>
-        resourceData[field.key as keyof ResourceBlock["data"]] === undefined ||
-        resourceData[field.key as keyof ResourceBlock["data"]] === null ||
-        resourceData[field.key as keyof ResourceBlock["data"]] === ""
-    );
+    const missing = requiredFields.filter((field) => {
+      const value = resourceData[field.key];
+      return value === undefined || value === null || value === "";
+    });
 
     setIsValid(missing.length === 0);
   }, [resource, formFields, resourceData]);
@@ -86,7 +85,9 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
   if (!settingOpenResourceId || !resource) return null;
 
   const resourceName =
-    typeof resource.data.Name === "string" ? resource.data.Name : undefined;
+    "Name" in resource.data && typeof resource.data.Name === "string"
+      ? resource.data.Name
+      : undefined;
 
   return (
     <SettingsPanelShell
@@ -125,12 +126,8 @@ function ResourceSettingsPanel({ editorWidth }: { editorWidth: number }) {
             <RenderForm
               key={field.key}
               field={field}
-              currentNode={
-                resourceData[field.key as keyof ResourceBlock["data"]]
-              }
-              handleChange={(value: unknown) =>
-                handleChange(field.key as keyof ResourceBlock["data"], value)
-              }
+              currentNode={resourceData[field.key]}
+              handleChange={(value: unknown) => handleChange(field.key, value)}
             />
           ))}
         </div>

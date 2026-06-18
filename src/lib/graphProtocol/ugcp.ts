@@ -2,6 +2,7 @@ import { Node, Edge } from "@xyflow/react";
 import { contractRegistry } from "./contractRegistry";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
+import { ResourceBlock } from "@/utils/types/resource";
 
 export async function handleContainment(
   childNode: Node,
@@ -28,7 +29,10 @@ export async function handleContainment(
           await syncNodeWithBackend({
             id: childNode.id,
             type: childType,
-            data: res.updatedSourceData as any,
+            data: {
+              ...childNode.data,
+              ...res.updatedSourceData,
+            } as ResourceBlock["data"],
           });
         }
       }
@@ -44,7 +48,10 @@ export async function handleContainment(
       await syncNodeWithBackend({
         id: childNode.id,
         type: childType,
-        data: res.updatedSourceData as any,
+        data: {
+          ...childNode.data,
+          ...res.updatedSourceData,
+        } as ResourceBlock["data"],
       });
     }
   }

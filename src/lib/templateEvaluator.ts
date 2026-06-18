@@ -1,4 +1,4 @@
-export function evaluateTemplate(template: string, data: any): string {
+export function evaluateTemplate(template: string, data: Record<string, unknown>): string {
   let result = "";
   let pos = 0;
 
@@ -95,7 +95,13 @@ function findEndTag(template: string, startPos: number): { blockContent: string;
   return { blockContent: "", nextPos: pos };
 }
 
-function evaluateRangeBlock(template: string, item: any, index: number, itemName: string, globalData: any): string {
+function evaluateRangeBlock(
+  template: string,
+  item: unknown,
+  index: number,
+  itemName: string,
+  globalData: Record<string, unknown>
+): string {
   let pos = 0;
   let finalResult = "";
 
@@ -128,7 +134,12 @@ function evaluateRangeBlock(template: string, item: any, index: number, itemName
   return evaluateTemplate(finalResult, globalData);
 }
 
-function getDeepValue(obj: any, path: string): any {
+function getDeepValue(obj: Record<string, unknown>, path: string): unknown {
   if (!path) return undefined;
-  return path.split(".").reduce((acc, part) => acc && acc[part], obj);
+  return path.split(".").reduce<unknown>((acc, part) => {
+    if (acc && typeof acc === "object" && part in (acc as Record<string, unknown>)) {
+      return (acc as Record<string, unknown>)[part];
+    }
+    return undefined;
+  }, obj);
 }

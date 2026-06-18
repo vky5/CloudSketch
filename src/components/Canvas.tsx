@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useMemo } from "react";
+import { useCallback, useRef, useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -24,7 +24,6 @@ import GhostRhombus from "./nodes/ghosts/GhostRhombus";
 import GhostCircle from "./nodes/ghosts/GhostCircle";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import { ResourceBlock } from "@/utils/types/resource";
-import { subnetData } from "@/config/awsNodes/subnet.config";
 import { handleDisconnection } from "@/lib/graphProtocol/ugcp";
 import canConnect from "@/config/connectionsConfig";
 import { areNodesAlreadyConnected } from "@/utils/connectionUtils";

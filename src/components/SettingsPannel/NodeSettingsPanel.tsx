@@ -78,7 +78,9 @@ function NodeSettingsPanel({ editorWidth }: { editorWidth: number }) {
   if (!settingOpenNodeId || !node) return null;
 
   const nodeName =
-    typeof node.data.Name === "string" ? node.data.Name : undefined;
+    "Name" in node.data && typeof node.data.Name === "string"
+      ? node.data.Name
+      : undefined;
 
   return (
     <SettingsPanelShell

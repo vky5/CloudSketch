@@ -1,7 +1,10 @@
 import { create } from "zustand";
+import type { Edge } from "@xyflow/react";
 import { useDiagramStore } from "./useDiagramStore";
 import { useTerraformResourceStore } from "./useTerraformResourceStore";
 import { useTerraformStore } from "./useTerraformStore";
+import type { AnyNode } from "@/utils/types/resource";
+import type { ResourceType, ResourceDataMap } from "./useTerraformResourceStore";
 
 export interface ProjectMetadata {
   id: string;
@@ -9,12 +12,18 @@ export interface ProjectMetadata {
   updatedAt: number;
 }
 
+type StoredResource = {
+  id: string;
+  type: ResourceType;
+  data: ResourceDataMap[ResourceType];
+};
+
 export interface ProjectPayload {
   id: string;
   name: string;
-  nodes: any[];
-  edges: any[];
-  resources: any[];
+  nodes: AnyNode[];
+  edges: Edge[];
+  resources: StoredResource[];
   terraformBlocks: Record<string, string>;
   updatedAt: number;
 }

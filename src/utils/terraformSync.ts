@@ -28,7 +28,7 @@ export async function syncNodeWithBackend(node: ResourceBlock) {
     const block = evaluateTemplate(template, {
       ...reqObj.Data,
       NodeID: reqObj.NodeID,
-    });
+    } as Record<string, unknown>);
 
     const store = useTerraformStore.getState();
     const { terraformBlocks, updateBlock, appendBlocks } = store;

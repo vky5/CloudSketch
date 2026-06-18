@@ -7,7 +7,7 @@ import MultiDirectionHandles from "@/components/nodes/shared/MultiDirectionHandl
 import { FaTrash } from "react-icons/fa6";
 import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
-function RhombusNode({ id, data, selected, width, height }: NodeProps) {
+function RhombusNode({ id, selected, width, height }: NodeProps) {
   const [hovered, setHovered] = useState(false);
   const showActions = useShowNodeActions(selected, hovered);
   const w = width || 100;

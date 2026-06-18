@@ -1,4 +1,5 @@
 import { Node, Edge } from "@xyflow/react";
+import { ResourceBlock } from "@/utils/types/resource";
 
 export type GraphSignalType =
   | "CONTAINER_ENTER"
@@ -11,13 +12,13 @@ export interface GraphSignalPayload {
   sourceNode: Node;
   targetNode?: Node;
   edge?: Edge;
-  extraData?: Record<string, any>;
+  extraData?: Record<string, unknown>;
 }
 
 export interface SignalResponse {
   success: boolean;
-  updatedSourceData?: Record<string, any>;
-  updatedTargetData?: Record<string, any>;
+  updatedSourceData?: Partial<ResourceBlock["data"]>;
+  updatedTargetData?: Partial<ResourceBlock["data"]>;
   error?: string;
 }
 

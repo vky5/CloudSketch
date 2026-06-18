@@ -7,7 +7,7 @@ import MultiDirectionHandles from "@/components/nodes/shared/MultiDirectionHandl
 import { FaTrash } from "react-icons/fa6";
 import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
-function RectangleNode({ id, data, selected, width, height }: NodeProps) {
+function RectangleNode({ id, selected, width, height }: NodeProps) {
   const [hovered, setHovered] = useState(false);
   const showActions = useShowNodeActions(selected, hovered);
   const w = width || 120;
