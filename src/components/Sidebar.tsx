@@ -23,6 +23,7 @@ import { useDiagramStore } from "@/store/useDiagramStore";
 import { useUIPanelStore } from "@/store/useUIPanelStore";
 import { awsComponents } from "@/data/aws.data";
 import AIConsole from "@/components/AIConsole";
+import { nodeTypes } from "@/components/Canvas/nodeTypes";
 
 const primaryTools = [
   { id: "select", name: "Select", icon: MousePointer2, shortcut: "V" },
@@ -124,7 +125,10 @@ export default function Sidebar() {
           <div className="text-white font-semibold text-md mb-2 flex justify-between items-center">
             <span>AWS Components</span>
             <span className="text-xs bg-[#1F2937] px-2 py-1 rounded-lg text-gray-300">
-              {awsComponents.reduce((sum, sec) => sum + sec.items.length, 0)}
+              {awsComponents.reduce(
+                (sum, sec) => sum + sec.items.filter((item) => item.id in nodeTypes).length,
+                0
+              )}
             </span>
           </div>
           <div className="space-y-6">
@@ -137,7 +141,7 @@ export default function Sidebar() {
                   <span>{section.title}</span>
                   <div className="flex items-center gap-1">
                     <span className="text-xs bg-[#1F2937] px-1.5 py-0.5 rounded-sm text-gray-400">
-                      {section.items.length}
+                      {section.items.filter((item) => item.id in nodeTypes).length}
                     </span>
                     <ChevronRight
                       className={`w-3 h-3 transition-transform ${
@@ -149,10 +153,16 @@ export default function Sidebar() {
 
                 {awsOpenSections[section.title] && (
                   <div className="mt-2 space-y-3">
-                    {section.items.map((item) => (
+                    {section.items
+                      .filter((item) => item.id in nodeTypes)
+                      .map((item) => (
                       <div
                         key={item.name}
-                        className="bg-[#1F2937] hover:bg-[#374151] rounded-md px-3 py-2 text-sm flex items-start gap-2 cursor-pointer"
+                        className={`rounded-md px-3 py-2 text-sm flex items-start gap-2 cursor-pointer ${
+                          selectedTool === item.id
+                            ? "bg-[#3B82F6] hover:bg-[#3B82F6]"
+                            : "bg-[#1F2937] hover:bg-[#374151]"
+                        }`}
                         onClick={() => setSelectedTool(item.id)}
                       >
                         <item.icon className="w-4 h-4 mt-0.5 text-blue-400" />

@@ -162,3 +162,30 @@ export function getVpcSizeForSubnetChildren(
     height: Math.max(MIN_VPC_HEIGHT, maxBottom),
   };
 }
+
+export const SUBNET_CHILD_WIDTH = 176;
+export const SUBNET_CHILD_HEIGHT = 52;
+const SUBNET_CHILD_PADDING_X = 16;
+const SUBNET_CHILD_PADDING_Y = 40;
+const SUBNET_CHILD_GAP = 12;
+const SUBNET_CHILD_COLS = 2;
+
+/** Place compute / ALB children in a simple grid inside a subnet (parent-relative). */
+export function getNextSubnetChildPosition(
+  existingChildren: Array<{
+    position?: { x: number; y: number };
+    width?: number;
+    height?: number;
+  }>,
+  childWidth: number = SUBNET_CHILD_WIDTH,
+  childHeight: number = SUBNET_CHILD_HEIGHT
+): { x: number; y: number } {
+  const slot = existingChildren.length;
+  const col = slot % SUBNET_CHILD_COLS;
+  const row = Math.floor(slot / SUBNET_CHILD_COLS);
+
+  return {
+    x: SUBNET_CHILD_PADDING_X + col * (childWidth + SUBNET_CHILD_GAP),
+    y: SUBNET_CHILD_PADDING_Y + row * (childHeight + SUBNET_CHILD_GAP),
+  };
+}
