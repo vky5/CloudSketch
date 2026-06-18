@@ -133,7 +133,7 @@ function VPCNode({
       />
 
       <div
-        className={`relative border rounded-xl transition-all duration-150 bg-transparent pointer-events-none
+        className={`relative border rounded-xl bg-transparent pointer-events-none
           ${
             selected
               ? "border-blue-500 border-2"

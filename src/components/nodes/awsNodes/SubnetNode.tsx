@@ -69,10 +69,13 @@ function SubnetNode({
         minHeight={80}
         lineClassName="border-slate-500"
         handleClassName="bg-slate-700 border border-white rounded"
+        onResizeEnd={(_e, { width, height }) => {
+          useDiagramStore.getState().updateNodeDimensions(id, width, height);
+        }}
       />
 
       <div
-        className="relative border rounded-lg transition-all duration-155 bg-transparent"
+        className="relative border rounded-lg bg-transparent"
         style={{
           width: width ?? 260,
           height: height ?? 180,

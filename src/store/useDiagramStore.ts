@@ -99,6 +99,15 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
 
       const nextNodes = applyNodeChanges(changes, state.nodes) as AnyNode[];
       const isDragging = nextNodes.some((node) => node.dragging);
+      const isResizing = nextNodes.some((node) => node.resizing);
+
+      if (isResizing) {
+        return {
+          nodes: sortNodesParentFirst(
+            nextNodes.map((node) => withFlowPresentation(node, state.selectedTool))
+          ),
+        };
+      }
 
       return {
         nodes: layoutNodes(nextNodes, state.nodes, { skipAutoExpand: isDragging }),
