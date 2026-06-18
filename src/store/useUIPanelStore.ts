@@ -1,24 +1,33 @@
-// stores/configPanelStore.ts
 import { create } from "zustand";
 
 type ConfigPanelStore = {
   isConfigOpen: boolean;
   isSettingsOpen: boolean;
   isEditorOpen: boolean;
+  isAwsComponentsOpen: boolean;
+  isAiConsoleOpen: boolean;
+  awsOpenSections: Record<string, boolean>;
 
-  settingsVersion: "resource" | "node"; // two types of settigns
+  settingsVersion: "resource" | "node";
 
   setEditorState: (newState: boolean) => void;
 
   openConfig: () => void;
   openSettings: (type: "resource" | "node") => void;
   closePanels: () => void;
+  toggleAwsComponents: () => void;
+  toggleAiConsole: () => void;
+  toggleAwsSection: (title: string) => void;
+  collapseAllSideMenus: () => void;
 };
 
 export const useUIPanelStore = create<ConfigPanelStore>((set) => ({
   isEditorOpen: false,
   isConfigOpen: false,
   isSettingsOpen: false,
+  isAwsComponentsOpen: false,
+  isAiConsoleOpen: false,
+  awsOpenSections: {},
 
   settingsVersion: "node",
 
@@ -44,5 +53,33 @@ export const useUIPanelStore = create<ConfigPanelStore>((set) => ({
     set(() => ({
       isConfigOpen: false,
       isSettingsOpen: false,
+    })),
+
+  toggleAwsComponents: () =>
+    set((state) => ({
+      isAwsComponentsOpen: !state.isAwsComponentsOpen,
+    })),
+
+  toggleAiConsole: () =>
+    set((state) => ({
+      isAiConsoleOpen: !state.isAiConsoleOpen,
+    })),
+
+  toggleAwsSection: (title) =>
+    set((state) => ({
+      awsOpenSections: {
+        ...state.awsOpenSections,
+        [title]: !state.awsOpenSections[title],
+      },
+    })),
+
+  collapseAllSideMenus: () =>
+    set(() => ({
+      isConfigOpen: false,
+      isSettingsOpen: false,
+      isEditorOpen: false,
+      isAwsComponentsOpen: false,
+      isAiConsoleOpen: false,
+      awsOpenSections: {},
     })),
 }));

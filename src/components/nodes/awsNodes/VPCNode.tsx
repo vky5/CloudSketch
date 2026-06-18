@@ -96,7 +96,7 @@ function VPCNode({
       />
 
       <div
-        className={`relative border rounded-xl transition-all duration-150 bg-transparent
+        className={`relative border rounded-xl transition-all duration-150 bg-transparent pointer-events-none
           ${
             selected
               ? "border-blue-500 border-2"
@@ -112,7 +112,18 @@ function VPCNode({
         onMouseLeave={() => setHovered(false)}
       >
         {/* Simple inline title */}
-        <div className="absolute top-2 left-3 text-[11px] text-slate-400 font-medium select-none flex items-center gap-1.5 pointer-events-auto z-10">
+        <div
+          className="absolute top-2 left-3 text-[11px] text-slate-400 font-medium select-none flex items-center gap-1.5 pointer-events-auto z-10 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            const store = useDiagramStore.getState();
+            if (store.selectedTool === "hand") {
+              store.handOffToSelectNode(id);
+            } else {
+              store.selectedNode(id);
+            }
+          }}
+        >
           <span className="text-blue-500 font-bold">VPC:</span>
           <span className="text-slate-200">{data.Name || "Production"}</span>
           <span className="font-mono text-[10px] opacity-75">({vpcCidr})</span>

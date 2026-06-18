@@ -26,9 +26,9 @@ import { syncNodeWithBackend } from "@/utils/terraformSync";
 import { ResourceBlock } from "@/utils/types/resource";
 import { subnetData } from "@/config/awsNodes/subnet.config";
 import { handleDisconnection } from "@/lib/graphProtocol/ugcp";
-import { useUpdateNodeInternals } from "@xyflow/react";
 import canConnect from "@/config/connectionsConfig";
 import { areNodesAlreadyConnected } from "@/utils/connectionUtils";
+import { collapseSideMenusOnCanvasInteract } from "@/utils/collapseSideMenusOnCanvasInteract";
 
 // Imported Hooks
 import { useGhostMovement } from "./Canvas/useGhostMovement";
@@ -49,6 +49,7 @@ function FlowContent() {
     selectedTool,
     setSelectedTool,
     selectedNode,
+    handOffToSelectNode,
     selectNodes,
     selectEdges,
     clearSelection,
@@ -63,15 +64,6 @@ function FlowContent() {
 
   const ghostRef = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
-  const updateNodeInternals = useUpdateNodeInternals();
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      nodes.forEach((node) => updateNodeInternals(node.id));
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [nodes, updateNodeInternals]);
-
   // 1. Ghost shape drawing & movement hook
   useGhostMovement(selectedTool, ghostRef);
 
@@ -96,14 +88,17 @@ function FlowContent() {
   );
 
   // 4. Node dragging, subnet boundary calculations & auto-assignment hook
-  const { onNodesChangeHandler, onNodeDragStart, onNodeDragStop } =
-    useCanvasDragAndDrop(
-      nodes,
-      setNodes,
-      updateNodePosition,
-      updateNodeData,
-      updateNodeParentAndPosition
-    );
+  const {
+    onNodesChangeHandler,
+    onNodeDragStart: onNodeDragStartFromHook,
+    onNodeDragStop,
+  } = useCanvasDragAndDrop(
+    nodes,
+    setNodes,
+    updateNodePosition,
+    updateNodeData,
+    updateNodeParentAndPosition
+  );
 
   function renderGhostShape(tool: string) {
     switch (tool) {
@@ -120,6 +115,8 @@ function FlowContent() {
 
   const handlePaneClick = useCallback(
     async (event: React.MouseEvent) => {
+      collapseSideMenusOnCanvasInteract();
+
       if (selectedTool === "select") {
         clearSelection();
         return;
@@ -156,16 +153,6 @@ function FlowContent() {
     [selectedTool, screenToFlowPosition, addNode, selectedNode, setSelectedTool, clearSelection]
   );
 
-  useEffect(() => console.log("Rendered"), []);
-
-  const memoizedNodes = useMemo(() => {
-    return nodes.map((node) => ({
-      ...node,
-      draggable: selectedTool === "select" && !!node.selected,
-      extent: node.parentId ? ("parent" as const) : undefined,
-    }));
-  }, [nodes, selectedTool]);
-
   const memoizedEdges = useMemo(() => {
     const isSelectTool = selectedTool === "select";
 
@@ -187,12 +174,29 @@ function FlowContent() {
   }, [edges, selectedTool]);
 
   const onSelectionChange: OnSelectionChangeFunc = useCallback(
-    ({ nodes: selectedNodes, edges: selectedEdges }) => {
-      selectNodes(selectedNodes.map((node) => node.id));
+    ({ edges: selectedEdges }) => {
       selectEdges(selectedEdges.map((edge) => edge.id));
     },
-    [selectNodes, selectEdges]
+    [selectEdges]
   );
+
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      collapseSideMenusOnCanvasInteract();
+      if (selectedTool !== "hand") return;
+      handOffToSelectNode(node.id);
+    },
+    [selectedTool, handOffToSelectNode]
+  );
+
+  const handleNodeDragStart = useCallback(() => {
+    collapseSideMenusOnCanvasInteract();
+    onNodeDragStartFromHook();
+  }, [onNodeDragStartFromHook]);
+
+  const onSelectionStart = useCallback(() => {
+    collapseSideMenusOnCanvasInteract();
+  }, []);
 
   const onEdgeClick = useCallback(
     (_event: React.MouseEvent, edge: Edge) => {
@@ -246,15 +250,18 @@ function FlowContent() {
     <div className="w-full h-full overflow-hidden relative">
       <ReactFlow
         fitView={false}
-        nodes={memoizedNodes}
+        nodes={nodes}
+        nodesDraggable={selectedTool === "select"}
         edges={memoizedEdges}
         onNodesChange={onNodesChangeHandler}
         onEdgesChange={onEdgesChangeHandler}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
-        onNodeDragStart={onNodeDragStart}
+        onNodeDragStart={handleNodeDragStart}
+        onSelectionStart={onSelectionStart}
         onNodeDragStop={onNodeDragStop}
         onPaneClick={handlePaneClick}
+        onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onSelectionChange={onSelectionChange}
         onNodesDelete={onNodesDelete}
@@ -265,6 +272,7 @@ function FlowContent() {
         selectionMode={SelectionMode.Partial}
         connectionMode={ConnectionMode.Loose}
         deleteKeyCode={selectedTool === "select" ? ["Delete", "Backspace"] : null}
+        onMoveStart={() => collapseSideMenusOnCanvasInteract()}
         onInit={(instance) => {
           instance.setViewport({ x: 0, y: 0, zoom: 1 });
         }}

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -21,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useDiagramStore } from "@/store/useDiagramStore";
+import { useUIPanelStore } from "@/store/useUIPanelStore";
 import { awsComponents } from "@/data/aws.data";
 import AIConsole from "@/components/AIConsole";
 
@@ -39,16 +39,14 @@ const primaryTools = [
 
 export default function Sidebar() {
   const { selectedTool, setSelectedTool } = useDiagramStore();
-  const [showAWSComponents, setShowAWSComponents] = useState(false);
-  const [showAIConsole, setShowAIConsole] = useState(false);
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-
-  const toggleSection = (title: string) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [title]: !prev[title],
-    }));
-  };
+  const {
+    isAwsComponentsOpen,
+    isAiConsoleOpen,
+    awsOpenSections,
+    toggleAwsComponents,
+    toggleAiConsole,
+    toggleAwsSection,
+  } = useUIPanelStore();
 
   return (
     <>
@@ -76,40 +74,39 @@ export default function Sidebar() {
             </div>
           ))}
 
-          {/* AWS Component Toggle */}
           <Button
             size="sm"
             className={`w-10 h-10 p-0 relative group rounded-md bg-transparent ${
-              showAWSComponents
+              isAwsComponentsOpen
                 ? "bg-[#3B82F6] hover:bg-[#3B82F6]"
                 : "hover:bg-[#1E293B]"
             } text-white transition-colors hover:cursor-pointer`}
-            onClick={() => setShowAWSComponents(!showAWSComponents)}
+            onClick={toggleAwsComponents}
             title="AWS Components"
           >
             <Server className="w-4 h-4" />
             <ChevronRight
               className={`w-3 h-3 absolute -right-1 -top-1 transition-transform ${
-                showAWSComponents ? "rotate-90" : ""
+                isAwsComponentsOpen ? "rotate-90" : ""
               }`}
             />
             <div className="absolute left-12 top-1/2 -translate-y-1/2 bg-popover text-popover-foreground px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
               AWS Components
             </div>
           </Button>
-          {/* AI Prompt Toggle */}
+
           <Button
             size="sm"
             className={`w-10 h-10 p-0 relative group rounded-md bg-transparent ${
-              showAIConsole ? "bg-[#10B981] hover:bg-[#10B981]" : "hover:bg-[#1E293B]"
+              isAiConsoleOpen ? "bg-[#10B981] hover:bg-[#10B981]" : "hover:bg-[#1E293B]"
             } text-white transition-colors hover:cursor-pointer mt-2`}
-            onClick={() => setShowAIConsole(!showAIConsole)}
+            onClick={toggleAiConsole}
             title="AI Prompt"
           >
             <Type className="w-4 h-4" />
             <ChevronRight
               className={`w-3 h-3 absolute -right-1 -top-1 transition-transform ${
-                showAIConsole ? "rotate-90" : ""
+                isAiConsoleOpen ? "rotate-90" : ""
               }`}
             />
             <div className="absolute left-12 top-1/2 -translate-y-1/2 bg-popover text-popover-foreground px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
@@ -119,8 +116,7 @@ export default function Sidebar() {
         </div>
       </Card>
 
-      {/* AWS Panel: Sidebar right-aligned panel */}
-      {showAWSComponents && (
+      {isAwsComponentsOpen && (
         <Card
           className="fixed left-22 top-1/2 -translate-y-1/2 z-40 w-60 max-h-[70vh] overflow-y-auto bg-[#232329] border border-[#374151] rounded-xl py-3 px-2"
           style={{ scrollbarWidth: "none" }}
@@ -135,7 +131,7 @@ export default function Sidebar() {
             {awsComponents.map((section) => (
               <div key={section.title} className="">
                 <div
-                  onClick={() => toggleSection(section.title)}
+                  onClick={() => toggleAwsSection(section.title)}
                   className="flex justify-between items-center text-sm text-gray-200 font-medium cursor-pointer px-2 py-1 hover:bg-[#1F2937] rounded-md"
                 >
                   <span>{section.title}</span>
@@ -145,29 +141,24 @@ export default function Sidebar() {
                     </span>
                     <ChevronRight
                       className={`w-3 h-3 transition-transform ${
-                        openSections[section.title] ? "rotate-90" : ""
+                        awsOpenSections[section.title] ? "rotate-90" : ""
                       }`}
                     />
                   </div>
                 </div>
 
-                {openSections[section.title] && (
+                {awsOpenSections[section.title] && (
                   <div className="mt-2 space-y-3">
                     {section.items.map((item) => (
-                      // this is the each button
                       <div
                         key={item.name}
                         className="bg-[#1F2937] hover:bg-[#374151] rounded-md px-3 py-2 text-sm flex items-start gap-2 cursor-pointer"
-                        onClick={()=>setSelectedTool(item.id)}
+                        onClick={() => setSelectedTool(item.id)}
                       >
                         <item.icon className="w-4 h-4 mt-0.5 text-blue-400" />
                         <div>
-                          <div className="text-gray-100 font-medium">
-                            {item.name}
-                          </div>
-                          <div className="text-gray-400 text-xs">
-                            {item.desc}
-                          </div>
+                          <div className="text-gray-100 font-medium">{item.name}</div>
+                          <div className="text-gray-400 text-xs">{item.desc}</div>
                         </div>
                       </div>
                     ))}
@@ -178,12 +169,11 @@ export default function Sidebar() {
           </div>
         </Card>
       )}
-      {/* AI Panel: premium glassmorphic prompt UI */}
-      {showAIConsole && (
+
+      {isAiConsoleOpen && (
         <Card className="fixed left-22 top-1/2 -translate-y-1/2 z-40 w-85 max-h-[85vh] overflow-y-auto bg-[#0c0d12]/95 backdrop-blur-md border border-[#232530] rounded-2xl py-4 px-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] scrollbar-none flex flex-col gap-3">
-          {/* Top glowing accent line */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 rounded-t-2xl" />
-          
+
           <div className="flex justify-between items-start border-b border-[#1b1c24] pb-3">
             <div className="flex flex-col gap-0.5">
               <div className="text-white font-bold text-sm flex items-center gap-1.5">
@@ -195,13 +185,13 @@ export default function Sidebar() {
               </p>
             </div>
             <button
-              onClick={() => setShowAIConsole(false)}
+              onClick={toggleAiConsole}
               className="text-gray-400 hover:text-white p-1 hover:bg-[#1b1c24] rounded-md transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
-          
+
           <AIConsole />
         </Card>
       )}

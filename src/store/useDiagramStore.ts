@@ -30,6 +30,7 @@ interface DiagramState {
   setSelectedTool: (tool: string) => void;
   openSettings: (id: string) => void; // this will be used to open settings for a selected node only (earlier was using it for settings as well)
   selectedNode: (id: string | null) => void; // this will be used to select a node
+  handOffToSelectNode: (id: string) => void;
   closeSettings: () => void;
   selectNodes: (ids: string[]) => void; // set a large number of nodes in selected in selectedNodeIds
   selectEdges: (ids: string[]) => void;
@@ -65,23 +66,56 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
 
   setNodes: (changes: NodeChange[]) =>
     set((state) => {
+      if (changes.length > 0 && changes.every((change) => change.type === "replace")) {
+        return state;
+      }
+
+      if (changes.length > 0 && changes.every((change) => change.type === "select")) {
+        const nextNodes = applyNodeChanges(changes, state.nodes).map((node) =>
+          withFlowPresentation(node as AnyNode, state.selectedTool)
+        ) as AnyNode[];
+        const selectedIds = nextNodes.filter((node) => node.selected).map((node) => node.id);
+        return {
+          nodes: nextNodes,
+          selectedNodeIds: selectedIds,
+          selectedNodeId:
+            selectedIds.length === 1
+              ? selectedIds[0]
+              : selectedIds.length > 0
+                ? selectedIds[0]
+                : null,
+        };
+      }
+
       const nextNodes = applyNodeChanges(changes, state.nodes) as AnyNode[];
       const collisionResolved = resolveSubnetCollisions(nextNodes, state.nodes);
-      const expanded = autoExpandContainers(collisionResolved);
-      return { nodes: expanded };
+
+      // Keep container sizes fixed while anything is dragging so EC2 can
+      // move freely between subnets without the subnet growing under the cursor.
+      if (collisionResolved.some((node) => node.dragging)) {
+        return { nodes: collisionResolved };
+      }
+
+      return { nodes: autoExpandContainers(collisionResolved) };
     }),
 
   setEdges: (changes) =>
-    set((state) => ({
-      edges: applyEdgeChanges(changes, state.edges),
-    })),
+    set((state) => {
+      if (changes.length > 0 && changes.every((change) => change.type === "select")) {
+        return state;
+      }
+      return { edges: applyEdgeChanges(changes, state.edges) };
+    }),
 
   addNode: (node: AnyNode) =>
     set((state) => {
       if (state.nodes.some((n) => n.id === node.id)) {
         return {};
       }
-      const expanded = autoExpandContainers([...state.nodes, node]);
+      const expanded = autoExpandContainers([
+        ...state.nodes,
+        withFlowPresentation(node, state.selectedTool),
+      ]);
       return {
         nodes: expanded,
       };
@@ -98,36 +132,64 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       };
     }),
 
-  setSelectedTool: (tool) => set({ selectedTool: tool }),
+  setSelectedTool: (tool) =>
+    set((state) => {
+      if (state.selectedTool === tool) return state;
+      return {
+        selectedTool: tool,
+        nodes: state.nodes.map((node) => withFlowPresentation(node, tool)),
+      };
+    }),
 
   openSettings: (id) => set({ settingOpenNodeId: id }),
   selectedNode: (id) =>
     set((state) => ({
       selectedNodeId: id,
       selectedNodeIds: id ? [id] : [],
-      nodes: state.nodes.map((node) => ({
-        ...node,
-        selected: id ? node.id === id : false,
-      })),
+      nodes: state.nodes.map((node) =>
+        withFlowPresentation({ ...node, selected: id ? node.id === id : false }, state.selectedTool)
+      ),
     })),
+
+  handOffToSelectNode: (id) =>
+    set((state) => {
+      const tool = "select";
+      return {
+        selectedTool: tool,
+        selectedNodeId: id,
+        selectedNodeIds: [id],
+        nodes: state.nodes.map((node) =>
+          withFlowPresentation({ ...node, selected: node.id === id }, tool)
+        ),
+      };
+    }),
+
   closeSettings: () => set({ settingOpenNodeId: null }),
 
   selectNodes: (ids) =>
-    set((state) => ({
-      selectedNodeIds: ids,
-      selectedNodeId: ids.length === 1 ? ids[0] : ids.length > 0 ? ids[0] : null,
-      nodes: state.nodes.map((node) => ({
-        ...node,
-        selected: ids.includes(node.id),
-      })),
-    })),
+    set((state) => {
+      const sameSelection =
+        state.selectedNodeIds.length === ids.length &&
+        state.selectedNodeIds.every((id) => ids.includes(id));
+      if (sameSelection) return state;
+
+      return {
+        selectedNodeIds: ids,
+        selectedNodeId: ids.length === 1 ? ids[0] : ids.length > 0 ? ids[0] : null,
+        nodes: state.nodes.map((node) =>
+          withFlowPresentation({ ...node, selected: ids.includes(node.id) }, state.selectedTool)
+        ),
+      };
+    }),
   selectEdges: (ids) => set({ selectedEdgeIds: ids }),
   clearSelection: () =>
     set((state) => ({
       selectedNodeIds: [],
       selectedNodeId: null,
       selectedEdgeIds: [],
-      nodes: state.nodes.map((node) => ({ ...node, selected: false })),
+      nodes: state.nodes.map((node) =>
+        withFlowPresentation({ ...node, selected: false }, state.selectedTool)
+      ),
       edges: state.edges.map((edge) => ({ ...edge, selected: false })),
     })),
   clearSelectedNodes: () =>
@@ -135,7 +197,9 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       selectedNodeIds: [],
       selectedNodeId: null,
       selectedEdgeIds: [],
-      nodes: state.nodes.map((node) => ({ ...node, selected: false })),
+      nodes: state.nodes.map((node) =>
+        withFlowPresentation({ ...node, selected: false }, state.selectedTool)
+      ),
       edges: state.edges.map((edge) => ({ ...edge, selected: false })),
     })),
 
@@ -225,11 +289,14 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     }),
 
   setNodesAndEdges: (nodes, edges) =>
-    set(() => {
+    set((state) => {
       const uniqueNodes = nodes.filter((n, idx, self) => self.findIndex((x) => x.id === n.id) === idx);
       const uniqueEdges = edges.filter((e, idx, self) => self.findIndex((x) => x.id === e.id) === idx);
       const expanded = autoExpandContainers(uniqueNodes);
-      return { nodes: expanded, edges: uniqueEdges };
+      return {
+        nodes: expanded.map((node) => withFlowPresentation(node, state.selectedTool)),
+        edges: uniqueEdges,
+      };
     }),
 
   deleteNode: (id: string) => get().deleteNodes([id]),
@@ -281,41 +348,106 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
     }),
 }));
 
+function getFlowZIndex(type: string | undefined): number {
+  switch (type) {
+    case "vpc":
+      return 0;
+    case "subnet":
+      return 1;
+    case "ec2":
+    case "rds":
+    case "lambda":
+      return 10;
+    default:
+      return 5;
+  }
+}
+
+function withFlowPresentation(node: AnyNode, selectedTool: string): AnyNode {
+  return {
+    ...node,
+    draggable: selectedTool === "select" && !!node.selected,
+    selectable: selectedTool === "select",
+    extent: node.type === "subnet" && node.parentId ? ("parent" as const) : undefined,
+    zIndex: node.zIndex ?? getFlowZIndex(node.type),
+  };
+}
+
+function subnetBounds(node: AnyNode) {
+  const width = node.width ?? 260;
+  const height = node.height ?? 180;
+  return {
+    left: node.position.x,
+    right: node.position.x + width,
+    top: node.position.y,
+    bottom: node.position.y + height,
+    width,
+    height,
+  };
+}
+
+function subnetsOverlap(a: AnyNode, b: AnyNode): boolean {
+  const ab = subnetBounds(a);
+  const bb = subnetBounds(b);
+  return ab.left < bb.right && ab.right > bb.left && ab.top < bb.bottom && ab.bottom > bb.top;
+}
+
 function resolveSubnetCollisions(nextNodes: AnyNode[], prevNodes: AnyNode[]): AnyNode[] {
-  return nextNodes.map((node) => {
-    if (node.type === "subnet" && node.parentId) {
-      const siblings = nextNodes.filter(
-        (n) => n.id !== node.id && n.type === "subnet" && n.parentId === node.parentId
-      );
+  const resolved = nextNodes.map((node) => ({ ...node }));
 
-      const hasOverlap = siblings.some((sib) => {
-        const ax1 = node.position.x;
-        const ax2 = node.position.x + (node.width ?? 260);
-        const ay1 = node.position.y;
-        const ay2 = node.position.y + (node.height ?? 180);
+  const subnetsByVpc = new Map<string, AnyNode[]>();
+  resolved
+    .filter((node) => node.type === "subnet" && node.parentId)
+    .forEach((subnet) => {
+      const siblings = subnetsByVpc.get(subnet.parentId!) ?? [];
+      siblings.push(subnet);
+      subnetsByVpc.set(subnet.parentId!, siblings);
+    });
 
-        const bx1 = sib.position.x;
-        const bx2 = sib.position.x + (sib.width ?? 260);
-        const by1 = sib.position.y;
-        const by2 = sib.position.y + (sib.height ?? 180);
+  subnetsByVpc.forEach((subnets) => {
+    for (let i = 0; i < subnets.length; i++) {
+      for (let j = i + 1; j < subnets.length; j++) {
+        const a = subnets[i];
+        const b = subnets[j];
+        if (!subnetsOverlap(a, b)) continue;
 
-        return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
-      });
+        const prevA = prevNodes.find((node) => node.id === a.id);
+        const prevB = prevNodes.find((node) => node.id === b.id);
+        const aMoved =
+          !prevA ||
+          a.position.x !== prevA.position.x ||
+          a.position.y !== prevA.position.y ||
+          a.width !== prevA.width ||
+          a.height !== prevA.height;
+        const bMoved =
+          !prevB ||
+          b.position.x !== prevB.position.x ||
+          b.position.y !== prevB.position.y ||
+          b.width !== prevB.width ||
+          b.height !== prevB.height;
 
-      if (hasOverlap) {
-        const prevNode = prevNodes.find((n) => n.id === node.id);
-        if (prevNode) {
-          return {
-            ...node,
-            position: prevNode.position,
-            width: prevNode.width,
-            height: prevNode.height,
-          };
-        }
+        const revertTarget = aMoved && !bMoved ? a : bMoved && !aMoved ? b : a.dragging ? a : b;
+
+        const prevTarget = prevNodes.find((node) => node.id === revertTarget.id);
+        if (!prevTarget) continue;
+
+        const index = resolved.findIndex((node) => node.id === revertTarget.id);
+        if (index === -1) continue;
+
+        resolved[index] = {
+          ...resolved[index],
+          position: { ...prevTarget.position },
+          width: prevTarget.width,
+          height: prevTarget.height,
+        };
+
+        subnets[i] = resolved.find((node) => node.id === subnets[i].id)!;
+        subnets[j] = resolved.find((node) => node.id === subnets[j].id)!;
       }
     }
-    return node;
   });
+
+  return resolved;
 }
 
 function autoExpandContainers(nodes: AnyNode[]): AnyNode[] {
@@ -326,45 +458,9 @@ function autoExpandContainers(nodes: AnyNode[]): AnyNode[] {
     return Array.from(nodesMap.values()).filter((n) => n.parentId === parentId);
   };
 
-  // Phase 1: Expand/Shrink Subnets to contain compute/database resources
-  const subnets = Array.from(nodesMap.values()).filter((n) => n.type === "subnet");
-  subnets.forEach((subnet) => {
-    const children = getChildren(subnet.id);
-    if (children.length === 0) return;
+  // Subnet size is manual (NodeResizer) — do not auto-grow from EC2/RDS/Lambda children.
 
-    const minX = 16;
-    const minY = 32; 
-    let maxX = 0;
-    let maxY = 0;
-
-    children.forEach((child) => {
-      if (!child.position) return;
-
-      const cw = child.width ?? 176;
-      const ch = child.height ?? 52;
-
-      if (child.position.x < minX) {
-        child.position.x = minX;
-      }
-      if (child.position.y < minY) {
-        child.position.y = minY;
-      }
-
-      const rightEdge = child.position.x + cw + 16;
-      const bottomEdge = child.position.y + ch + 16;
-
-      if (rightEdge > maxX) maxX = rightEdge;
-      if (bottomEdge > maxY) maxY = bottomEdge;
-
-      nodesMap.set(child.id, child);
-    });
-
-    subnet.width = Math.max(260, maxX);
-    subnet.height = Math.max(180, maxY);
-    nodesMap.set(subnet.id, subnet);
-  });
-
-  // Phase 2: Expand/Shrink VPCs to contain Subnets
+  // Expand/Shrink VPCs to contain subnet children
   const vpcs = Array.from(nodesMap.values()).filter((n) => n.type === "vpc");
   vpcs.forEach((vpc) => {
     const children = getChildren(vpc.id);

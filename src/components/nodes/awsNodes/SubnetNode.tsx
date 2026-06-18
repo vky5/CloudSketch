@@ -49,7 +49,18 @@ function SubnetNode({
         onMouseLeave={() => setHovered(false)}
       >
         {/* Simple inline title */}
-        <div className="absolute top-2 left-2 text-[11px] text-slate-400 font-medium select-none flex items-center gap-1.5 pointer-events-auto">
+        <div
+          className="absolute top-2 left-2 text-[11px] text-slate-400 font-medium select-none flex items-center gap-1.5 pointer-events-auto cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            const store = useDiagramStore.getState();
+            if (store.selectedTool === "hand") {
+              store.handOffToSelectNode(id);
+            } else {
+              store.selectedNode(id);
+            }
+          }}
+        >
           <span style={{ color: subnetColor }} className="font-bold">SUBNET ({subnetLabel}):</span>
           <span className="text-slate-200">{data.Name || "Subnet"}</span>
           <span className="font-mono text-[10px] opacity-75">({subnetCidr})</span>
