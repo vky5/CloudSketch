@@ -28,6 +28,11 @@ import { handleDisconnection } from "@/lib/graphProtocol/ugcp";
 import canConnect from "@/config/connectionsConfig";
 import { areNodesAlreadyConnected } from "@/utils/connectionUtils";
 import { collapseSideMenusOnCanvasInteract } from "@/utils/collapseSideMenusOnCanvasInteract";
+import {
+  MIN_VPC_HEIGHT,
+  MIN_VPC_WIDTH,
+} from "@/utils/getNextSubnetPosition";
+
 
 // Imported Hooks
 import { useGhostMovement } from "./Canvas/useGhostMovement";
@@ -128,6 +133,7 @@ function FlowContent() {
       const position = screenToFlowPosition({ x: clientX, y: clientY });
 
       const newNodeId = crypto.randomUUID();
+
       const newNode: Node<ResourceBlock["data"]> = {
         id: newNodeId,
         type: selectedTool || "unknown",
@@ -135,6 +141,12 @@ function FlowContent() {
         draggable: false,
         data: getDefaultDataForNode(selectedTool, newNodeId),
       };
+
+      if (selectedTool === "vpc") {
+        // Place at click; resolveVpcCollisions pushes neighbors if overlapping.
+        newNode.width = MIN_VPC_WIDTH;
+        newNode.height = MIN_VPC_HEIGHT;
+      }
 
       try {
         await syncNodeWithBackend({

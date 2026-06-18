@@ -8,6 +8,16 @@ import {
   applyEdgeChanges,
 } from "@xyflow/react";
 import { AnyNode, ResourceBlock } from "@/utils/types/resource";
+import {
+  DEFAULT_SUBNET_HEIGHT,
+  DEFAULT_SUBNET_WIDTH,
+  MIN_VPC_HEIGHT,
+  MIN_VPC_WIDTH,
+  SUBNET_BOTTOM_PADDING,
+  SUBNET_PADDING,
+  SUBNET_TOP_PADDING,
+} from "@/utils/getNextSubnetPosition";
+import { resolveVpcCollisions } from "@/utils/vpcLayout";
 /*
 Okay so two types Edge and Connnections
 Edge includes Id connections doesnt
@@ -88,15 +98,11 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       }
 
       const nextNodes = applyNodeChanges(changes, state.nodes) as AnyNode[];
-      const collisionResolved = resolveSubnetCollisions(nextNodes, state.nodes);
+      const isDragging = nextNodes.some((node) => node.dragging);
 
-      // Keep container sizes fixed while anything is dragging so EC2 can
-      // move freely between subnets without the subnet growing under the cursor.
-      if (collisionResolved.some((node) => node.dragging)) {
-        return { nodes: collisionResolved };
-      }
-
-      return { nodes: autoExpandContainers(collisionResolved) };
+      return {
+        nodes: layoutNodes(nextNodes, state.nodes, { skipAutoExpand: isDragging }),
+      };
     }),
 
   setEdges: (changes) =>
@@ -112,12 +118,11 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       if (state.nodes.some((n) => n.id === node.id)) {
         return {};
       }
-      const expanded = autoExpandContainers([
-        ...state.nodes,
-        withFlowPresentation(node, state.selectedTool),
-      ]);
       return {
-        nodes: expanded,
+        nodes: layoutNodes(
+          [...state.nodes, withFlowPresentation(node, state.selectedTool)],
+          state.nodes
+        ),
       };
     }),
 
@@ -223,10 +228,8 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       const nextEdges = state.edges.filter(
         (edge) => !idsToDelete.has(edge.source) && !idsToDelete.has(edge.target)
       );
-      const expanded = autoExpandContainers(nextNodes);
-
       return {
-        nodes: expanded,
+        nodes: layoutNodes(nextNodes, state.nodes),
         edges: nextEdges,
         selectedNodeId: idsToDelete.has(state.selectedNodeId || "") ? null : state.selectedNodeId,
         selectedNodeIds: state.selectedNodeIds.filter((nId) => !idsToDelete.has(nId)),
@@ -239,8 +242,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       const nextNodes = state.nodes.map((node) =>
         node.id === id ? { ...node, data: { ...node.data, ...newData } } : node
       );
-      const expanded = autoExpandContainers(nextNodes);
-      return { nodes: expanded };
+      return { nodes: layoutNodes(nextNodes, state.nodes) };
     }),
 
   updateNodeDimensions: (id: string, width: number, height: number) =>
@@ -248,9 +250,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       const nextNodes = state.nodes.map((node) =>
         node.id === id ? { ...node, width, height } : node
       );
-      const collisionResolved = resolveSubnetCollisions(nextNodes, state.nodes);
-      const expanded = autoExpandContainers(collisionResolved);
-      return { nodes: expanded };
+      return { nodes: layoutNodes(nextNodes, state.nodes) };
     }),
 
   updateNodePosition: (id: string, x: number, y: number) =>
@@ -265,9 +265,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
             }
           : node
       );
-      const collisionResolved = resolveSubnetCollisions(nextNodes, state.nodes);
-      const expanded = autoExpandContainers(collisionResolved);
-      return { nodes: expanded };
+      return { nodes: layoutNodes(nextNodes, state.nodes) };
     }),
 
   updateNodeParentAndPosition: (id: string, parentId: string | undefined, x: number, y: number) =>
@@ -283,18 +281,17 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
             }
           : node
       );
-      const collisionResolved = resolveSubnetCollisions(nextNodes, state.nodes);
-      const expanded = autoExpandContainers(collisionResolved);
-      return { nodes: expanded };
+      return { nodes: layoutNodes(nextNodes, state.nodes) };
     }),
 
   setNodesAndEdges: (nodes, edges) =>
     set((state) => {
       const uniqueNodes = nodes.filter((n, idx, self) => self.findIndex((x) => x.id === n.id) === idx);
       const uniqueEdges = edges.filter((e, idx, self) => self.findIndex((x) => x.id === e.id) === idx);
-      const expanded = autoExpandContainers(uniqueNodes);
       return {
-        nodes: expanded.map((node) => withFlowPresentation(node, state.selectedTool)),
+        nodes: layoutNodes(uniqueNodes, []).map((node) =>
+          withFlowPresentation(node, state.selectedTool)
+        ),
         edges: uniqueEdges,
       };
     }),
@@ -371,6 +368,41 @@ function withFlowPresentation(node: AnyNode, selectedTool: string): AnyNode {
     extent: node.type === "subnet" && node.parentId ? ("parent" as const) : undefined,
     zIndex: node.zIndex ?? getFlowZIndex(node.type),
   };
+}
+
+function layoutNodes(
+  nextNodes: AnyNode[],
+  prevNodes: AnyNode[],
+  options?: { skipAutoExpand?: boolean }
+): AnyNode[] {
+  let nodes = resolveSubnetCollisions(nextNodes, prevNodes);
+
+  if (!options?.skipAutoExpand && !nodes.some((node) => node.dragging)) {
+    nodes = autoExpandContainers(nodes);
+  }
+
+  nodes = resolveVpcCollisions(nodes, prevNodes);
+  return sortNodesParentFirst(nodes);
+}
+
+/** React Flow requires every parent node to appear before its children in the array. */
+function sortNodesParentFirst(nodes: AnyNode[]): AnyNode[] {
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+  const sorted: AnyNode[] = [];
+  const visited = new Set<string>();
+
+  const visit = (node: AnyNode) => {
+    if (visited.has(node.id)) return;
+    if (node.parentId) {
+      const parent = nodeMap.get(node.parentId);
+      if (parent) visit(parent);
+    }
+    visited.add(node.id);
+    sorted.push(node);
+  };
+
+  nodes.forEach(visit);
+  return sorted;
 }
 
 function subnetBounds(node: AnyNode) {
@@ -466,35 +498,33 @@ function autoExpandContainers(nodes: AnyNode[]): AnyNode[] {
     const children = getChildren(vpc.id);
     if (children.length === 0) return;
 
-    const minX = 20;
-    const minY = 36;
-    let maxX = 0;
-    let maxY = 0;
+    let maxRight = 0;
+    let maxBottom = 0;
 
     children.forEach((child) => {
       if (!child.position) return;
 
-      const cw = child.width ?? 260;
-      const ch = child.height ?? 180;
+      const cw = child.width ?? DEFAULT_SUBNET_WIDTH;
+      const ch = child.height ?? DEFAULT_SUBNET_HEIGHT;
 
-      if (child.position.x < minX) {
-        child.position.x = minX;
+      if (child.position.x < SUBNET_PADDING) {
+        child.position.x = SUBNET_PADDING;
       }
-      if (child.position.y < minY) {
-        child.position.y = minY;
+      if (child.position.y < SUBNET_TOP_PADDING) {
+        child.position.y = SUBNET_TOP_PADDING;
       }
 
-      const rightEdge = child.position.x + cw + 20;
-      const bottomEdge = child.position.y + ch + 20;
+      const rightEdge = child.position.x + cw + SUBNET_PADDING;
+      const bottomEdge = child.position.y + ch + SUBNET_BOTTOM_PADDING;
 
-      if (rightEdge > maxX) maxX = rightEdge;
-      if (bottomEdge > maxY) maxY = bottomEdge;
+      if (rightEdge > maxRight) maxRight = rightEdge;
+      if (bottomEdge > maxBottom) maxBottom = bottomEdge;
 
       nodesMap.set(child.id, child);
     });
 
-    vpc.width = Math.max(600, maxX);
-    vpc.height = Math.max(400, maxY);
+    vpc.width = Math.max(vpc.width ?? MIN_VPC_WIDTH, MIN_VPC_WIDTH, maxRight);
+    vpc.height = Math.max(vpc.height ?? MIN_VPC_HEIGHT, MIN_VPC_HEIGHT, maxBottom);
     nodesMap.set(vpc.id, vpc);
   });
 

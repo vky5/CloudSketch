@@ -8,7 +8,13 @@ import { AnyNodeProps } from "@/utils/types/resource";
 import { vpcData } from "@/config/awsNodes/vpc.config";
 import { useDiagramStore } from "@/store/useDiagramStore";
 import { subnetData } from "@/config/awsNodes/subnet.config";
-import { getNextSubnetPosition } from "@/utils/getNextSubnetPosition";
+import {
+  DEFAULT_SUBNET_HEIGHT,
+  DEFAULT_SUBNET_WIDTH,
+  getNextSubnetPosition,
+  getVpcSizeForSubnetChildren,
+  getVpcSizeForSubnetPosition,
+} from "@/utils/getNextSubnetPosition";
 import { syncNodeWithBackend } from "@/utils/terraformSync";
 import { useShowNodeActions } from "@/utils/useShowNodeActions";
 
@@ -21,7 +27,7 @@ function VPCNode({
 }: AnyNodeProps<vpcData>) {
   const [hovered, setHovered] = useState(false);
   const showActions = useShowNodeActions(selected, hovered);
-  const { nodes, addNode } = useDiagramStore();
+  const { nodes, addNode, updateNodeDimensions } = useDiagramStore();
   const vpcCidr = data.CIDR?.toString() || "10.0.0.0/16";
 
   const handleAddSubnet = async () => {
@@ -44,9 +50,40 @@ function VPCNode({
     const pos = getNextSubnetPosition(
       parentVpcNodeProps,
       existingSubnets,
-      260,
-      180,
-      { x: 0, y: 0, width: 5000, height: 5000 }
+      DEFAULT_SUBNET_WIDTH,
+      DEFAULT_SUBNET_HEIGHT
+    );
+
+    const sizeForNewSubnet = getVpcSizeForSubnetPosition(
+      pos,
+      DEFAULT_SUBNET_WIDTH,
+      DEFAULT_SUBNET_HEIGHT
+    );
+    const sizeForAllSubnets = getVpcSizeForSubnetChildren(
+      [
+        ...existingSubnets,
+        {
+          position: pos,
+          width: DEFAULT_SUBNET_WIDTH,
+          height: DEFAULT_SUBNET_HEIGHT,
+        },
+      ],
+      DEFAULT_SUBNET_WIDTH,
+      DEFAULT_SUBNET_HEIGHT
+    );
+
+    updateNodeDimensions(
+      id,
+      Math.max(
+        parentVpcNode.width ?? 0,
+        sizeForNewSubnet.width,
+        sizeForAllSubnets.width
+      ),
+      Math.max(
+        parentVpcNode.height ?? 0,
+        sizeForNewSubnet.height,
+        sizeForAllSubnets.height
+      )
     );
 
     const newSubnet = {
@@ -60,8 +97,8 @@ function VPCNode({
         Name: "New Subnet",
         CIDR: "10.0.1.0/24",
       },
-      width: 260,
-      height: 180,
+      width: DEFAULT_SUBNET_WIDTH,
+      height: DEFAULT_SUBNET_HEIGHT,
       dragging: false,
       zIndex: 0,
       selectable: true,
