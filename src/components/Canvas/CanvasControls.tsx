@@ -1,7 +1,8 @@
 "use client";
 
 import { useReactFlow, useStore } from "@xyflow/react";
-import { Crosshair, Minus, Plus } from "lucide-react";
+import { Crosshair, Minus, Plus, Redo2, Undo2 } from "lucide-react";
+import { useDiagramStore } from "@/store/useDiagramStore";
 
 export default function CanvasControls() {
   const { zoomIn, zoomOut, setCenter } = useReactFlow();
@@ -12,6 +13,13 @@ export default function CanvasControls() {
     (state) => state.transform[2] <= state.minZoom
   );
 
+  const { undo, redo, canUndo, canRedo } = useDiagramStore((state) => ({
+    undo: state.undo,
+    redo: state.redo,
+    canUndo: state.historyIndex > 0,
+    canRedo: state.historyIndex < state.history.length - 1,
+  }));
+
   const handleCenter = () => {
     setCenter(0, 0, { zoom: 1, duration: 250 });
   };
@@ -21,6 +29,28 @@ export default function CanvasControls() {
 
   return (
     <div className="pointer-events-auto absolute bottom-4 right-4 z-10 flex flex-row overflow-hidden rounded-lg border border-slate-800/70 bg-[#0f1219] shadow-lg">
+      <button
+        type="button"
+        onClick={undo}
+        disabled={!canUndo}
+        className={`${buttonClass} border-r border-slate-800/70`}
+        title="Undo"
+        aria-label="Undo"
+      >
+        <Undo2 className="h-4 w-4" />
+      </button>
+
+      <button
+        type="button"
+        onClick={redo}
+        disabled={!canRedo}
+        className={`${buttonClass} border-r border-slate-800/70`}
+        title="Redo"
+        aria-label="Redo"
+      >
+        <Redo2 className="h-4 w-4" />
+      </button>
+
       <button
         type="button"
         onClick={() => zoomIn({ duration: 200 })}

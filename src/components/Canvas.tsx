@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useMemo } from "react";
+import { useCallback, useEffect, useRef, useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -64,12 +64,45 @@ function FlowContent() {
     deleteModal,
     confirmDelete,
     closeDeleteModal,
+    undo,
+    redo,
   } = useDiagramStore();
 
   const ghostRef = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   // 1. Ghost shape drawing & movement hook
   useGhostMovement(selectedTool, ghostRef);
+
+  // Undo/redo keyboard shortcuts (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y)
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const isTypingTarget =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (isTypingTarget) return;
+
+      const isModifierPressed = event.ctrlKey || event.metaKey;
+      if (!isModifierPressed) return;
+
+      const key = event.key.toLowerCase();
+      if (key === "z" && event.shiftKey) {
+        event.preventDefault();
+        redo();
+      } else if (key === "z") {
+        event.preventDefault();
+        undo();
+      } else if (key === "y") {
+        event.preventDefault();
+        redo();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [undo, redo]);
 
   // 3. Node connections hook
   const { onConnect } = useCanvasConnection(nodes, edges, addEdge);
