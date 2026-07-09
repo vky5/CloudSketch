@@ -84,7 +84,6 @@ resource "aws_key_pair" "{{.KeyName}}" {
 
   s3: `resource "aws_s3_bucket" "{{ .NodeID }}" {
   bucket = "{{ .BucketName }}"
-  acl    = "private"
 
   tags = {
     Name = "{{ .BucketName }}"

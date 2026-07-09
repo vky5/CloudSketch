@@ -43,6 +43,8 @@ export default function EdgeDeleteToolbar() {
       left: screenPos.x,
       top: screenPos.y - 36,
     };
+    // transform keeps this in sync with pan/zoom; flowToScreenPosition reads it internally but is referentially stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEdgeIds, edges, nodes, flowToScreenPosition, transform]);
 
   if (!position) return null;

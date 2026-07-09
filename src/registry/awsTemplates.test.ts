@@ -131,6 +131,20 @@ describe("awsTemplates rendering", () => {
     });
   });
 
+  describe("s3", () => {
+    it("renders bucket with public access block and no deprecated acl argument", () => {
+      const tf = render("s3", { NodeID: "bucket_1", BucketName: "my-assets" });
+
+      expect(tf).toContain('resource "aws_s3_bucket" "bucket_1"');
+      expect(tf).toContain('bucket = "my-assets"');
+      expect(tf).toContain(
+        'resource "aws_s3_bucket_public_access_block" "bucket_1_block"'
+      );
+      // acl was removed from aws_s3_bucket in AWS provider v4+
+      expect(tf).not.toMatch(/^\s*acl\s*=/m);
+    });
+  });
+
   describe("subnet", () => {
     it("renders vpc reference and cidr", () => {
       const tf = render("subnet", {

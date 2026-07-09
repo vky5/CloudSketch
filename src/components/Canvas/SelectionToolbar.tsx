@@ -30,6 +30,8 @@ export default function SelectionToolbar() {
       left: topRight.x + 8,
       top: topRight.y - 36,
     };
+    // transform keeps this in sync with pan/zoom; flowToScreenPosition reads it internally but is referentially stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNodeIds, nodes, getNodesBounds, flowToScreenPosition, transform]);
 
   if (!position) return null;
