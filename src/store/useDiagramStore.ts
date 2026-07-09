@@ -18,19 +18,52 @@ import {
   SUBNET_TOP_PADDING,
 } from "@/utils/getNextSubnetPosition";
 import { resolveVpcCollisions } from "@/utils/vpcLayout";
-/*
-Okay so two types Edge and Connnections
-Edge includes Id connections doesnt
-*/
+import { UGCPGraph } from "@/models/ugcp/schema";
+import { toUGCPGraph, validateUGCPGraph } from "@/lib/ugcp/graphSync";
+import { diffUGCPGraphs, GraphDiffResult } from "@/lib/ugcp/graphDiff";
+
+// Rebuilds canvas-facing nodes/edges from a canonical UGCP graph snapshot (used by undo/redo)
+function restoreCanvasFromGraph(graph: UGCPGraph): { nodes: AnyNode[]; edges: Edge[] } {
+  const nodes = graph.nodes.map((n) => ({
+    id: n.id,
+    type: n.type,
+    parentId: n.parentId || undefined,
+    position: { x: n.position.x, y: n.position.y },
+    width: n.width || undefined,
+    height: n.height || undefined,
+    data: { ...n.data, provenance: n.provenance },
+  })) as unknown as AnyNode[];
+
+  const edges = graph.edges.map((e) => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    type: e.type,
+    data: e.data ? { ...e.data, provenance: e.provenance } : undefined,
+  })) as Edge[];
+
+  return { nodes, edges };
+}
 
 interface DiagramState {
   nodes: AnyNode[];
   edges: Edge[];
-  selectedNodeId: string | null; // for signle selected node (enables drag drop and resize)
+  selectedNodeId: string | null; // for single selected node
   selectedTool: string;
   settingOpenNodeId: string | null; // for opening settings of a selected node
   selectedNodeIds: string[]; // for tracking multiple selected nodes
   selectedEdgeIds: string[];
+
+  // UGCP Graph History & Metadata
+  history: UGCPGraph[];
+  historyIndex: number;
+  lastDiff: GraphDiffResult | null;
+  projectId: string | null;
+  projectName: string | null;
+  setProjectMeta: (id: string, name: string) => void;
+  commitGraphState: () => void;
+  undo: () => void;
+  redo: () => void;
 
   setNodes: (changes: NodeChange[]) => void;
   setEdges: (changes: EdgeChange[]) => void;
@@ -38,11 +71,11 @@ interface DiagramState {
   addEdge: (edge: Edge | Connection) => void;
 
   setSelectedTool: (tool: string) => void;
-  openSettings: (id: string) => void; // this will be used to open settings for a selected node only (earlier was using it for settings as well)
-  selectedNode: (id: string | null) => void; // this will be used to select a node
+  openSettings: (id: string) => void;
+  selectedNode: (id: string | null) => void;
   handOffToSelectNode: (id: string) => void;
   closeSettings: () => void;
-  selectNodes: (ids: string[]) => void; // set a large number of nodes in selected in selectedNodeIds
+  selectNodes: (ids: string[]) => void;
   selectEdges: (ids: string[]) => void;
   clearSelection: () => void;
   clearSelectedNodes: () => void;
@@ -69,10 +102,104 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
-  selectedTool: "select", // Default tool
+  selectedTool: "select",
   selectedNodeIds: [],
   selectedEdgeIds: [],
   settingOpenNodeId: null,
+
+  // History & Metadata initialization
+  history: [],
+  historyIndex: -1,
+  lastDiff: null,
+  projectId: null,
+  projectName: "Untitled Project",
+
+  setProjectMeta: (id: string, name: string) => {
+    set({ projectId: id, projectName: name });
+  },
+
+  commitGraphState: () => {
+    const { nodes, edges, history, historyIndex, projectId, projectName } = get();
+
+    // Map canvas state to canonical UGCP Graph payload
+    const projectMeta = {
+      id: projectId ?? "00000000-0000-0000-0000-000000000000",
+      name: projectName ?? "Untitled Project",
+    };
+    const newGraph = toUGCPGraph(nodes, edges, projectMeta);
+
+    // Validate using Zod schemas
+    const validation = validateUGCPGraph(newGraph);
+    if (!validation.success) {
+      console.warn("UGCP Graph validation failed during commit:", validation.error);
+      return;
+    }
+
+    const validatedGraph = validation.data;
+
+    // Check if the graph has changed since the last snapshot
+    if (historyIndex >= 0 && historyIndex < history.length) {
+      const currentSnapshot = history[historyIndex];
+      const nodesMatch = JSON.stringify(currentSnapshot.nodes) === JSON.stringify(validatedGraph.nodes);
+      const edgesMatch = JSON.stringify(currentSnapshot.edges) === JSON.stringify(validatedGraph.edges);
+
+      if (nodesMatch && edgesMatch) {
+        // No architectural structure changes; skip committing a new version
+        return;
+      }
+    }
+
+    // Truncate undone history trail
+    const cleanHistory = history.slice(0, historyIndex + 1);
+
+    // Assign incremented version number
+    const nextVersion = historyIndex >= 0 ? cleanHistory[historyIndex].version + 1 : 1;
+    validatedGraph.version = nextVersion;
+
+    // Diff against the previous snapshot so provenance/history tooling can show what changed
+    const previousSnapshot = cleanHistory[cleanHistory.length - 1] ?? null;
+    const diff = previousSnapshot ? diffUGCPGraphs(previousSnapshot, validatedGraph) : null;
+
+    set({
+      history: [...cleanHistory, validatedGraph],
+      historyIndex: cleanHistory.length,
+      lastDiff: diff,
+    });
+
+    console.log(`Committed UGCP Graph v${nextVersion}. History count: ${cleanHistory.length + 1}`, diff);
+  },
+
+  undo: () => {
+    const { history, historyIndex } = get();
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      const targetGraph = history[newIndex];
+      const { nodes: restoredNodes, edges: restoredEdges } = restoreCanvasFromGraph(targetGraph);
+
+      set({
+        nodes: restoredNodes,
+        edges: restoredEdges,
+        historyIndex: newIndex,
+      });
+      console.log(`Undid to graph version: ${targetGraph.version}`);
+    }
+  },
+
+  redo: () => {
+    const { history, historyIndex } = get();
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      const targetGraph = history[newIndex];
+      const { nodes: restoredNodes, edges: restoredEdges } = restoreCanvasFromGraph(targetGraph);
+
+      set({
+        nodes: restoredNodes,
+        edges: restoredEdges,
+        historyIndex: newIndex,
+      });
+      console.log(`Redid to graph version: ${targetGraph.version}`);
+    }
+  },
 
   setNodes: (changes: NodeChange[]) =>
     set((state) => {
@@ -122,7 +249,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       return { edges: applyEdgeChanges(changes, state.edges) };
     }),
 
-  addNode: (node: AnyNode) =>
+  addNode: (node: AnyNode) => {
     set((state) => {
       if (state.nodes.some((n) => n.id === node.id)) {
         return {};
@@ -133,9 +260,11 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
           state.nodes
         ),
       };
-    }),
+    });
+    get().commitGraphState();
+  },
 
-  addEdge: (edge: Edge | Connection) =>
+  addEdge: (edge: Edge | Connection) => {
     set((state) => {
       const newEdge = { ...edge, id: "id" in edge ? edge.id : crypto.randomUUID() } as Edge;
       if (state.edges.some((e) => e.id === newEdge.id)) {
@@ -144,7 +273,9 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       return {
         edges: [...state.edges, newEdge],
       };
-    }),
+    });
+    get().commitGraphState();
+  },
 
   setSelectedTool: (tool) =>
     set((state) => {
@@ -217,7 +348,7 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       edges: state.edges.map((edge) => ({ ...edge, selected: false })),
     })),
 
-  deleteNodes: (ids: string[]) =>
+  deleteNodes: (ids: string[]) => {
     set((state) => {
       if (ids.length === 0) return {};
 
@@ -244,25 +375,31 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
         selectedNodeIds: state.selectedNodeIds.filter((nId) => !idsToDelete.has(nId)),
         settingOpenNodeId: idsToDelete.has(state.settingOpenNodeId || "") ? null : state.settingOpenNodeId,
       };
-    }),
+    });
+    get().commitGraphState();
+  },
 
-  updateNodeData: (id: string, newData: Partial<ResourceBlock["data"]>) =>
+  updateNodeData: (id: string, newData: Partial<ResourceBlock["data"]>) => {
     set((state) => {
       const nextNodes = state.nodes.map((node) =>
         node.id === id ? { ...node, data: { ...node.data, ...newData } } : node
       );
       return { nodes: layoutNodes(nextNodes, state.nodes) };
-    }),
+    });
+    get().commitGraphState();
+  },
 
-  updateNodeDimensions: (id: string, width: number, height: number) =>
+  updateNodeDimensions: (id: string, width: number, height: number) => {
     set((state) => {
       const nextNodes = state.nodes.map((node) =>
         node.id === id ? { ...node, width, height } : node
       );
       return { nodes: layoutNodes(nextNodes, state.nodes) };
-    }),
+    });
+    get().commitGraphState();
+  },
 
-  updateNodePosition: (id: string, x: number, y: number) =>
+  updateNodePosition: (id: string, x: number, y: number) => {
     set((state) => {
       const nextNodes = state.nodes.map((node) =>
         node.id === id
@@ -275,9 +412,11 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
           : node
       );
       return { nodes: layoutNodes(nextNodes, state.nodes) };
-    }),
+    });
+    get().commitGraphState();
+  },
 
-  updateNodeParentAndPosition: (id: string, parentId: string | undefined, x: number, y: number) =>
+  updateNodeParentAndPosition: (id: string, parentId: string | undefined, x: number, y: number) => {
     set((state) => {
       const nextNodes = state.nodes.map((node) =>
         node.id === id
@@ -291,9 +430,11 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
           : node
       );
       return { nodes: layoutNodes(nextNodes, state.nodes) };
-    }),
+    });
+    get().commitGraphState();
+  },
 
-  setNodesAndEdges: (nodes, edges) =>
+  setNodesAndEdges: (nodes, edges) => {
     set((state) => {
       const uniqueNodes = nodes.filter((n, idx, self) => self.findIndex((x) => x.id === n.id) === idx);
       const uniqueEdges = edges.filter((e, idx, self) => self.findIndex((x) => x.id === e.id) === idx);
@@ -302,8 +443,13 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
           withFlowPresentation(node, state.selectedTool)
         ),
         edges: uniqueEdges,
+        history: [],
+        historyIndex: -1,
+        lastDiff: null,
       };
-    }),
+    });
+    get().commitGraphState();
+  },
 
   deleteNode: (id: string) => get().deleteNodes([id]),
 
@@ -315,6 +461,11 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       selectedNodeIds: [],
       selectedEdgeIds: [],
       settingOpenNodeId: null,
+      history: [],
+      historyIndex: -1,
+      lastDiff: null,
+      projectId: null,
+      projectName: "Untitled Project",
     }),
 
   deleteModal: {

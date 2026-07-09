@@ -1,3 +1,4 @@
+// basically default values for each node.
 // importing all nodes
 import EC2Node from "../nodes/awsNodes/EC2Node";
 import RhombusNode from "../nodes/tools/RhombusNode";
@@ -93,3 +94,4 @@ export function getDefaultDataForNode(
       throw new Error(`Unknown node type: ${type}`);
   }
 }
+

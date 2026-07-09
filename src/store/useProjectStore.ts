@@ -100,6 +100,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => {
 
       // Clear current workspace states
       useDiagramStore.getState().clearAll();
+      useDiagramStore.getState().setProjectMeta(id, projectName);
       useTerraformResourceStore.getState().resetAll();
       useTerraformStore.getState().clearAll();
 
@@ -147,6 +148,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => {
 
         const payload: ProjectPayload = JSON.parse(storedPayload);
 
+        // Bind project metadata to diagram store before loading states
+        useDiagramStore.getState().setProjectMeta(id, payload.name || "Untitled Project");
+        
         // Load content into diagram, resources, and terraform blocks stores
         useDiagramStore.getState().setNodesAndEdges(payload.nodes || [], payload.edges || []);
         useTerraformResourceStore.getState().setResources(payload.resources || []);

@@ -35,6 +35,8 @@ export const contractRegistry: Record<string, NodeCommunicationContract> = {
       return { success: false };
     },
   },
+
+  // ? EC2 
   ec2: {
     onContainerEnter: (childNode, containerNode): SignalResponse => {
       if (containerNode.type === "subnet") {

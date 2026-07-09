@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
 type ConfigPanelStore = {
-  isConfigOpen: boolean;
-  isSettingsOpen: boolean;
+  isConfigOpen: boolean; // the key value pair and rest of stuff
+  isSettingsOpen: boolean; // show detaled settings from the node/resource
   isEditorOpen: boolean;
   isAwsComponentsOpen: boolean;
   isAiConsoleOpen: boolean;

@@ -1,3 +1,5 @@
+// Universal Graph Communication Protocol
+
 import { Node, Edge } from "@xyflow/react";
 import { contractRegistry } from "./contractRegistry";
 import { useDiagramStore } from "@/store/useDiagramStore";
