@@ -2,6 +2,7 @@
 
 import { useReactFlow, useStore } from "@xyflow/react";
 import { Crosshair, Minus, Plus, Redo2, Undo2 } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import { useDiagramStore } from "@/store/useDiagramStore";
 
 export default function CanvasControls() {
@@ -13,12 +14,14 @@ export default function CanvasControls() {
     (state) => state.transform[2] <= state.minZoom
   );
 
-  const { undo, redo, canUndo, canRedo } = useDiagramStore((state) => ({
-    undo: state.undo,
-    redo: state.redo,
-    canUndo: state.historyIndex > 0,
-    canRedo: state.historyIndex < state.history.length - 1,
-  }));
+  const { undo, redo, canUndo, canRedo } = useDiagramStore(
+    useShallow((state) => ({
+      undo: state.undo,
+      redo: state.redo,
+      canUndo: state.historyIndex > 0,
+      canRedo: state.historyIndex < state.history.length - 1,
+    }))
+  );
 
   const handleCenter = () => {
     setCenter(0, 0, { zoom: 1, duration: 250 });

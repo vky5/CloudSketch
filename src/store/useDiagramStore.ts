@@ -61,7 +61,7 @@ interface DiagramState {
   projectId: string | null;
   projectName: string | null;
   setProjectMeta: (id: string, name: string) => void;
-  commitGraphState: () => void;
+  commitGraphState: () => void; // taking snapshot of the current canvas state and committing it to history
   undo: () => void;
   redo: () => void;
 
@@ -165,8 +165,6 @@ export const useDiagramStore = create<DiagramState>((set, get) => ({
       historyIndex: cleanHistory.length,
       lastDiff: diff,
     });
-
-    console.log(`Committed UGCP Graph v${nextVersion}. History count: ${cleanHistory.length + 1}`, diff);
   },
 
   undo: () => {
